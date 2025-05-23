@@ -19,7 +19,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Social App",
+  title: "OnlyPaws",
   description: "A modern social media app powered by Next.js",
 };
 
