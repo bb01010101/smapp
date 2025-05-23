@@ -21,6 +21,9 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "OnlyPaws",
   description: "A modern social media app powered by Next.js",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
