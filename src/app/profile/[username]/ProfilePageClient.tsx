@@ -39,6 +39,7 @@ interface ProfilePageClientProps {
   posts: Posts;
   likedPosts: Posts;
   isFollowing: boolean;
+  pets: any[];
 }
 
 function ProfilePageClient({
@@ -46,6 +47,7 @@ function ProfilePageClient({
   likedPosts,
   posts,
   user,
+  pets,
 }: ProfilePageClientProps) {
   const { user: currentUser } = useUser();
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -105,6 +107,35 @@ function ProfilePageClient({
                 <h1 className="mt-4 text-2xl font-bold">{user.name ?? user.username}</h1>
                 <p className="text-muted-foreground">@{user.username}</p>
                 <p className="mt-2 text-sm">{user.bio}</p>
+
+                {/* PETS GRID */}
+                {pets && pets.length > 0 && (
+                  <div className="w-full mt-6">
+                    <h2 className="text-lg font-semibold mb-2 text-left">Pets</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                      {pets.map((pet) => (
+                        <Card key={pet.id} className="p-4 bg-background shadow-lg w-full">
+                          <div className="text-center space-y-2">
+                            <Avatar className="w-16 h-16 mx-auto">
+                              {pet.imageUrl && !pet.imageUrl.includes('placehold.co') ? (
+                                <AvatarImage src={pet.imageUrl} alt={pet.name} />
+                              ) : (
+                                <AvatarImage src="/avatar.png" alt={pet.name} />
+                              )}
+                            </Avatar>
+                            <div className="font-medium">{pet.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {pet.breed} • {pet.age}
+                            </div>
+                            <div className="text-xs text-muted-foreground line-clamp-2">
+                              {pet.bio}
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* PROFILE STATS */}
                 <div className="w-full mt-6">

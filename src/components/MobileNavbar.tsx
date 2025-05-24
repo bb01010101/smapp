@@ -8,6 +8,7 @@ import {
   MoonIcon,
   SunIcon,
   UserIcon,
+  PawPrintIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -50,6 +51,13 @@ function MobileNavbar() {
               <Link href="/">
                 <HomeIcon className="w-4 h-4" />
                 Home
+              </Link>
+            </Button>
+
+            <Button variant="ghost" className="flex items-center gap-3 justify-start" asChild>
+              <Link href="/pawpad">
+                <PawPrintIcon className="w-4 h-4" />
+                PawPad
               </Link>
             </Button>
 

@@ -1,4 +1,3 @@
-
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { auth } from "@clerk/nextjs/server";
 
@@ -18,6 +17,26 @@ export const ourFileRouter = {
       if (!userId) throw new Error("Unauthorized");
 
       // whatever is returned here is accessible in onUploadComplete as `metadata`
+      return { userId };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      try {
+        return { fileUrl: file.url };
+      } catch (error) {
+        console.error("Error in onUploadComplete:", error);
+        throw error;
+      }
+    }),
+
+  petImage: f({
+    image: {
+      maxFileSize: "4MB",
+      maxFileCount: 1,
+    },
+  })
+    .middleware(async () => {
+      const { userId } = await auth();
+      if (!userId) throw new Error("Unauthorized");
       return { userId };
     })
     .onUploadComplete(async ({ metadata, file }) => {

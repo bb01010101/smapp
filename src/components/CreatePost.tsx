@@ -1,8 +1,7 @@
-
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "./ui/card";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import { Textarea } from "./ui/textarea";
@@ -18,19 +17,33 @@ function CreatePost() {
   const [imageUrl, setImageUrl] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const [showImageUpload, setShowImageUpload] = useState(false);
+  const [pets, setPets] = useState<any[]>([]);
+  const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Fetch pets for the current user
+    const fetchPets = async () => {
+      const res = await fetch("/api/pets");
+      if (res.ok) {
+        const data = await res.json();
+        setPets(data);
+      }
+    };
+    fetchPets();
+  }, []);
 
   const handleSubmit = async () => {
     if (!content.trim() && !imageUrl) return;
 
     setIsPosting(true);
     try {
-      const result = await createPost(content, imageUrl);
+      const result = await createPost(content, imageUrl, selectedPetId);
       if (result?.success) {
         // reset the form
         setContent("");
         setImageUrl("");
         setShowImageUpload(false);
-
+        setSelectedPetId(null);
         toast.success("Post created successfully");
       }
     } catch (error) {
@@ -56,6 +69,24 @@ function CreatePost() {
               onChange={(e) => setContent(e.target.value)}
               disabled={isPosting}
             />
+          </div>
+
+          {/* Post as selector */}
+          <div>
+            <label className="block text-sm font-medium mb-1">Post as</label>
+            <select
+              className="w-full border rounded-md px-3 py-2 text-sm"
+              value={selectedPetId || ""}
+              onChange={e => setSelectedPetId(e.target.value || null)}
+              disabled={isPosting}
+            >
+              <option value="">Yourself</option>
+              {pets.map((pet) => (
+                <option key={pet.id} value={pet.id}>
+                  {pet.name} ({pet.species})
+                </option>
+              ))}
+            </select>
           </div>
 
           {(showImageUpload || imageUrl) && (

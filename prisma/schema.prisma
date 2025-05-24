@@ -39,16 +39,17 @@ model User {
 }
 
 
-model Post{
+model Post {
   id        String    @id @default(cuid())
-  authorId String
-  content String?
-  image String?
+  authorId  String
+  petId     String?
+  content   String?
+  image     String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  // Relations
-  author User @relation(fields: [authorId],references: [id], onDelete: Cascade) // cascade delete means delete all posts if author is deleted
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  pet    Pet? @relation("PetPosts", fields: [petId], references: [id])
   comments Comment[]
   likes Like[]
   notifications Notification[]
@@ -119,4 +120,21 @@ enum NotificationType {
   LIKE     
   COMMENT 
   FOLLOW   
+}
+
+model Pet {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  species   String
+  breed     String
+  age       String
+  bio       String
+  imageUrl  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts     Post[]   @relation("PetPosts") // <-- add this line
+
+  @@index([userId])
 }

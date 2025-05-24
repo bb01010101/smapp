@@ -78,35 +78,58 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
       <CardContent className="p-4 sm:p-6">
         <div className="space-y-4">
           <div className="flex space-x-3 sm:space-x-4">
-            <Link href={`/profile/${post.author.username}`}>
-              <Avatar className="size-8 sm:w-10 sm:h-10">
-                <AvatarImage src={post.author.image ?? "/avatar.png"} />
-              </Avatar>
-            </Link>
-
-            {/* POST HEADER & TEXT CONTENT */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 truncate">
-                  <Link
-                    href={`/profile/${post.author.username}`}
-                    className="font-semibold truncate"
-                  >
-                    {post.author.name}
-                  </Link>
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <Link href={`/profile/${post.author.username}`}>@{post.author.username}</Link>
-                    <span>•</span>
-                    <span>{formatDistanceToNow(new Date(post.createdAt))} ago</span>
+            {post.pet ? (
+              <>
+                <Avatar className="size-8 sm:w-10 sm:h-10">
+                  <AvatarImage src={post.pet.imageUrl || "/avatar.png"} />
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 truncate">
+                      <span className="font-semibold truncate">{post.pet.name}</span>
+                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                        <span>{post.pet.species}</span>
+                        <span>•</span>
+                        <span>{formatDistanceToNow(new Date(post.createdAt))} ago</span>
+                      </div>
+                    </div>
+                    {dbUserId === post.author.id && (
+                      <DeleteAlertDialog isDeleting={isDeleting} onDelete={handleDeletePost} />
+                    )}
                   </div>
+                  <p className="mt-2 text-sm text-foreground break-words">{post.content}</p>
                 </div>
-                {/* Check if current user is the post author */}
-                {dbUserId === post.author.id && (
-                  <DeleteAlertDialog isDeleting={isDeleting} onDelete={handleDeletePost} />
-                )}
-              </div>
-              <p className="mt-2 text-sm text-foreground break-words">{post.content}</p>
-            </div>
+              </>
+            ) : (
+              <>
+                <Link href={`/profile/${post.author.username}`}>
+                  <Avatar className="size-8 sm:w-10 sm:h-10">
+                    <AvatarImage src={post.author.image ?? "/avatar.png"} />
+                  </Avatar>
+                </Link>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 truncate">
+                      <Link
+                        href={`/profile/${post.author.username}`}
+                        className="font-semibold truncate"
+                      >
+                        {post.author.name}
+                      </Link>
+                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                        <Link href={`/profile/${post.author.username}`}>@{post.author.username}</Link>
+                        <span>•</span>
+                        <span>{formatDistanceToNow(new Date(post.createdAt))} ago</span>
+                      </div>
+                    </div>
+                    {dbUserId === post.author.id && (
+                      <DeleteAlertDialog isDeleting={isDeleting} onDelete={handleDeletePost} />
+                    )}
+                  </div>
+                  <p className="mt-2 text-sm text-foreground break-words">{post.content}</p>
+                </div>
+              </>
+            )}
           </div>
 
           {/* POST IMAGE */}

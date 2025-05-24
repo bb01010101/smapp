@@ -11,6 +11,7 @@ export async function getProfileByUsername(username: string) {
         where: { username: username },
         select: {
           id: true,
+          clerkId: true,
           name: true,
           username: true,
           bio: true,
@@ -193,6 +194,19 @@ export async function getProfileByUsername(username: string) {
     } catch (error) {
       console.error("Error checking follow status:", error);
       return false;
+    }
+  }
+
+  export async function getUserPets(userId: string) {
+    try {
+      const pets = await prisma.pet.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+      });
+      return pets;
+    } catch (error) {
+      console.error("Error fetching user pets:", error);
+      throw new Error("Failed to fetch user pets");
     }
   }
 
