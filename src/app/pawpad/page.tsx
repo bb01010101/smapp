@@ -19,15 +19,17 @@ import Image from "next/image";
 import ImageUpload from "@/components/ImageUpload";
 import { useAuth } from "@clerk/nextjs";
 
-interface Pet {
-  id: string;
-  name: string;
-  species: string;
-  breed: string;
-  age: string;
-  bio: string;
-  imageUrl: string;
-  angle: number;
+declare global {
+  interface Pet {
+    id: string;
+    name: string;
+    species: string;
+    breed?: string;
+    age?: string;
+    bio?: string;
+    imageUrl?: string | { url: string; type: string } | null;
+    angle?: number;
+  }
 }
 
 const speciesOptions = [
@@ -71,13 +73,13 @@ const breedOptions = {
 
 export default function PawPad() {
   const [pets, setPets] = useState<Pet[]>([]);
-  const [newPet, setNewPet] = useState<Partial<Pet>>({
+  const [newPet, setNewPet] = useState<Partial<Pet> & { imageUrl?: { url: string; type: string } | null }>({
     name: "",
     species: "",
     breed: "",
     age: "",
     bio: "",
-    imageUrl: "https://placehold.co/400x400?text=Pet+Photo",
+    imageUrl: null,
   });
   const [selectedSpecies, setSelectedSpecies] = useState<string>("");
   const [editingPetId, setEditingPetId] = useState<string | null>(null);
@@ -106,10 +108,19 @@ export default function PawPad() {
   }, []);
 
   const addPet = async () => {
-    if (newPet.name?.trim() && newPet.species && newPet.breed) {
+    if (newPet.name?.trim() && newPet.species) {
       setLoading(true);
       try {
         const token = await getToken();
+        // Only send valid fields to the backend
+        const petPayload = {
+          name: newPet.name,
+          species: newPet.species,
+          breed: newPet.breed || undefined,
+          age: newPet.age || undefined,
+          bio: newPet.bio || undefined,
+          imageUrl: newPet.imageUrl?.url || undefined,
+        };
         if (editingPetId) {
           await fetch(`/api/pets/${editingPetId}`, {
             method: "PUT",
@@ -117,7 +128,7 @@ export default function PawPad() {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify(newPet),
+            body: JSON.stringify(petPayload),
           });
           setEditingPetId(null);
         } else {
@@ -127,7 +138,7 @@ export default function PawPad() {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify(newPet),
+            body: JSON.stringify(petPayload),
           });
         }
         setNewPet({
@@ -136,7 +147,7 @@ export default function PawPad() {
           breed: "",
           age: "",
           bio: "",
-          imageUrl: "https://placehold.co/400x400?text=Pet+Photo",
+          imageUrl: null,
         });
         setSelectedSpecies("");
         setShowForm(false);
@@ -151,7 +162,10 @@ export default function PawPad() {
   };
 
   const handleEdit = (pet: Pet) => {
-    setNewPet({ ...pet });
+    setNewPet({
+      ...pet,
+      imageUrl: typeof pet.imageUrl === 'string' ? (pet.imageUrl ? { url: pet.imageUrl, type: "image" } : null) : pet.imageUrl,
+    });
     setSelectedSpecies(pet.species);
     setEditingPetId(pet.id);
     setShowForm(true);
@@ -170,7 +184,7 @@ export default function PawPad() {
         breed: "",
         age: "",
         bio: "",
-        imageUrl: "https://placehold.co/400x400?text=Pet+Photo",
+        imageUrl: null,
       });
       setSelectedSpecies("");
       setEditingPetId(null);
@@ -256,8 +270,8 @@ export default function PawPad() {
                       <Label>Profile Picture</Label>
                       <ImageUpload
                         endpoint="petImage"
-                        value={newPet.imageUrl || ""}
-                        onChange={(url) => setNewPet({ ...newPet, imageUrl: url })}
+                        value={newPet.imageUrl || null}
+                        onChange={(mediaObj) => setNewPet({ ...newPet, imageUrl: mediaObj })}
                       />
                     </div>
 
@@ -344,7 +358,7 @@ export default function PawPad() {
                       <Button onClick={addPet} className="w-full" disabled={loading}>
                         {loading ? "Saving..." : editingPetId ? "Save Changes" : "Add Pet"}
                       </Button>
-                      <Button type="button" variant="outline" className="w-full" onClick={() => { setShowForm(false); setEditingPetId(null); setNewPet({ name: "", species: "", breed: "", age: "", bio: "", imageUrl: "https://placehold.co/400x400?text=Pet+Photo" }); setSelectedSpecies(""); }}>
+                      <Button type="button" variant="outline" className="w-full" onClick={() => { setShowForm(false); setEditingPetId(null); setNewPet({ name: "", species: "", breed: "", age: "", bio: "", imageUrl: null }); setSelectedSpecies(""); }}>
                         Cancel
                       </Button>
                     </div>
@@ -361,9 +375,16 @@ export default function PawPad() {
             <Card key={pet.id} className="p-8 bg-background shadow-lg w-full">
               <div className="text-center space-y-4">
                 <div className="relative w-24 h-24 mx-auto rounded-full overflow-hidden">
-                  {pet.imageUrl && !pet.imageUrl.includes('placehold.co') ? (
+                  {pet.imageUrl && typeof pet.imageUrl === 'string' && !pet.imageUrl.includes('placehold.co') ? (
                     <Image
                       src={pet.imageUrl}
+                      alt={pet.name}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : pet.imageUrl && typeof pet.imageUrl === 'object' && pet.imageUrl.url && !pet.imageUrl.url.includes('placehold.co') ? (
+                    <Image
+                      src={pet.imageUrl.url}
                       alt={pet.name}
                       fill
                       className="object-cover"

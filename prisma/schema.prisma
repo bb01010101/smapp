@@ -128,14 +128,14 @@ model Pet {
   userId    String
   name      String
   species   String
-  breed     String
-  age       String
-  bio       String
-  imageUrl  String
+  breed     String?
+  age       String?
+  bio       String?
+  imageUrl  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  posts     Post[]   @relation("PetPosts") // <-- add this line
+  posts     Post[]   @relation("PetPosts")
 
   @@index([userId])
 }

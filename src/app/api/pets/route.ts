@@ -18,6 +18,15 @@ export async function POST(req: NextRequest) {
   const { userId } = getAuth(req);
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const data = await req.json();
+
+  // Validate required fields
+  const requiredFields = ['name', 'species'];
+  for (const field of requiredFields) {
+    if (!data[field] || typeof data[field] !== 'string' || data[field].trim() === '') {
+      return NextResponse.json({ error: `Missing or empty required field: ${field}` }, { status: 400 });
+    }
+  }
+
   const pet = await prisma.pet.create({
     data: {
       userId,
