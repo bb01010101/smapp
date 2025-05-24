@@ -90,7 +90,7 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
                       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                         <span>{post.pet.species}</span>
                         <span>•</span>
-                        <span>{formatDistanceToNow(new Date(post.createdAt))} ago</span>
+                        <span suppressHydrationWarning>{formatDistanceToNow(new Date(post.createdAt))} ago</span>
                       </div>
                     </div>
                     {dbUserId === post.author.id && (
@@ -119,7 +119,7 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
                       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                         <Link href={`/profile/${post.author.username}`}>@{post.author.username}</Link>
                         <span>•</span>
-                        <span>{formatDistanceToNow(new Date(post.createdAt))} ago</span>
+                        <span suppressHydrationWarning>{formatDistanceToNow(new Date(post.createdAt))} ago</span>
                       </div>
                     </div>
                     {dbUserId === post.author.id && (
@@ -205,7 +205,7 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
                         </span>
                         <span className="text-sm text-muted-foreground">·</span>
                         <span className="text-sm text-muted-foreground">
-                          {formatDistanceToNow(new Date(comment.createdAt))} ago
+                          <span suppressHydrationWarning>{formatDistanceToNow(new Date(comment.createdAt))} ago</span>
                         </span>
                       </div>
                       <p className="text-sm break-words">{comment.content}</p>
