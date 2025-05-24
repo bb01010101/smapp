@@ -1,9 +1,9 @@
 import { getAuth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 
 // GET /api/pets - get all pets for current user
-export async function GET(req) {
+export async function GET(req: NextRequest) {
   const { userId } = getAuth(req);
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const pets = await prisma.pet.findMany({
@@ -14,7 +14,7 @@ export async function GET(req) {
 }
 
 // POST /api/pets - create a new pet
-export async function POST(req) {
+export async function POST(req: NextRequest) {
   const { userId } = getAuth(req);
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const data = await req.json();

@@ -1,6 +1,7 @@
 "use client";
 
 import { getProfileByUsername, getUserPosts, updateProfile } from "@/actions/profile.action";
+import { getPosts } from "@/actions/post.action";
 import { toggleFollow } from "@/actions/user.action";
 import PostCard from "@/components/PostCard";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -33,11 +34,12 @@ import toast from "react-hot-toast";
 
 type User = Awaited<ReturnType<typeof getProfileByUsername>>;
 type Posts = Awaited<ReturnType<typeof getUserPosts>>;
+type Post = Awaited<ReturnType<typeof getPosts>>[number];
 
 interface ProfilePageClientProps {
   user: NonNullable<User>;
-  posts: Posts;
-  likedPosts: Posts;
+  posts: Post[];
+  likedPosts: Post[];
   isFollowing: boolean;
   pets: any[];
 }
