@@ -6,11 +6,11 @@ import { Avatar, AvatarImage } from "./ui/avatar";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 
-interface Video {
+interface Post {
   id: string;
-  title: string;
-  url: string;
-  thumbnail?: string | null;
+  content: string;
+  image: string;
+  mediaType?: string;
   createdAt: Date;
   author: {
     id: string;
@@ -21,7 +21,7 @@ interface Video {
 }
 
 interface VideoFeedProps {
-  videos: Video[];
+  videos: Post[];
 }
 
 export default function VideoFeed({ videos }: VideoFeedProps) {
@@ -56,8 +56,8 @@ export default function VideoFeed({ videos }: VideoFeedProps) {
         >
           <Card className="h-full relative overflow-hidden">
             <video
-              ref={(el) => (videoRefs.current[index] = el)}
-              src={video.url}
+              ref={el => { videoRefs.current[index] = el; }}
+              src={video.image}
               className="w-full h-full object-cover"
               autoPlay={index === currentVideoIndex}
               loop
@@ -84,7 +84,7 @@ export default function VideoFeed({ videos }: VideoFeedProps) {
                   </p>
                 </div>
               </div>
-              <h2 className="mt-2 text-lg font-semibold text-white">{video.title}</h2>
+              <h2 className="mt-2 text-lg font-semibold text-white">{video.content}</h2>
             </div>
           </Card>
         </div>

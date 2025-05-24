@@ -11,7 +11,7 @@ export const ourFileRouter = {
       maxFileCount: 1,
     },
     video: {
-      maxFileSize: "100MB",
+      maxFileSize: "128MB",
       maxFileCount: 1,
     }
   })

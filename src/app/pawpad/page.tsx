@@ -205,8 +205,7 @@ export default function PawPad() {
       setPets((prevPets) =>
         prevPets.map((pet, i) => ({
           ...pet,
-          angle: (pet.angle + 0.03 * delta) % 360, // speed: 0.03 deg/ms
-        }))
+          angle: ((pet.angle ?? 0) + 0.03 * delta) % 360,        }))
       );
       requestRef.current = requestAnimationFrame(animate);
     };

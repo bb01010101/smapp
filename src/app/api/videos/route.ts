@@ -11,24 +11,25 @@ export async function POST(req: Request) {
 
     const { title, url } = await req.json();
 
-    if (!title || !url) {
+    if (!url) {
       return NextResponse.json(
-        { error: "Title and URL are required" },
+        { error: "URL is required" },
         { status: 400 }
       );
     }
 
-    const video = await prisma.video.create({
+    const post = await prisma.post.create({
       data: {
-        title,
-        url,
+        content: title || "",
+        image: url,
+        mediaType: "video",
         authorId: userId,
       },
     });
 
-    return NextResponse.json(video);
+    return NextResponse.json(post);
   } catch (error) {
-    console.error("Error creating video:", error);
+    console.error("Error creating video post:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
