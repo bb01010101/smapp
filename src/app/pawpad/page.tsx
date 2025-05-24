@@ -256,7 +256,7 @@ export default function PawPad() {
                       <Label>Profile Picture</Label>
                       <ImageUpload
                         endpoint="petImage"
-                        value={newPet.imageUrl || ""}
+                        value={newPet.imageUrl}
                         onChange={(url) => setNewPet({ ...newPet, imageUrl: url })}
                       />
                     </div>

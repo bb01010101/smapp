@@ -6,7 +6,7 @@ import { XIcon } from "lucide-react";
 interface ImageUploadProps {
   onChange: (url: string) => void;
   value: string;
-  endpoint: "postImage" | "petImage";
+  endpoint: "postImage";
 }
 
 function ImageUpload({ endpoint, onChange, value }: ImageUploadProps) {

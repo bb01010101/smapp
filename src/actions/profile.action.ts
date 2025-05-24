@@ -51,17 +51,6 @@ export async function getProfileByUsername(username: string) {
               image: true,
             },
           },
-          pet: {
-            select: {
-              id: true,
-              name: true,
-              imageUrl: true,
-              species: true,
-              breed: true,
-              age: true,
-              bio: true,
-            },
-          },
           comments: {
             include: {
               author: {
@@ -118,17 +107,6 @@ export async function getProfileByUsername(username: string) {
               name: true,
               username: true,
               image: true,
-            },
-          },
-          pet: {
-            select: {
-              id: true,
-              name: true,
-              imageUrl: true,
-              species: true,
-              breed: true,
-              age: true,
-              bio: true,
             },
           },
           comments: {
