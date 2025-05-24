@@ -30,7 +30,6 @@ model User {
   posts Post[] // One-to-many
   comments Comment[] // One-to-many
   likes Like[] // One-to-many
-  videos Video[] // One-to-many
 
   followers Follows[] @relation("following") // users who follow this user
   following Follows[] @relation("follower")  // users this user follows
@@ -39,19 +38,6 @@ model User {
   notificationsCreated Notification[] @relation("notificationCreator") // notifications triggered by a user
 }
 
-model Video {
-  id        String   @id @default(cuid())
-  title     String
-  url       String
-  thumbnail String?
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-
-  @@index([authorId])
-}
 
 model Post {
   id        String    @id @default(cuid())
@@ -59,6 +45,7 @@ model Post {
   petId     String?
   content   String?
   image     String?
+  mediaType String? // MIME type for image/video
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
@@ -148,7 +135,7 @@ model Pet {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  posts     Post[]   @relation("PetPosts")
+  posts     Post[]   @relation("PetPosts") // <-- add this line
 
   @@index([userId])
 }

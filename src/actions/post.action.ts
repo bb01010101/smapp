@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { getDbUserId } from "./user.action";
 import { revalidatePath } from "next/cache";
 
-export async function createPost(content: string, image: string, petId?: string | null) {
+export async function createPost(content: string, image: string, petId?: string | null, mediaType?: string) {
     try {
         const userId = await getDbUserId();
 
@@ -14,6 +14,7 @@ export async function createPost(content: string, image: string, petId?: string 
             data:{
                 content,  
                 image,
+                mediaType: mediaType || null,
                 authorId: userId,
                 petId: petId || null,
             }

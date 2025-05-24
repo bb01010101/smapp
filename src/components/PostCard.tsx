@@ -132,10 +132,18 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
             )}
           </div>
 
-          {/* POST IMAGE */}
+          {/* POST IMAGE/VIDEO */}
           {post.image && (
             <div className="rounded-lg overflow-hidden">
-              <img src={post.image} alt="Post content" className="w-full h-auto object-cover" />
+              {post.mediaType?.startsWith("video") ? (
+                <video 
+                  src={post.image} 
+                  controls 
+                  className="w-full h-auto"
+                />
+              ) : (
+                <img src={post.image} alt="Post content" className="w-full h-auto object-cover" />
+              )}
             </div>
           )}
 

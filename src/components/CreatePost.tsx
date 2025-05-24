@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "./ui/card";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import { Textarea } from "./ui/textarea";
-import { ImageIcon, Loader2Icon, SendIcon } from "lucide-react";
+import { ImageIcon, Loader2Icon, SendIcon, VideoIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { createPost } from "@/actions/post.action";
 import toast from "react-hot-toast";
@@ -14,7 +14,7 @@ import ImageUpload from "./ImageUpload";
 function CreatePost() {
   const { user } = useUser();
   const [content, setContent] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [media, setMedia] = useState<{ url: string; type: string } | null>(null);
   const [isPosting, setIsPosting] = useState(false);
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [pets, setPets] = useState<any[]>([]);
@@ -33,15 +33,15 @@ function CreatePost() {
   }, []);
 
   const handleSubmit = async () => {
-    if (!content.trim() && !imageUrl) return;
+    if (!content.trim() && !media?.url) return;
 
     setIsPosting(true);
     try {
-      const result = await createPost(content, imageUrl, selectedPetId);
+      const result = await createPost(content, media?.url || "", selectedPetId, media?.type || "");
       if (result?.success) {
         // reset the form
         setContent("");
-        setImageUrl("");
+        setMedia(null);
         setShowImageUpload(false);
         setSelectedPetId(null);
         toast.success("Post created successfully");
@@ -89,14 +89,14 @@ function CreatePost() {
             </select>
           </div>
 
-          {(showImageUpload || imageUrl) && (
+          {(showImageUpload || media) && (
             <div className="border rounded-lg p-4">
               <ImageUpload
                 endpoint="postImage"
-                value={imageUrl}
-                onChange={(url) => {
-                  setImageUrl(url);
-                  if (!url) setShowImageUpload(false);
+                value={media}
+                onChange={(mediaObj) => {
+                  setMedia(mediaObj);
+                  if (!mediaObj) setShowImageUpload(false);
                 }}
               />
             </div>
@@ -112,14 +112,18 @@ function CreatePost() {
                 onClick={() => setShowImageUpload(!showImageUpload)}
                 disabled={isPosting}
               >
-                <ImageIcon className="size-4 mr-2" />
-                Photo
+                {media && media.type?.startsWith("video") ? (
+                  <VideoIcon className="size-4 mr-2" />
+                ) : (
+                  <ImageIcon className="size-4 mr-2" />
+                )}
+                {media && media.type?.startsWith("video") ? "Video" : "Photo"}
               </Button>
             </div>
             <Button
               className="flex items-center"
               onClick={handleSubmit}
-              disabled={(!content.trim() && !imageUrl) || isPosting}
+              disabled={(!content.trim() && !media?.url) || isPosting}
             >
               {isPosting ? (
                 <>
