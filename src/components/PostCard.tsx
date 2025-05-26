@@ -81,9 +81,9 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
             {post.pet ? (
               <>
                 <Link href={`/profile/${post.author.username}`}>
-                  <Avatar className="size-8 sm:w-10 sm:h-10">
-                    <AvatarImage src={post.pet.imageUrl || "/avatar.png"} />
-                  </Avatar>
+                <Avatar className="size-8 sm:w-10 sm:h-10">
+                  <AvatarImage src={post.pet.imageUrl || "/avatar.png"} />
+                </Avatar>
                 </Link>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">

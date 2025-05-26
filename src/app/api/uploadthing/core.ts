@@ -16,15 +16,18 @@ export const ourFileRouter = {
     }
   })
     .middleware(async () => {
-      // this code runs on your server before upload
-      const { userId } = await auth();
-      if (!userId) throw new Error("Unauthorized");
-
-      // whatever is returned here is accessible in onUploadComplete as `metadata`
-      return { userId };
+      try {
+        const { userId } = await auth();
+        if (!userId) throw new Error("Unauthorized");
+        return { userId };
+      } catch (error) {
+        console.error("Uploadthing middleware error:", error);
+        throw error;
+      }
     })
     .onUploadComplete(async ({ metadata, file }) => {
       try {
+        console.log("Upload completed:", { fileUrl: file.url, fileType: file.type });
         return { fileUrl: file.url, fileType: file.type };
       } catch (error) {
         console.error("Error in onUploadComplete:", error);
@@ -39,12 +42,18 @@ export const ourFileRouter = {
     },
   })
     .middleware(async () => {
-      const { userId } = await auth();
-      if (!userId) throw new Error("Unauthorized");
-      return { userId };
+      try {
+        const { userId } = await auth();
+        if (!userId) throw new Error("Unauthorized");
+        return { userId };
+      } catch (error) {
+        console.error("Uploadthing middleware error:", error);
+        throw error;
+      }
     })
     .onUploadComplete(async ({ metadata, file }) => {
       try {
+        console.log("Upload completed:", { fileUrl: file.url });
         return { fileUrl: file.url };
       } catch (error) {
         console.error("Error in onUploadComplete:", error);
