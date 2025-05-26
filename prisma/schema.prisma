@@ -25,6 +25,7 @@ model User {
   website String?
   createdAt DateTime @default(now())  // member since 2025
   updatedAt DateTime @updatedAt
+  isAdmin Boolean @default(false)
 
   // Relations: 
   posts Post[] // One-to-many
@@ -40,19 +41,31 @@ model User {
 
 
 model Post {
-  id        String    @id @default(cuid())
-  authorId  String
-  petId     String?
-  content   String?
-  image     String?
-  mediaType String? // MIME type for image/video
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id          String   @id @default(cuid())
+  authorId    String
+  petId       String?
+  content     String?
+  image       String?
+  mediaType   String?
+  type        PostType @default(REGULAR)
+  // Marketplace fields
+  title       String?
+  description String?
+  price       Float?
+  priceType   String? // for services: hourly, daily, fixed
+  category    String?
+  condition   String? // for products: new, used, etc.
+  location    String?
+  isAffiliate Boolean?
+  affiliateLink String?
+  affiliateCode String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  pet    Pet? @relation("PetPosts", fields: [petId], references: [id])
-  comments Comment[]
-  likes Like[]
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  pet         Pet?     @relation("PetPosts", fields: [petId], references: [id])
+  comments    Comment[]
+  likes       Like[]
   notifications Notification[]
 }
 
@@ -138,4 +151,10 @@ model Pet {
   posts     Post[]   @relation("PetPosts")
 
   @@index([userId])
+}
+
+enum PostType {
+  REGULAR
+  PRODUCT
+  SERVICE
 }

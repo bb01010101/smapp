@@ -1,7 +1,9 @@
 "use client";
 
 import { UploadDropzone } from "@/lib/uploadthing";
-import { XIcon } from "lucide-react";
+import { XIcon, Loader2Icon } from "lucide-react";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
 interface ImageUploadProps {
   onChange: (media: { url: string; type: string } | null) => void;
@@ -10,6 +12,8 @@ interface ImageUploadProps {
 }
 
 function ImageUpload({ endpoint, onChange, value }: ImageUploadProps) {
+  const [isLoading, setIsLoading] = useState(false);
+
   if (value && value.url) {
     const isVideo = value.type?.startsWith("video");
     return (
@@ -33,18 +37,40 @@ function ImageUpload({ endpoint, onChange, value }: ImageUploadProps) {
       </div>
     );
   }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center size-40 border-2 border-dashed rounded-md">
+        <Loader2Icon className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <UploadDropzone
       endpoint={endpoint}
+      onUploadBegin={() => {
+        setIsLoading(true);
+        console.log("Upload started");
+      }}
       onClientUploadComplete={(res) => {
+        setIsLoading(false);
+        console.log("Upload complete:", res);
         if (res && res[0]) {
           onChange({ url: res[0].url, type: res[0].type });
+          toast.success("File uploaded successfully");
         }
       }}
       onUploadError={(error: Error) => {
-        console.log(error);
+        setIsLoading(false);
+        console.error("Upload error:", error);
+        toast.error(error.message || "Failed to upload file");
+      }}
+      config={{
+        mode: "auto",
       }}
     />
   );
 }
+
 export default ImageUpload;
