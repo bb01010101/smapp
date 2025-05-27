@@ -43,10 +43,7 @@ export default function CreateProductDialog({ open, onOpenChange }: CreateProduc
       if (result?.success) {
         toast.success("Product listed successfully");
         onOpenChange(false);
-        // Reset form
-        e.currentTarget.reset();
-        setImage(null);
-        setIsAffiliate(false);
+        return;
       } else {
         throw new Error(result?.error || "Failed to create product");
       }
