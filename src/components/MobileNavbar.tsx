@@ -10,6 +10,7 @@ import {
   UserIcon,
   PawPrintIcon,
   StoreIcon,
+  MessageCircleIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -71,6 +72,12 @@ function MobileNavbar() {
 
             {isSignedIn ? (
               <>
+                <Button variant="ghost" className="flex items-center gap-3 justify-start" asChild>
+                  <Link href="/messages">
+                    <MessageCircleIcon className="w-4 h-4" />
+                    Messages
+                  </Link>
+                </Button>
                 <Button variant="ghost" className="flex items-center gap-3 justify-start" asChild>
                   <Link href="/notifications">
                     <BellIcon className="w-4 h-4" />

@@ -18,6 +18,7 @@ import { deleteListing } from "@/actions/marketplace.action";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import EditServiceDialog from "@/components/marketplace/EditServiceDialog";
+import { getOrCreateConversation } from "@/actions/dm.action";
 
 type Service = {
   id: string;
@@ -45,6 +46,7 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
   const { user } = useUser();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this service?")) return;
@@ -59,6 +61,19 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
       }
     } catch (error) {
       toast.error("Failed to delete service");
+    }
+  };
+
+  const handleContactProvider = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const conversation = await getOrCreateConversation(service.author.id);
+      router.push(`/messages/${conversation.id}`);
+    } catch (e) {
+      // Optionally show error
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -162,8 +177,8 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
           </div>
         </div>
 
-        <Button className="w-full" size="lg">
-          Contact Provider
+        <Button className="w-full" size="lg" onClick={handleContactProvider} disabled={loading}>
+          {loading ? "Contacting..." : "Contact Provider"}
         </Button>
       </div>
 

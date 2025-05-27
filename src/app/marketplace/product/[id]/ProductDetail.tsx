@@ -19,6 +19,7 @@ import { deleteListing } from "@/actions/marketplace.action";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import EditProductDialog from "@/components/marketplace/EditProductDialog";
+import { getOrCreateConversation } from "@/actions/dm.action";
 
 type Product = {
   id: string;
@@ -50,6 +51,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   const { user } = useUser();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this product?")) return;
@@ -64,6 +66,19 @@ export default function ProductDetail({ product }: ProductDetailProps) {
       }
     } catch (error) {
       toast.error("Failed to delete product");
+    }
+  };
+
+  const handleContactSeller = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const conversation = await getOrCreateConversation(product.author.id);
+      router.push(`/messages/${conversation.id}`);
+    } catch (e) {
+      // Optionally show error
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -197,8 +212,8 @@ export default function ProductDetail({ product }: ProductDetailProps) {
               </Button>
             </a>
           ) : (
-            <Button className="w-full" size="lg">
-              Contact Seller
+            <Button className="w-full" size="lg" onClick={handleContactSeller} disabled={loading}>
+              {loading ? "Contacting..." : "Contact Seller"}
             </Button>
           )}
         </div>
