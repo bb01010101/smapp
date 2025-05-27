@@ -31,6 +31,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { getOrCreateConversation } from "@/actions/dm.action";
 
 type User = Awaited<ReturnType<typeof getProfileByUsername>>;
 type Posts = Awaited<ReturnType<typeof getUserPosts>>;
@@ -55,6 +57,7 @@ function ProfilePageClient({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [isUpdatingFollow, setIsUpdatingFollow] = useState(false);
+  const router = useRouter();
 
   const [editForm, setEditForm] = useState({
     name: user.name || "",
@@ -88,6 +91,12 @@ function ProfilePageClient({
     } finally {
       setIsUpdatingFollow(false);
     }
+  };
+
+  const handleMessage = async () => {
+    if (!currentUser) return;
+    const conversation = await getOrCreateConversation(user.id);
+    router.push(`/messages/${conversation.id}`);
   };
 
   const isOwnProfile =
@@ -170,14 +179,23 @@ function ProfilePageClient({
                     Edit Profile
                   </Button>
                 ) : (
-                  <Button
-                    className="w-full mt-4"
-                    onClick={handleFollow}
-                    disabled={isUpdatingFollow}
-                    variant={isFollowing ? "outline" : "default"}
-                  >
-                    {isFollowing ? "Unfollow" : "Follow"}
-                  </Button>
+                  <>
+                    <Button
+                      className="w-full mt-4 mb-2"
+                      onClick={handleFollow}
+                      disabled={isUpdatingFollow}
+                      variant={isFollowing ? "outline" : "default"}
+                    >
+                      {isFollowing ? "Unfollow" : "Follow"}
+                    </Button>
+                    <Button
+                      className="w-full"
+                      variant="secondary"
+                      onClick={handleMessage}
+                    >
+                      Message
+                    </Button>
+                  </>
                 )}
 
                 {/* LOCATION & WEBSITE */}
