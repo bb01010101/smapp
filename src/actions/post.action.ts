@@ -31,8 +31,13 @@ export async function createPost(content: string, image: string, petId?: string 
 export async function getPosts() {
     try {
         const posts = await prisma.post.findMany({
+            where: {
+                NOT: {
+                    type: { in: ["PRODUCT", "SERVICE"] }
+                }
+            },
             orderBy: {
-                createdAt:"desc"
+                createdAt: "desc"
             },
             include:{
                 author:{

@@ -138,11 +138,7 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
           {post.image && (
             <div className="rounded-lg overflow-hidden">
               {post.mediaType?.startsWith("video") ? (
-                <video 
-                  src={post.image} 
-                  controls 
-                  className="w-full h-auto"
-                />
+                <VideoWithToggleControls src={post.image} />
               ) : (
                 <img src={post.image} alt="Post content" className="w-full h-auto object-cover" />
               )}
@@ -266,4 +262,22 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
     </Card>
   );
 }
+
+function VideoWithToggleControls({ src }: { src: string }) {
+  const [showControls, setShowControls] = useState(false);
+  return (
+    <div className="relative w-full h-auto" onClick={() => setShowControls((v) => !v)} style={{ cursor: "pointer" }}>
+      <video
+        src={src}
+        controls={showControls}
+        autoPlay
+        muted
+        playsInline
+        className="w-full h-auto bg-black"
+        style={{ objectFit: "cover" }}
+      />
+    </div>
+  );
+}
+
 export default PostCard;
