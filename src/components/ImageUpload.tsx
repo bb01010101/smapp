@@ -57,7 +57,8 @@ function ImageUpload({ endpoint, onChange, value }: ImageUploadProps) {
         setIsLoading(false);
         console.log("Upload complete:", res);
         if (res && res[0]) {
-          onChange({ url: res[0].url, type: res[0].type });
+          const url = res[0].ufsUrl || res[0].url;
+          onChange({ url, type: res[0].type });
           toast.success("File uploaded successfully");
         }
       }}

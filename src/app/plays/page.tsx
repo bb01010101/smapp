@@ -171,55 +171,67 @@ export default function PlaysPage() {
                 </div>
                 {/* Comments Section (modal style) */}
                 {showCommentsIdx === idx && (
-                  <div className="absolute bottom-0 left-0 w-full bg-black/80 p-4 z-20 max-h-[60vh] overflow-y-auto rounded-t-xl">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-white font-semibold">Comments</span>
-                      <Button variant="ghost" size="icon" onClick={() => setShowCommentsIdx(null)}>
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-auto p-6 relative">
+                      <button
+                        className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
+                        onClick={() => setShowCommentsIdx(null)}
+                        aria-label="Close"
+                      >
                         ×
-                      </Button>
-                    </div>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {video.comments.length === 0 ? (
-                        <div className="text-white/70 text-sm">No comments yet.</div>
-                      ) : (
-                        video.comments.map((comment: any) => (
-                          <div key={comment.id} className="flex items-center gap-2">
-                            <Avatar className="w-7 h-7">
-                              <AvatarImage src={comment.author?.image ?? "/avatar.png"} />
-                            </Avatar>
-                            <span className="text-white text-xs font-semibold">{comment.author?.name || "User"}</span>
-                            <span className="text-white text-xs">{comment.content}</span>
+                      </button>
+                      <div className="font-semibold text-lg mb-4 text-center">Comments</div>
+                      <div className="space-y-4 max-h-64 overflow-y-auto mb-4">
+                        {video.comments.length === 0 ? (
+                          <div className="text-muted-foreground text-center">No comments yet.</div>
+                        ) : (
+                          video.comments.map((comment: any) => (
+                            <div key={comment.id} className="flex space-x-3">
+                              <Avatar className="size-8 flex-shrink-0">
+                                <AvatarImage src={comment.author?.image ?? "/avatar.png"} />
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                  <span className="font-medium text-sm">{comment.author?.name || "User"}</span>
+                                </div>
+                                <p className="text-sm break-words">{comment.content}</p>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      {user ? (
+                        <div className="flex space-x-3 mt-2">
+                          <Avatar className="size-8 flex-shrink-0">
+                            <AvatarImage src={user.imageUrl || "/avatar.png"} />
+                          </Avatar>
+                          <div className="flex-1">
+                            <Textarea
+                              placeholder="Write a comment..."
+                              value={newComment}
+                              onChange={(e) => setNewComment(e.target.value)}
+                              className="min-h-[60px] resize-none"
+                            />
+                            <div className="flex justify-end mt-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleAddComment(video)}
+                                disabled={!newComment.trim() || isCommenting}
+                                className="flex items-center gap-2"
+                              >
+                                {isCommenting ? "Posting..." : "Post"}
+                              </Button>
+                            </div>
                           </div>
-                        ))
+                        </div>
+                      ) : (
+                        <div className="flex justify-center p-4 border rounded-lg bg-muted/50">
+                          <SignInButton mode="modal">
+                            <Button variant="outline" className="gap-2">Sign in to comment</Button>
+                          </SignInButton>
+                        </div>
                       )}
                     </div>
-                    {user ? (
-                      <div className="flex items-center gap-2 mt-2">
-                        <Avatar className="w-7 h-7">
-                          <AvatarImage src={user.imageUrl || "/avatar.png"} />
-                        </Avatar>
-                        <Textarea
-                          placeholder="Write a comment..."
-                          value={newComment}
-                          onChange={(e) => setNewComment(e.target.value)}
-                          className="min-h-[40px] resize-none text-xs"
-                        />
-                        <Button
-                          size="sm"
-                          onClick={() => handleAddComment(video)}
-                          disabled={!newComment.trim() || isCommenting}
-                          className="flex items-center gap-2"
-                        >
-                          {isCommenting ? "Posting..." : "Post"}
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex justify-center p-2">
-                        <SignInButton mode="modal">
-                          <Button variant="outline" className="gap-2 text-xs">Sign in to comment</Button>
-                        </SignInButton>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
