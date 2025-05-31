@@ -11,6 +11,7 @@ import {
   PawPrintIcon,
   StoreIcon,
   MessageCircleIcon,
+  PlayCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -60,6 +61,13 @@ function MobileNavbar() {
               <Link href="/pawpad">
                 <PawPrintIcon className="w-4 h-4" />
                 PawPad
+              </Link>
+            </Button>
+
+            <Button variant="ghost" className="flex items-center gap-3 justify-start" asChild>
+              <Link href="/plays">
+                <PlayCircle className="w-4 h-4" />
+                Plays
               </Link>
             </Button>
 

@@ -33,6 +33,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { getOrCreateConversation } from "@/actions/dm.action";
+import ImageUpload from "@/components/ImageUpload";
 
 type User = Awaited<ReturnType<typeof getProfileByUsername>>;
 type Posts = Awaited<ReturnType<typeof getUserPosts>>;
@@ -64,13 +65,20 @@ function ProfilePageClient({
     bio: user.bio || "",
     location: user.location || "",
     website: user.website || "",
+    image: user.image || "",
   });
+
+  const [imageUpload, setImageUpload] = useState<{ url: string; type: string } | null>(user.image ? { url: user.image, type: "image" } : null);
 
   const handleEditSubmit = async () => {
     const formData = new FormData();
     Object.entries(editForm).forEach(([key, value]) => {
       formData.append(key, value);
     });
+
+    if (imageUpload && imageUpload.url) {
+      formData.set("image", imageUpload.url);
+    }
 
     const result = await updateProfile(formData);
     if (result.success) {
@@ -278,6 +286,17 @@ function ProfilePageClient({
               <DialogTitle>Edit Profile</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Profile Picture</Label>
+                <ImageUpload
+                  endpoint="postImage"
+                  value={imageUpload}
+                  onChange={(img) => {
+                    setImageUpload(img);
+                    setEditForm((prev) => ({ ...prev, image: img?.url || "" }));
+                  }}
+                />
+              </div>
               <div className="space-y-2">
                 <Label>Name</Label>
                 <Input
