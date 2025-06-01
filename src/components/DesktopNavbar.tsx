@@ -40,6 +40,13 @@ async function DesktopNavbar() {
         </Link>
       </Button>
 
+      <Button variant="ghost" className="flex items-center gap-2" asChild>
+        <Link href="/barks">
+          <span role="img" aria-label="Barks">🐾</span>
+          <span className="hidden lg:inline">Barks</span>
+        </Link>
+      </Button>
+
       {user ? (
         <>
           <Button variant="ghost" className="flex items-center gap-2" asChild>
