@@ -26,6 +26,8 @@ model User {
   createdAt DateTime @default(now())  // member since 2025
   updatedAt DateTime @updatedAt
   isAdmin Boolean @default(false)
+  barks Bark[]
+  barkVotes BarkVote[]
 
   // Relations: 
   posts Post[] // One-to-many
@@ -40,6 +42,11 @@ model User {
 
   conversationParticipants ConversationParticipant[]
   messages                  Message[]
+
+  barkComments BarkComment[]
+  barkCommentVotes BarkCommentVote[]
+
+  communitiesCreated Community[] @relation("CommunityCreator")
 }
 
 
@@ -190,4 +197,75 @@ model Message {
   content        String
   read           Boolean     @default(false)
   createdAt      DateTime    @default(now())
+}
+
+model Community {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  barks       Bark[]
+  creator     User?    @relation("CommunityCreator", fields: [creatorId], references: [id])
+  creatorId   String?
+}
+
+model Bark {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String
+  community   Community? @relation(fields: [communityId], references: [id])
+  communityId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  upvotes     Int      @default(0)
+  votes       BarkVote[]
+  comments    BarkComment[]
+
+  // Add more fields as needed (e.g., comments, etc.)
+}
+
+model BarkVote {
+  id        String   @id @default(cuid())
+  userId    String
+  barkId    String
+  value     Int      // +1 for upvote, -1 for downvote
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bark      Bark     @relation(fields: [barkId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, barkId])
+}
+
+model BarkComment {
+  id        String      @id @default(cuid())
+  content   String
+  authorId  String
+  barkId    String
+  parentId  String?     // For nested comments
+  createdAt DateTime    @default(now())
+
+  author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  bark      Bark        @relation(fields: [barkId], references: [id], onDelete: Cascade)
+  parent    BarkComment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   BarkComment[] @relation("CommentReplies")
+  votes     BarkCommentVote[]
+
+  @@index([barkId])
+  @@index([parentId])
+}
+
+model BarkCommentVote {
+  id         String   @id @default(cuid())
+  userId     String
+  commentId  String
+  value      Int      // +1 for upvote, -1 for downvote
+  createdAt  DateTime @default(now())
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment    BarkComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
 }

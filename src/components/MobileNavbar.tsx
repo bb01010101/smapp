@@ -78,6 +78,13 @@ function MobileNavbar() {
               </Link>
             </Button>
 
+            <Button variant="ghost" className="flex items-center gap-3 justify-start" asChild>
+              <Link href="/barks">
+                <span role="img" aria-label="Barks">🐾</span>
+                Barks
+              </Link>
+            </Button>
+
             {isSignedIn ? (
               <>
                 <Button variant="ghost" className="flex items-center gap-3 justify-start" asChild>
