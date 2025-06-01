@@ -19,7 +19,7 @@ export default function CommunitiesPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Communities</h1>
         <Link href="/barks/communities/create">
-          <Button variant="primary">Create Community</Button>
+          <Button variant="default">Create Community</Button>
         </Link>
       </div>
       <div className="space-y-4">

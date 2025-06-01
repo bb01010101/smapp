@@ -22,7 +22,7 @@ export default function CommunityPage() {
   const { communityId } = useParams() as { communityId: string };
   const router = useRouter();
   const searchParams = useSearchParams();
-  const justCreated = searchParams.get("created") === "1";
+  const justCreated = searchParams?.get("created") === "1";
   const { user } = useUser();
   const userClerkId = user?.id;
   const [community, setCommunity] = useState<any>(null);
@@ -283,7 +283,7 @@ export default function CommunityPage() {
         <>
           <div className="flex items-center justify-between mb-6">
             <Link href={{ pathname: "/barks/submit", query: { communityId } }}>
-              <Button variant="primary">Create Bark</Button>
+              <Button variant="default">Create Bark</Button>
             </Link>
           </div>
           <div className="space-y-4">

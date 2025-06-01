@@ -191,7 +191,7 @@ export default function BarksPage() {
         </Button>
         {!sidebarCollapsed && (
           <>
-            <Button variant="primary" size="sm" className="w-full mb-4" onClick={() => setShowCreateModal(true)}>
+            <Button variant="default" size="sm" className="w-full mb-4" onClick={() => setShowCreateModal(true)}>
               Create Community
             </Button>
             <div className="space-y-2">
@@ -208,7 +208,7 @@ export default function BarksPage() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Barks</h1>
           <Link href="/barks/submit">
-            <Button variant="primary">Create Bark</Button>
+            <Button variant="default">Create Bark</Button>
           </Link>
         </div>
         <div className="space-y-4">

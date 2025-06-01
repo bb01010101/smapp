@@ -1,11 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function BarkSubmitPage() {
+function BarkSubmitPageInner() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [community, setCommunity] = useState("");
@@ -96,5 +96,13 @@ export default function BarkSubmitPage() {
         </Button>
       </form>
     </div>
+  );
+}
+
+export default function BarkSubmitPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <BarkSubmitPageInner />
+    </Suspense>
   );
 } 
