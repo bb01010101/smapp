@@ -23,8 +23,23 @@ export async function createBark({ title, content, communityId }: { title: strin
 
 export async function getBarks({ communityId }: { communityId?: string } = {}) {
   try {
+    let whereClause = {};
+    if (communityId) {
+      // Try to find community by name first
+      const community = await prisma.community.findUnique({
+        where: { name: communityId },
+        select: { id: true }
+      });
+      if (community) {
+        whereClause = { communityId: community.id };
+      } else {
+        // If not found by name, try using the ID directly
+        whereClause = { communityId };
+      }
+    }
+
     let barks = await prisma.bark.findMany({
-      where: communityId ? { communityId } : undefined,
+      where: whereClause,
       include: {
         author: { select: { id: true, clerkId: true, name: true, username: true, image: true } },
         community: { select: { id: true, name: true } },
