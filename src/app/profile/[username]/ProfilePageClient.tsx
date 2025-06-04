@@ -28,6 +28,8 @@ import {
   HeartIcon,
   LinkIcon,
   MapPinIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -69,6 +71,15 @@ function ProfilePageClient({
   });
 
   const [imageUpload, setImageUpload] = useState<{ url: string; type: string } | null>(user.image ? { url: user.image, type: "image" } : null);
+
+  // Pet Story Modal State
+  const [storyOpen, setStoryOpen] = useState(false);
+  const [activePet, setActivePet] = useState<any | null>(null);
+  const [petPostIndex, setPetPostIndex] = useState(0);
+
+  // Get posts for the active pet
+  const activePetPosts = activePet ? posts.filter((post) => post.petId === activePet.id) : [];
+  const currentPetPost = activePetPosts[petPostIndex] || null;
 
   const handleEditSubmit = async () => {
     const formData = new FormData();
@@ -113,6 +124,28 @@ function ProfilePageClient({
 
   const formattedDate = format(new Date(user.createdAt), "MMMM yyyy");
 
+  // Handlers
+  const openPetStory = (pet: any) => {
+    setActivePet(pet);
+    setPetPostIndex(0);
+    setStoryOpen(true);
+  };
+  const closePetStory = () => {
+    setStoryOpen(false);
+    setActivePet(null);
+    setPetPostIndex(0);
+  };
+  const nextPetPost = () => {
+    if (activePetPosts && petPostIndex < activePetPosts.length - 1) {
+      setPetPostIndex((idx) => idx + 1);
+    }
+  };
+  const prevPetPost = () => {
+    if (petPostIndex > 0) {
+      setPetPostIndex((idx) => idx - 1);
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto">
       <div className="grid grid-cols-1 gap-6">
@@ -127,30 +160,26 @@ function ProfilePageClient({
                 <p className="text-muted-foreground">@{user.username}</p>
                 <p className="mt-2 text-sm">{user.bio}</p>
 
-                {/* PETS GRID */}
+                {/* PETS HIGHLIGHTS BAR */}
                 {pets && pets.length > 0 && (
                   <div className="w-full mt-6">
                     <h2 className="text-lg font-semibold mb-2 text-left">Pets</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    <div className="flex gap-6 overflow-x-auto pb-2">
                       {pets.map((pet) => (
-                        <Card key={pet.id} className="p-4 bg-background shadow-lg w-full">
-                          <div className="text-center space-y-2">
-                            <Avatar className="w-16 h-16 mx-auto">
-                              {pet.imageUrl && !pet.imageUrl.includes('placehold.co') ? (
-                                <AvatarImage src={pet.imageUrl} alt={pet.name} />
-                              ) : (
-                                <AvatarImage src="/avatar.png" alt={pet.name} />
-                              )}
-                            </Avatar>
-                            <div className="font-medium">{pet.name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {pet.breed} • {pet.age}
-                            </div>
-                            <div className="text-xs text-muted-foreground line-clamp-2">
-                              {pet.bio}
-                            </div>
-                          </div>
-                        </Card>
+                        <div
+                          key={pet.id}
+                          className="flex flex-col items-center cursor-pointer group"
+                          onClick={() => openPetStory(pet)}
+                        >
+                          <Avatar className="w-16 h-16 border-2 border-primary group-hover:scale-105 transition">
+                            {pet.imageUrl && !pet.imageUrl.includes('placehold.co') ? (
+                              <AvatarImage src={pet.imageUrl} alt={pet.name} />
+                            ) : (
+                              <AvatarImage src="/avatar.png" alt={pet.name} />
+                            )}
+                          </Avatar>
+                          <div className="font-medium text-xs mt-2 text-center w-16 truncate">{pet.name}</div>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -341,6 +370,52 @@ function ProfilePageClient({
               </DialogClose>
               <Button onClick={handleEditSubmit}>Save Changes</Button>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* PET STORY MODAL */}
+        <Dialog open={storyOpen} onOpenChange={closePetStory}>
+          <DialogContent className="max-w-md p-0 overflow-hidden flex items-center justify-center min-h-[70vh]">
+            {activePet && (
+              <div className="relative bg-background rounded-lg shadow-lg w-full flex flex-col items-center justify-center min-h-[60vh]">
+                <div className="flex flex-col items-center p-6 w-full">
+                  <Avatar className="w-20 h-20 mb-2">
+                    <AvatarImage src={activePet.imageUrl && !activePet.imageUrl.includes('placehold.co') ? activePet.imageUrl : '/avatar.png'} alt={activePet.name} />
+                  </Avatar>
+                  <div className="font-bold text-lg">{activePet.name}</div>
+                  <div className="text-sm text-muted-foreground mb-1">{activePet.breed} • {activePet.age}</div>
+                  <div className="text-xs text-muted-foreground text-center mb-4">{activePet.bio}</div>
+                  {/* Post navigation */}
+                  {activePetPosts.length > 0 ? (
+                    <div className="relative w-full flex items-center justify-center min-h-[300px]">
+                      <button
+                        onClick={prevPetPost}
+                        disabled={petPostIndex === 0}
+                        className="absolute left-0 top-1/2 -translate-y-1/2 p-2 disabled:opacity-30 z-10"
+                        aria-label="Previous post"
+                      >
+                        <ChevronLeftIcon className="w-6 h-6" />
+                      </button>
+                      <div className="mx-10 w-full flex items-center justify-center">
+                        <div className="max-w-full flex items-center justify-center">
+                          <PostCard post={currentPetPost} dbUserId={user.id} />
+                        </div>
+                      </div>
+                      <button
+                        onClick={nextPetPost}
+                        disabled={petPostIndex === activePetPosts.length - 1}
+                        className="absolute right-0 top-1/2 -translate-y-1/2 p-2 disabled:opacity-30 z-10"
+                        aria-label="Next post"
+                      >
+                        <ChevronRightIcon className="w-6 h-6" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center text-muted-foreground py-8">No posts for this pet yet.</div>
+                  )}
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
