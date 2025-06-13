@@ -149,11 +149,9 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
           <div className="flex items-center pt-2 space-x-4">
             {user ? (
               <Button
-                variant="ghost"
+                variant={hasLiked ? "gold" : "outline"}
                 size="sm"
-                className={`text-muted-foreground gap-2 ${
-                  hasLiked ? "text-red-500 hover:text-red-600" : "hover:text-red-500"
-                }`}
+                className={`gap-2 ${hasLiked ? "hover:bg-gold-600" : "hover:bg-gold-100"}`}
                 onClick={handleLike}
               >
                 {hasLiked ? (
@@ -173,13 +171,13 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
             )}
 
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="text-muted-foreground gap-2 hover:text-blue-500"
+              className="gap-2 hover:bg-gold-100 hover:text-gold-700"
               onClick={() => setShowComments((prev) => !prev)}
             >
               <MessageCircleIcon
-                className={`size-5 ${showComments ? "fill-blue-500 text-blue-500" : ""}`}
+                className={`size-5 ${showComments ? "fill-gold-500 text-gold-500" : ""}`}
               />
               <span>{post.comments.length}</span>
             </Button>
@@ -272,6 +270,7 @@ function VideoWithToggleControls({ src }: { src: string }) {
         controls={showControls}
         autoPlay
         muted
+        loop
         playsInline
         className="w-full h-auto bg-black"
         style={{ objectFit: "cover" }}

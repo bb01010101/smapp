@@ -233,3 +233,161 @@ export async function toggleLike(postId: string) {
     }
   }
 
+export async function getFollowingPosts() {
+    try {
+        const userId = await getDbUserId();
+        if (!userId) return [];
+
+        const posts = await prisma.post.findMany({
+            where: {
+                OR: [
+                    { authorId: userId }, // User's own posts
+                    {
+                        author: {
+                            followers: {
+                                some: {
+                                    followerId: userId
+                                }
+                            }
+                        }
+                    }
+                ],
+                NOT: {
+                    type: { in: ["PRODUCT", "SERVICE"] }
+                }
+            },
+            orderBy: {
+                createdAt: "desc"
+            },
+            include:{
+                author:{
+                    select:{
+                        id: true,
+                        name: true,
+                        image: true,
+                        username: true
+                    }
+                },
+                pet: {
+                    select: {
+                        id: true,
+                        name: true,
+                        imageUrl: true,
+                        species: true,
+                        breed: true,
+                        age: true,
+                        bio: true,
+                    }
+                },
+                comments:{
+                    include:{
+                        author:{
+                            select:{
+                                id: true,
+                                username: true,
+                                image: true,
+                                name: true
+                            }
+                        }
+                    },
+                    orderBy: {
+                        createdAt:"asc"
+                    }
+                },
+                likes:{
+                    select:{
+                        userId:true
+                    }
+                },
+                _count:{
+                    select:{
+                        likes:true,
+                        comments:true
+                    }
+                }
+            },
+        });
+
+        return posts;
+    } catch (error) {
+        console.log("Error in getFollowingPosts", error);
+        throw new Error("Failed to fetch following posts");
+    }
+}
+
+export async function getExplorePosts() {
+    try {
+        const userId = await getDbUserId();
+        if (!userId) return [];
+
+        const posts = await prisma.post.findMany({
+            where: {
+                NOT: {
+                    OR: [
+                        { authorId: userId }, // Exclude user's own posts
+                        { type: { in: ["PRODUCT", "SERVICE"] } }
+                    ]
+                }
+            },
+            orderBy: {
+                createdAt: "desc"
+            },
+            include:{
+                author:{
+                    select:{
+                        id: true,
+                        name: true,
+                        image: true,
+                        username: true
+                    }
+                },
+                pet: {
+                    select: {
+                        id: true,
+                        name: true,
+                        imageUrl: true,
+                        species: true,
+                        breed: true,
+                        age: true,
+                        bio: true,
+                    }
+                },
+                comments:{
+                    include:{
+                        author:{
+                            select:{
+                                id: true,
+                                username: true,
+                                image: true,
+                                name: true
+                            }
+                        }
+                    },
+                    orderBy: {
+                        createdAt:"asc"
+                    }
+                },
+                likes:{
+                    select:{
+                        userId:true
+                    }
+                },
+                _count:{
+                    select:{
+                        likes:true,
+                        comments:true
+                    }
+                }
+            },
+        });
+
+        // Shuffle the posts array
+        const shuffledPosts = [...posts].sort(() => Math.random() - 0.5);
+
+        return shuffledPosts;
+    } catch (error) {
+        console.log("Error in getExplorePosts", error);
+        throw new Error("Failed to fetch explore posts");
+    }
+}
+

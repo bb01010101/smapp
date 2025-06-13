@@ -106,9 +106,9 @@ function CreatePost() {
             <div className="flex space-x-2">
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="text-muted-foreground hover:text-primary"
+                className="hover:bg-gold-100 hover:text-gold-700"
                 onClick={() => setShowImageUpload(!showImageUpload)}
                 disabled={isPosting}
               >
@@ -122,6 +122,7 @@ function CreatePost() {
             </div>
             <Button
               className="flex items-center"
+              variant="default"
               onClick={handleSubmit}
               disabled={(!content.trim() && !media?.url) || isPosting}
             >

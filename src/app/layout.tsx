@@ -19,7 +19,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "OnlyPaws",
+  title: "Petnet",
   description: "A modern social media app powered by Next.js",
   icons: {
     icon: '/favicon.ico',
@@ -39,7 +39,7 @@ export default function RootLayout({
     >
       <html lang="en" suppressHydrationWarning>
         <head>
-          <link rel="icon" href="/favicon.png" type="image/png" />
+          <link rel="icon" href="/logo.jpeg" type="image/jpeg" />
         </head>
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <ThemeProvider
