@@ -17,6 +17,7 @@ import { useState } from "react";
 import { deleteListing } from "@/actions/marketplace.action";
 import toast from "react-hot-toast";
 import EditProductDialog from "./EditProductDialog";
+import { Button } from "@/components/ui/button";
 
 type Product = {
   id: string;
@@ -112,9 +113,13 @@ export default function ProductList({ products }: ProductListProps) {
                   {user?.id === product.author.clerkId && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="p-1 hover:bg-muted rounded-full">
+                        <Button
+                          variant="gold"
+                          size="sm"
+                          className="ml-2"
+                        >
                           <MoreVertical className="size-4" />
-                        </button>
+                        </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem

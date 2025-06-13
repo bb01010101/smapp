@@ -16,6 +16,7 @@ import { useState } from "react";
 import { deleteListing } from "@/actions/marketplace.action";
 import toast from "react-hot-toast";
 import EditServiceDialog from "./EditServiceDialog";
+import { Button } from "@/components/ui/button";
 
 type Service = {
   id: string;
@@ -92,9 +93,13 @@ export default function ServiceList({ services }: ServiceListProps) {
               {user?.id === service.author.clerkId && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="p-1 hover:bg-muted rounded-full">
+                    <Button
+                      variant="gold"
+                      size="sm"
+                      className="ml-2"
+                    >
                       <MoreVertical className="size-4" />
-                    </button>
+                    </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem

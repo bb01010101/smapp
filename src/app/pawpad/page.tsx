@@ -1,416 +1,438 @@
 "use client";
 
-import { useState, useEffect, useRef, KeyboardEvent } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { motion, AnimatePresence } from "framer-motion";
-import { PawPrintIcon } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import Image from "next/image";
-import ImageUpload from "@/components/ImageUpload";
-import { useAuth } from "@clerk/nextjs";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import { PawPrintIcon, HeartIcon, MessageCircleIcon } from "lucide-react";
+import { getExplorePosts, getPosts, toggleLike } from "@/actions/post.action";
+import { getDbUserId } from "@/actions/user.action";
+import { useUser } from "@clerk/nextjs";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
-declare global {
-  interface Pet {
+type PostType = "REGULAR" | "PRODUCT" | "SERVICE";
+
+type Post = {
+  id: string;
+  content: string | null;
+  image: string | null;
+  mediaType: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  authorId: string;
+  petId: string | null;
+  type: PostType;
+  title: string | null;
+  description: string | null;
+  price: number | null;
+  priceType: string | null;
+  category: string | null;
+  condition: string | null;
+  location: string | null;
+  isAffiliate: boolean | null;
+  affiliateLink: string | null;
+  affiliateCode: string | null;
+  author: {
+    id: string;
+    name: string | null;
+    username: string;
+    image: string | null;
+  };
+  pet: {
     id: string;
     name: string;
+    imageUrl: string | null;
     species: string;
-    breed?: string;
-    age?: string;
-    bio?: string;
-    imageUrl?: string | { url: string; type: string } | null;
-    angle?: number;
-  }
-}
-
-const speciesOptions = [
-  { value: "dog", label: "Dog" },
-  { value: "cat", label: "Cat" },
-  { value: "bird", label: "Bird" },
-  { value: "fish", label: "Fish" },
-  { value: "reptile", label: "Reptile" },
-  { value: "other", label: "Other" },
-];
-
-const breedOptions = {
-  dog: [
-    "German Shepherd",
-    "Golden Retriever",
-    "Labrador Retriever",
-    "Bulldog",
-    "Beagle",
-    "Poodle",
-    "Rottweiler",
-    "Dachshund",
-    "Chihuahua",
-    "Other",
-  ],
-  cat: [
-    "Persian",
-    "Maine Coon",
-    "Siamese",
-    "Ragdoll",
-    "Bengal",
-    "Sphynx",
-    "British Shorthair",
-    "Abyssinian",
-    "Other",
-  ],
-  bird: ["Parrot", "Canary", "Cockatiel", "Budgie", "Other"],
-  fish: ["Goldfish", "Betta", "Guppy", "Tetra", "Other"],
-  reptile: ["Bearded Dragon", "Leopard Gecko", "Ball Python", "Other"],
-  other: ["Other"],
+    breed: string | null;
+    age: string | null;
+    bio: string | null;
+  } | null;
+  comments: Array<{
+    id: string;
+    content: string;
+    createdAt: Date;
+    authorId: string;
+    postId: string;
+    author: {
+      id: string;
+      name: string | null;
+      username: string;
+      image: string | null;
+    };
+  }>;
+  likes: Array<{
+    userId: string;
+  }>;
+  _count: {
+    likes: number;
+    comments: number;
+  };
 };
 
-export default function PawPad() {
-  const [pets, setPets] = useState<Pet[]>([]);
-  const [newPet, setNewPet] = useState<Partial<Pet> & { imageUrl?: { url: string; type: string } | null }>({
-    name: "",
-    species: "",
-    breed: "",
-    age: "",
-    bio: "",
-    imageUrl: null,
-  });
-  const [selectedSpecies, setSelectedSpecies] = useState<string>("");
-  const [editingPetId, setEditingPetId] = useState<string | null>(null);
-  const [isPaused, setIsPaused] = useState(false);
-  const requestRef = useRef<number | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const { getToken } = useAuth();
+function useIntersectionObserver(ref: React.RefObject<HTMLVideoElement>, onChange: (inView: boolean) => void) {
+  React.useEffect(() => {
+    if (!ref.current) return;
+    const observer = new window.IntersectionObserver(
+      ([entry]) => onChange(entry.isIntersecting),
+      { threshold: 0.5 }
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [ref, onChange]);
+}
 
-  // Fetch pets from API on mount and after changes
-  const fetchPets = async () => {
-    setLoading(true);
-    const token = await getToken();
-    const res = await fetch("/api/pets", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setPets(data);
-    }
-    setLoading(false);
-  };
+function PostMedia({ post }: { post: Post }) {
+  // Images: 1:1, Videos: 1:2 (portrait rectangle, twice as tall as wide)
+  const isVideo = post.mediaType?.startsWith("video");
+  return (
+    <div
+      style={{
+        aspectRatio: isVideo ? "1/2" : "1/1",
+        width: "100vw",
+        maxWidth: 400,
+        maxHeight: '80vh',
+        background: "#222",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+      }}
+      className="mx-auto"
+    >
+      {isVideo ? (
+        <video
+          src={post.image || undefined}
+          controls={false}
+          autoPlay
+          style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 0 }}
+        />
+      ) : (
+        <img
+          src={post.image || "/placeholder.png"}
+          alt={post.title || "Post"}
+          style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 0 }}
+        />
+      )}
+    </div>
+  );
+}
+
+function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOpenChange: (v: boolean) => void; post: Post | null; dbUserId: string | null }) {
+  const { user } = useUser();
+  const [newComment, setNewComment] = useState("");
+  const [isCommenting, setIsCommenting] = useState(false);
+  const [comments, setComments] = useState(post?.comments || []);
+  const [hasLiked, setHasLiked] = useState(post ? post.likes.some(like => like.userId === dbUserId) : false);
+  const [optimisticLikes, setOptimisticLikes] = useState(post ? post._count.likes : 0);
+  const [isLiking, setIsLiking] = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
   useEffect(() => {
-    fetchPets();
-  }, []);
+    setComments(post?.comments || []);
+    setHasLiked(post ? post.likes.some(like => like.userId === dbUserId) : false);
+    setOptimisticLikes(post ? post._count.likes : 0);
+    setShowComments(false);
+  }, [post, dbUserId]);
 
-  const addPet = async () => {
-    if (newPet.name?.trim() && newPet.species) {
-      setLoading(true);
+  const handleLike = async () => {
+    if (isLiking || !post) return;
+    try {
+      setIsLiking(true);
+      setHasLiked(prev => !prev);
+      setOptimisticLikes(prev => prev + (hasLiked ? -1 : 1));
+      await toggleLike(post.id);
+    } catch (error) {
+      setOptimisticLikes(post ? post._count.likes : 0);
+      setHasLiked(post ? post.likes.some(like => like.userId === dbUserId) : false);
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || isCommenting || !post) return;
+    try {
+      setIsCommenting(true);
+      setComments([
+        ...comments,
+        {
+          id: Math.random().toString(),
+          content: newComment,
+          createdAt: new Date(),
+          authorId: user?.id || "",
+          postId: post.id,
+          author: {
+            id: user?.id || "",
+            name: user?.fullName || user?.username || "Anonymous",
+            username: user?.username || "anonymous",
+            image: user?.imageUrl || "/avatar.png",
+          },
+        },
+      ]);
+      setNewComment("");
+    } finally {
+      setIsCommenting(false);
+    }
+  };
+
+  if (!post) return null;
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="p-0 flex flex-col items-center justify-center bg-transparent shadow-none border-none max-w-fit">
+        {/* Media area with enforced aspect ratio and no black bars */}
+        <div className="relative flex items-center justify-center">
+          <PostMedia post={post} />
+          {/* Floating like & comment icons at the bottom of the media */}
+          <div className="absolute bottom-0 left-0 w-full flex items-center justify-start gap-6 px-4 py-3 bg-gradient-to-t from-black/60 to-transparent z-10">
+            {user ? (
+              <button
+                className={`flex items-center gap-2 text-muted-foreground ${hasLiked ? "text-red-500 hover:text-red-600" : "hover:text-red-500"}`}
+                onClick={handleLike}
+                disabled={isLiking}
+              >
+                {hasLiked ? (
+                  <HeartIcon className="size-6 fill-current" />
+                ) : (
+                  <HeartIcon className="size-6" />
+                )}
+                <span>{optimisticLikes}</span>
+              </button>
+            ) : (
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <HeartIcon className="size-6" />
+                <span>{optimisticLikes}</span>
+              </span>
+            )}
+            <button
+              className="flex items-center gap-2 text-muted-foreground hover:text-blue-500"
+              onClick={() => setShowComments(true)}
+            >
+              <MessageCircleIcon className="size-6" />
+              <span>{comments.length}</span>
+            </button>
+          </div>
+        </div>
+        {/* Bottom sheet for comments */}
+        <Sheet open={showComments} onOpenChange={setShowComments}>
+          <SheetContent 
+            side="bottom" 
+            className="max-h-[60vh] p-4 rounded-t-2xl"
+            style={{ maxWidth: 400, width: '100vw', margin: '0 auto' }}
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <Link href={`/profile/${post.author.username}`}>
+                <Avatar className="w-10 h-10">
+                  <AvatarImage src={post.author.image ?? "/avatar.png"} />
+                </Avatar>
+              </Link>
+              <div>
+                <Link href={`/profile/${post.author.username}`} className="font-semibold hover:underline">
+                  {post.author.name ?? post.author.username}
+                </Link>
+                <div className="text-xs text-muted-foreground">@{post.author.username}</div>
+              </div>
+            </div>
+            <div className="mb-4 text-sm break-words">{post.content}</div>
+            <div className="space-y-4 max-h-[30vh] overflow-y-auto">
+              {comments.map((comment) => (
+                <div key={comment.id} className="flex space-x-3">
+                  <Avatar className="size-8 flex-shrink-0">
+                    <AvatarImage src={comment.author.image ?? "/avatar.png"} />
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="font-medium text-sm">{comment.author.name}</span>
+                      <span className="text-sm text-muted-foreground">@{comment.author.username}</span>
+                      <span className="text-sm text-muted-foreground">·</span>
+                      <span className="text-sm text-muted-foreground">
+                        <span suppressHydrationWarning>{new Date(comment.createdAt).toLocaleString()}</span>
+                      </span>
+                    </div>
+                    <p className="text-sm break-words">{comment.content}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {user ? (
+              <div className="flex space-x-3 mt-4">
+                <Avatar className="size-8 flex-shrink-0">
+                  <AvatarImage src={user?.imageUrl || "/avatar.png"} />
+                </Avatar>
+                <div className="flex-1">
+                  <textarea
+                    placeholder="Write a comment..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    className="min-h-[60px] resize-none w-full border rounded p-2"
+                  />
+                  <div className="flex justify-end mt-2">
+                    <button
+                      onClick={handleAddComment}
+                      className="px-3 py-1 bg-primary text-white rounded disabled:opacity-50"
+                      disabled={!newComment.trim() || isCommenting}
+                    >
+                      {isCommenting ? "Posting..." : "Comment"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </SheetContent>
+        </Sheet>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Add this style block to the component or your global CSS
+const gridStyles = `
+  .explore-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-auto-rows: 220px;
+    gap: 0;
+    width: 100%;
+  }
+  .explore-item {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: pointer;
+    background: #222;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .explore-item.video {
+    grid-row: span 2;
+  }
+`;
+
+export default function PawPad() {
+  const { user } = useUser();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [dbUserId, setDbUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [activePost, setActivePost] = useState<Post | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const token = await getToken();
-        // Only send valid fields to the backend
-        const petPayload = {
-          name: newPet.name,
-          species: newPet.species,
-          breed: newPet.breed || undefined,
-          age: newPet.age || undefined,
-          bio: newPet.bio || undefined,
-          imageUrl: newPet.imageUrl?.url || undefined,
-        };
-        if (editingPetId) {
-          await fetch(`/api/pets/${editingPetId}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(petPayload),
-          });
-          setEditingPetId(null);
+        let explorePosts = [];
+        let userId = null;
+        if (user) {
+          [explorePosts, userId] = await Promise.all([
+            getExplorePosts(),
+            getDbUserId()
+          ]);
         } else {
-          await fetch("/api/pets", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(petPayload),
-          });
+          explorePosts = await getPosts();
         }
-        setNewPet({
-          name: "",
-          species: "",
-          breed: "",
-          age: "",
-          bio: "",
-          imageUrl: null,
-        });
-        setSelectedSpecies("");
-        setShowForm(false);
-        await fetchPets();
-      } catch (e) {
-        // Optionally show an error toast
-        console.error("Failed to add/edit pet", e);
+        setPosts(explorePosts);
+        setDbUserId(userId);
+      } catch (error) {
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
+    };
+    fetchData();
+  }, [user]);
+
+  // Video preview logic
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const handleMouseEnter = (idx: number) => {
+    const vid = videoRefs.current[idx];
+    if (vid) {
+      vid.play();
+    }
+  };
+  const handleMouseLeave = (idx: number) => {
+    const vid = videoRefs.current[idx];
+    if (vid) {
+      vid.pause();
+      vid.currentTime = 0;
     }
   };
 
-  const handleEdit = (pet: Pet) => {
-    setNewPet({
-      ...pet,
-      imageUrl: typeof pet.imageUrl === 'string' ? (pet.imageUrl ? { url: pet.imageUrl, type: "image" } : null) : pet.imageUrl,
-    });
-    setSelectedSpecies(pet.species);
-    setEditingPetId(pet.id);
-    setShowForm(true);
-  };
-
-  const handleDelete = async (id: string) => {
-    const token = await getToken();
-    await fetch(`/api/pets/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (editingPetId === id) {
-      setNewPet({
-        name: "",
-        species: "",
-        breed: "",
-        age: "",
-        bio: "",
-        imageUrl: null,
-      });
-      setSelectedSpecies("");
-      setEditingPetId(null);
+  // Intersection observer for mobile
+  const handleIntersection = useCallback((idx: number, inView: boolean) => {
+    const vid = videoRefs.current[idx];
+    if (vid) {
+      if (inView) vid.play();
+      else {
+        vid.pause();
+        vid.currentTime = 0;
+      }
     }
-    fetchPets();
-  };
-
-  // Orbit animation
-  useEffect(() => {
-    if (isPaused) {
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
-      return;
-    }
-    let lastTimestamp = performance.now();
-    const animate = (timestamp: number) => {
-      const delta = timestamp - lastTimestamp;
-      lastTimestamp = timestamp;
-      setPets((prevPets) =>
-        prevPets.map((pet, i) => ({
-          ...pet,
-          angle: ((pet.angle ?? 0) + 0.03 * delta) % 360,        }))
-      );
-      requestRef.current = requestAnimationFrame(animate);
-    };
-    requestRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
-    };
-  }, [isPaused]);
-
-  // Pause/resume on pointer down/up anywhere
-  useEffect(() => {
-    const handlePointerDown = () => setIsPaused(true);
-    const handlePointerUp = () => setIsPaused(false);
-    window.addEventListener("pointerdown", handlePointerDown);
-    window.addEventListener("pointerup", handlePointerUp);
-    return () => {
-      window.removeEventListener("pointerdown", handlePointerDown);
-      window.removeEventListener("pointerup", handlePointerUp);
-    };
   }, []);
 
   return (
-    <div className="container mx-auto p-4 min-h-screen">
-      <div className="max-w-2xl mx-auto">
+    <div className="container mx-auto p-0 min-h-screen">
+      <style>{gridStyles}</style>
+      <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-center gap-2 mb-8">
           <PawPrintIcon className="w-8 h-8 text-primary" />
-          <h1 className="text-4xl font-bold text-center">PawPad</h1>
+          <h1 className="text-4xl font-bold text-center">Explore</h1>
         </div>
-        
-        {/* Add New Pet Button & Form */}
-        <div className="mb-8">
-          <AnimatePresence>
-            {!showForm && (
-              <motion.button
-                className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-lg border border-primary text-primary font-semibold bg-background hover:bg-primary/10 transition-colors shadow"
-                onClick={() => setShowForm(true)}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          </div>
+        ) : posts.length > 0 ? (
+          <div className="explore-grid">
+            {posts.map((post, idx) => (
+              <div
+                key={post.id}
+                className={
+                  post.mediaType?.startsWith('video')
+                    ? 'explore-item video'
+                    : 'explore-item image'
+                }
+                style={{
+                  borderRadius: 0,
+                  background: '#222',
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  setActivePost(post);
+                  setModalOpen(true);
+                }}
+                onMouseEnter={() => post.mediaType?.startsWith('video') && handleMouseEnter(idx)}
+                onMouseLeave={() => post.mediaType?.startsWith('video') && handleMouseLeave(idx)}
               >
-                <PawPrintIcon className="w-6 h-6" /> Add New Pet
-              </motion.button>
-            )}
-          </AnimatePresence>
-          <AnimatePresence>
-            {showForm && (
-              <motion.div
-                initial={{ opacity: 0, height: 0, scale: 0.98 }}
-                animate={{ opacity: 1, height: "auto", scale: 1 }}
-                exit={{ opacity: 0, height: 0, scale: 0.98 }}
-                transition={{ duration: 0.25 }}
-                className="overflow-hidden"
-              >
-                <Card className="p-6 mt-2">
-                  <div className="space-y-6">
-                    <h2 className="text-xl font-semibold">{editingPetId ? "Edit Pet" : "Add a New Pet"}</h2>
-                    
-                    {/* Image Upload */}
-                    <div className="space-y-2">
-                      <Label>Profile Picture</Label>
-                      <ImageUpload
-                        endpoint="petImage"
-                        value={newPet.imageUrl || null}
-                        onChange={(mediaObj) => setNewPet({ ...newPet, imageUrl: mediaObj })}
-                      />
-                    </div>
-
-                    {/* Name */}
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name</Label>
-                      <Input
-                        id="name"
-                        placeholder="Enter pet name..."
-                        value={newPet.name}
-                        onChange={(e) => setNewPet({ ...newPet, name: e.target.value })}
-                      />
-                    </div>
-
-                    {/* Species */}
-                    <div className="space-y-2">
-                      <Label htmlFor="species">Species</Label>
-                      <Select
-                        value={selectedSpecies}
-                        onValueChange={(value) => {
-                          setSelectedSpecies(value);
-                          setNewPet({ ...newPet, species: value, breed: "" });
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select species" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {speciesOptions.map((species) => (
-                            <SelectItem key={species.value} value={species.value}>
-                              {species.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Breed */}
-                    {selectedSpecies && (
-                      <div className="space-y-2">
-                        <Label htmlFor="breed">Breed</Label>
-                        <Select
-                          value={newPet.breed}
-                          onValueChange={(value) => setNewPet({ ...newPet, breed: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select breed" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {breedOptions[selectedSpecies as keyof typeof breedOptions].map((breed) => (
-                              <SelectItem key={breed} value={breed}>
-                                {breed}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    {/* Age */}
-                    <div className="space-y-2">
-                      <Label htmlFor="age">Age</Label>
-                      <Input
-                        id="age"
-                        placeholder="Enter age..."
-                        value={newPet.age}
-                        onChange={(e) => setNewPet({ ...newPet, age: e.target.value })}
-                      />
-                    </div>
-
-                    {/* Bio */}
-                    <div className="space-y-2">
-                      <Label htmlFor="bio">Bio</Label>
-                      <Textarea
-                        id="bio"
-                        placeholder="Tell us about your pet..."
-                        value={newPet.bio}
-                        onChange={(e) => setNewPet({ ...newPet, bio: e.target.value })}
-                        className="h-24"
-                      />
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button onClick={addPet} className="w-full" disabled={loading}>
-                        {loading ? "Saving..." : editingPetId ? "Save Changes" : "Add Pet"}
-                      </Button>
-                      <Button type="button" variant="outline" className="w-full" onClick={() => { setShowForm(false); setEditingPetId(null); setNewPet({ name: "", species: "", breed: "", age: "", bio: "", imageUrl: null }); setSelectedSpecies(""); }}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Pet Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mt-8">
-          {[...pets].reverse().map((pet) => (
-            <Card key={pet.id} className="p-8 bg-background shadow-lg w-full">
-              <div className="text-center space-y-4">
-                <div className="relative w-24 h-24 mx-auto rounded-full overflow-hidden">
-                  {pet.imageUrl && typeof pet.imageUrl === 'string' && !pet.imageUrl.includes('placehold.co') ? (
-                    <Image
-                      src={pet.imageUrl}
-                      alt={pet.name}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : pet.imageUrl && typeof pet.imageUrl === 'object' && pet.imageUrl.url && !pet.imageUrl.url.includes('placehold.co') ? (
-                    <Image
-                      src={pet.imageUrl.url}
-                      alt={pet.name}
-                      fill
-                      className="object-cover"
+                {post.mediaType?.startsWith('video') ? (
+                  <video
+                    ref={el => { videoRefs.current[idx] = el; }}
+                    src={post.image || undefined}
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    controls={false}
                     />
                   ) : (
-                    <PawPrintIcon className="w-full h-full text-primary" />
-                  )}
-                </div>
-                <div className="font-medium text-lg">{pet.name}</div>
-                <div className="text-sm text-muted-foreground">
-                  {pet.breed} • {pet.age}
-                </div>
-                <div className="text-xs text-muted-foreground line-clamp-2">
-                  {pet.bio}
-                </div>
-                <div className="flex justify-center gap-2 mt-2">
-                  <Button size="sm" variant="outline" onClick={() => handleEdit(pet)}>
-                    Edit
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(pet.id)}>
-                    Delete
-                  </Button>
-                </div>
+                  <img
+                    src={post.image || '/placeholder.png'}
+                    alt={post.title || 'Post'}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                )}
               </div>
-            </Card>
-          ))}
+            ))}
+            <PostModal open={modalOpen} onOpenChange={setModalOpen} post={activePost} dbUserId={dbUserId} />
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <h2 className="text-xl font-semibold mb-2">No posts to explore</h2>
+            <p className="text-muted-foreground">
+              Check back later for new content!
+            </p>
         </div>
+        )}
       </div>
     </div>
   );

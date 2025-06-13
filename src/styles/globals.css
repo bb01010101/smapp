@@ -1,0 +1,63 @@
+/* Golden color palette and gradient for light/dark mode */
+:root {
+  --gold-50: #fffbea;
+  --gold-100: #fff3c4;
+  --gold-200: #fce588;
+  --gold-300: #fadb5f;
+  --gold-400: #f7c948;
+  --gold-500: #f0b429;
+  --gold-600: #de911d;
+  --gold-700: #b44d12;
+  --gold-800: #8d2b0b;
+  --gold-900: #771d1d;
+  --gold-gradient: linear-gradient(90deg, #FFD700 0%, #FFA500 100%);
+}
+
+.dark {
+  --gold-50: #2d1a00;
+  --gold-100: #3a2500;
+  --gold-200: #5a3a00;
+  --gold-300: #7a4f00;
+  --gold-400: #b47d00;
+  --gold-500: #ffd700;
+  --gold-600: #ffb300;
+  --gold-700: #ff9800;
+  --gold-800: #ff6f00;
+  --gold-900: #ff5722;
+  --gold-gradient: linear-gradient(90deg, #FFD700 0%, #FFA500 100%);
+}
+
+.text-gradient-gold {
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+
+.bg-gold {
+  background-color: var(--gold-500);
+}
+
+.border-gold {
+  border-color: var(--gold-500);
+}
+
+.text-gold {
+  color: var(--gold-500);
+}
+
+.btn-gold {
+  background: var(--gold-gradient);
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1.5rem;
+  font-weight: bold;
+  box-shadow: 0 2px 8px 0 rgba(255, 215, 0, 0.15);
+  transition: transform 0.1s;
+}
+.btn-gold:hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 16px 0 rgba(255, 215, 0, 0.25);
+} 

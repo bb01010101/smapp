@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 import { withUt } from "uploadthing/tw";
 
@@ -51,6 +50,18 @@ const config: Config = withUt({
           "3": "hsl(var(--chart-3))",
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
+        },
+        gold: {
+          50: "#fffbea",
+          100: "#fff3c4",
+          200: "#fce588",
+          300: "#fadb5f",
+          400: "#f7c948",
+          500: "#f0b429",
+          600: "#de911d",
+          700: "#b44d12",
+          800: "#8d2b0b",
+          900: "#771d1d",
         },
       },
       borderRadius: {

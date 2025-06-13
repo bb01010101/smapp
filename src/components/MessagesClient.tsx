@@ -162,7 +162,7 @@ export default function MessagesClient({ conversations }: { conversations: any[]
                 )}
                 <div className="relative">
                   <Button
-                    variant="ghost"
+                    variant="gold"
                     size="icon"
                     className="ml-2"
                     onClick={e => { e.stopPropagation(); setOpenMenuId(conv.id === openMenuId ? null : conv.id); }}
