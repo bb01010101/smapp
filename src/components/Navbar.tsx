@@ -20,8 +20,8 @@ async function Navbar() {
             <Image src="/logo.jpeg" alt="PetNet Logo" width={40} height={40} className="rounded-full" />
             <span className="text-2xl font-bold text-gold-700">PetNet</span>
           </Link>
-          {/* Main navigation */}
-          <div className="flex-1 flex items-center justify-between">
+          {/* Main navigation shifted right for balance */}
+          <div className="flex-1 flex items-center justify-end">
             <DesktopNavbar />
             <MobileNavbar />
           </div>
