@@ -1,54 +1,31 @@
 {
-  "name": "smapp",
-  "version": "0.1.0",
+  "name": "smapp-monorepo",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "postinstall": "prisma generate"
-  },
-  "dependencies": {
-    "@clerk/nextjs": "^6.20.0",
-    "@next/env": "^15.3.2",
-    "@prisma/client": "^6.8.2",
-    "@radix-ui/react-alert-dialog": "^1.1.14",
-    "@radix-ui/react-avatar": "^1.1.10",
-    "@radix-ui/react-dialog": "^1.1.14",
-    "@radix-ui/react-dropdown-menu": "^2.1.15",
-    "@radix-ui/react-label": "^2.1.7",
-    "@radix-ui/react-scroll-area": "^1.2.9",
-    "@radix-ui/react-select": "^2.2.5",
-    "@radix-ui/react-separator": "^1.1.7",
-    "@radix-ui/react-slot": "^1.2.3",
-    "@radix-ui/react-tabs": "^1.1.12",
-    "@tanstack/react-query": "^5.77.2",
-    "@uploadthing/react": "^7.3.1",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "date-fns": "^4.1.0",
-    "framer-motion": "^12.12.2",
-    "hls.js": "^1.6.2",
-    "lucide-react": "^0.511.0",
-    "next": "^14.2.25",
-    "next-themes": "^0.4.6",
-    "react": "^18",
-    "react-dom": "^18",
-    "react-hot-toast": "^2.5.2",
-    "sonner": "^2.0.3",
-    "swiper": "^11.2.8",
-    "tailwind-merge": "^3.3.0",
-    "tailwindcss-animate": "^1.0.7",
-    "uploadthing": "^7.7.2"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "postcss": "^8",
-    "prisma": "^6.8.2",
+    "autoprefixer": "^10.4.17",
+    "nativewind": "^4.0.1",
+    "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "turbo": "^1.12.4",
+    "typescript": "^5.0.0"
+  },
+  "packageManager": "npm@10.2.4",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "dependencies": {
+    "@clerk/nextjs": "^6.21.0",
+    "@expo/metro-config": "^0.20.14",
+    "metro": "^0.82.4",
+    "metro-core": "^0.82.4",
+    "expo": "^53.0.0"
   }
 }

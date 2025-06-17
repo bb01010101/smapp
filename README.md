@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SMApp Monorepo
+
+This is a monorepo containing a Next.js web app and an Expo React Native app, sharing code between them using Solito.
+
+## Project Structure
+
+- `apps/next-app`: Next.js web application
+- `apps/native-app`: Expo React Native application
+- `packages/app`: Shared code (screens, components, API, etc.)
 
 ## Getting Started
 
-First, run the development server:
-
+1. Install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Start the development servers:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+For web:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+For mobile:
+```bash
+cd apps/native-app
+npm run start
+```
 
-## Learn More
+## Development
 
-To learn more about Next.js, take a look at the following resources:
+- Shared code lives in `packages/app`
+- Platform-specific code can be handled using `Platform.OS === 'web'` checks
+- Styling is done using NativeWind (Tailwind CSS for React Native)
+- Navigation is handled by React Navigation (mobile) and Next.js (web)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Building
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+To build all applications:
 
-## Deploy on Vercel
+```bash
+npm run build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## TypeScript Path Aliases
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The following path aliases are available:
+
+- `@app/*`: Points to `packages/app/src/*`
+- `@components/*`: Points to `packages/app/src/components/*`
+- `@screens/*`: Points to `packages/app/src/screens/*`
+- `@api/*`: Points to `packages/app/src/api/*`
+- `@hooks/*`: Points to `packages/app/src/hooks/*`
+- `@utils/*`: Points to `packages/app/src/utils/*`
