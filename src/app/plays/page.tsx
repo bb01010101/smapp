@@ -5,13 +5,14 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/mousewheel";
 import { Button } from "@/components/ui/button";
-import { HeartIcon, MessageCircleIcon } from "lucide-react";
+import { HeartIcon, MessageCircleIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { toggleLike, createComment } from "@/actions/post.action";
 import { useUser, SignInButton } from "@clerk/nextjs";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import toast from "react-hot-toast";
+import { useRouter } from 'next/navigation';
 
 // Placeholder for HLS.js video player
 const VideoPlayer = dynamic(() => import("@/components/VideoFeed"), { ssr: false });
@@ -27,6 +28,11 @@ export default function PlaysPage() {
   const [optimisticLikes, setOptimisticLikes] = useState<{ [id: string]: number }>({});
   const [hasLiked, setHasLiked] = useState<{ [id: string]: boolean }>({});
   const swiperRef = useRef<any>(null);
+  const router = useRouter();
+  const [showSaveNSwipe, setShowSaveNSwipe] = useState(false);
+  const [saveNSwipeDogs, setSaveNSwipeDogs] = useState<any[]>([]);
+  const [currentDogIdx, setCurrentDogIdx] = useState(0);
+  const [isFetchingDogs, setIsFetchingDogs] = useState(false);
 
   useEffect(() => {
     fetch("/api/plays?limit=10")
@@ -35,6 +41,11 @@ export default function PlaysPage() {
         return res.json();
       })
       .then((data) => {
+        // Shuffle videos
+        for (let i = data.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [data[i], data[j]] = [data[j], data[i]];
+        }
         setVideos(data);
         // Set initial like state
         const likeState: { [id: string]: boolean } = {};
@@ -85,6 +96,60 @@ export default function PlaysPage() {
     }
   };
 
+  // Save-n-swipe trigger on video swipe
+  const handleVideoSwipe = async () => {
+    if (Math.random() < 0.2 && !showSaveNSwipe) {
+      setIsFetchingDogs(true);
+      try {
+        const res = await fetch('/api/pets/random-posts');
+        const data = await res.json();
+        setSaveNSwipeDogs(data.posts || []);
+        setCurrentDogIdx(0);
+        setShowSaveNSwipe(true);
+      } catch (e) {
+        toast.error('Failed to load dogs for Save-n-swipe');
+      } finally {
+        setIsFetchingDogs(false);
+      }
+    }
+  };
+
+  // Save-n-swipe actions
+  const handleSwipeLeft = () => {
+    if (currentDogIdx < saveNSwipeDogs.length - 1) {
+      setCurrentDogIdx(currentDogIdx + 1);
+    } else {
+      setShowSaveNSwipe(false);
+    }
+  };
+  const handleSwipeRight = async () => {
+    const dog = saveNSwipeDogs[currentDogIdx];
+    if (dog && dog.author) {
+      // Get or create conversation
+      const convoRes = await fetch('/api/messages/get-or-create-conversation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: dog.author.id }),
+      });
+      const convoData = await convoRes.json();
+      const conversationId = convoData.conversationId;
+      if (conversationId) {
+        // Send message
+        const message = `I'm interested in saving ${dog.pet.name}`;
+        await fetch('/api/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ conversationId, content: message }),
+        });
+        router.push(`/messages/${conversationId}`);
+        // No need to call setShowSaveNSwipe(false) here, redirect will unmount
+      } else {
+        toast.error('Could not start conversation');
+        setShowSaveNSwipe(false);
+      }
+    }
+  };
+
   if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
 
   if (!loading && videos.length === 0) {
@@ -93,6 +158,56 @@ export default function PlaysPage() {
 
   return (
     <div className="w-full h-screen bg-black">
+      {/* Save-n-swipe Modal */}
+      {showSaveNSwipe && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-xs flex flex-col items-center">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
+              onClick={() => setShowSaveNSwipe(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+            {isFetchingDogs ? (
+              <div className="py-16">Loading...</div>
+            ) : saveNSwipeDogs.length === 0 ? (
+              <div className="py-16">No dogs found.</div>
+            ) : (
+              <div className="flex flex-col items-center">
+                <img
+                  src={saveNSwipeDogs[currentDogIdx]?.image || saveNSwipeDogs[currentDogIdx]?.pet?.imageUrl || '/avatar.png'}
+                  alt={saveNSwipeDogs[currentDogIdx]?.pet?.name || 'Dog'}
+                  className="w-48 h-48 object-cover rounded-xl mb-4 border-4 border-orange-300"
+                />
+                <div className="text-xl font-bold mb-2 text-center">
+                  {saveNSwipeDogs[currentDogIdx]?.pet?.name || 'Dog'}
+                </div>
+                <div className="text-gray-600 mb-4 text-center">
+                  Owner: {saveNSwipeDogs[currentDogIdx]?.author?.name || saveNSwipeDogs[currentDogIdx]?.author?.username}
+                </div>
+                <div className="flex gap-10 mt-4">
+                  <button
+                    className="bg-gray-200 hover:bg-gray-300 rounded-full p-4 text-3xl flex items-center justify-center"
+                    onClick={handleSwipeLeft}
+                    aria-label="Forget"
+                  >
+                    <XIcon className="w-8 h-8 text-gray-500" />
+                  </button>
+                  <button
+                    className="bg-pink-100 hover:bg-pink-200 rounded-full p-4 text-3xl flex items-center justify-center"
+                    onClick={handleSwipeRight}
+                    aria-label="Love"
+                  >
+                    <HeartIcon className="w-8 h-8 text-pink-500" />
+                  </button>
+                </div>
+                <div className="mt-4 text-sm text-gray-400">{currentDogIdx + 1} / {saveNSwipeDogs.length}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <Swiper
         direction="vertical"
         slidesPerView={1}
@@ -115,6 +230,7 @@ export default function PlaysPage() {
             video.currentTime = 0;
             video.play();
           }
+          handleVideoSwipe(); // <-- trigger Save-n-swipe logic
         }}
         loop
       >

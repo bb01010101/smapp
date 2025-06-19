@@ -1,7 +1,7 @@
 "use client";
 
 import { getProfileByUsername, getUserPosts, updateProfile } from "@/actions/profile.action";
-import { getPosts } from "@/actions/post.action";
+import { getPosts, createPost } from "@/actions/post.action";
 import { toggleFollow } from "@/actions/user.action";
 import PostCard from "@/components/PostCard";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -36,12 +36,18 @@ import {
   PawPrintIcon,
   FlameIcon,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { getOrCreateConversation } from "@/actions/dm.action";
-import ImageUpload from "@/components/ImageUpload";
+import dynamic from "next/dynamic";
 import EditFamilyModal from "@/components/EditFamilyModal";
+
+// Dynamically import ImageUpload to avoid SSR issues
+const ImageUpload = dynamic(() => import("@/components/ImageUpload"), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center size-40 border-2 border-dashed rounded-md">Loading...</div>
+});
 
 type User = Awaited<ReturnType<typeof getProfileByUsername>>;
 type Posts = Awaited<ReturnType<typeof getUserPosts>>;
@@ -89,9 +95,8 @@ function ProfilePageClient({
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showUploadOptions, setShowUploadOptions] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showExistingPosts, setShowExistingPosts] = useState(false);
+  const [timelineImageUpload, setTimelineImageUpload] = useState<{ url: string; type: string } | null>(null);
 
   // Get posts for the active pet
   const activePetPosts = activePet ? posts.filter((post) => 
@@ -187,19 +192,6 @@ function ProfilePageClient({
     setShowUploadOptions(true);
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-    }
-  };
-
-  const handleTakePhoto = () => {
-    document.getElementById('file-upload')?.click();
-  };
-
   const handleSelectExistingPost = (post: Post) => {
     // Mark this post as today's daily photo (implement backend logic as needed)
     toast.success('Selected existing post as today\'s timeline photo!');
@@ -221,19 +213,33 @@ function ProfilePageClient({
   };
 
   const handleUploadSubmit = async () => {
-    if (!selectedFile) return;
-
+    if (!timelineImageUpload?.url || !activePet) return;
+    
     try {
       setIsUploading(true);
-      // TODO: Implement file upload logic
-      toast.success("Daily photo uploaded successfully!");
-      setShowUploadOptions(false);
-      setSelectedFile(null);
-      setPreviewUrl(null);
+      
+      // Create a post for the timeline using the same logic as regular posts
+      const result = await createPost(
+        "", // Empty content for timeline photos
+        timelineImageUpload.url,
+        activePet.id, // Post as the active pet
+        timelineImageUpload.type || "image"
+      );
+      
+      if (result?.success) {
+        // Refresh the page to show the new post
+        window.location.reload();
+        toast.success("Daily photo uploaded successfully!");
+      } else {
+        toast.error("Failed to upload daily photo");
+      }
     } catch (error) {
+      console.error("Failed to upload daily photo:", error);
       toast.error("Failed to upload daily photo");
     } finally {
       setIsUploading(false);
+      setShowUploadOptions(false);
+      setTimelineImageUpload(null);
     }
   };
 
@@ -306,6 +312,14 @@ function ProfilePageClient({
       setPetPostIndex((idx) => idx - 1);
     }
   };
+
+  const timelineRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (timelineOpen && activePetPosts.length > 0) {
+      // Scroll to the top (most recent post)
+      timelineRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [timelineOpen, activePetPosts.length]);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -676,36 +690,51 @@ function ProfilePageClient({
                       Press space or double tap to view timeline
                     </div>
                   )}
-                  {/* Timeline grid with click-to-expand */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
-                    {activePetPosts.map((post, index) => (
-                      <div 
-                        key={post.id}
-                        className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer transform hover:scale-105 transition-transform ${index === petPostIndex ? 'ring-2 ring-orange-400' : ''}`}
-                        onClick={() => setPetPostIndex(index)}
-                      >
-                        {post.image ? (
-                          <img 
-                            src={post.image || '/avatar.png'} 
-                            alt={`${activePet.name}'s photo`} 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-muted flex items-center justify-center">
-                            <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-                          <div className="text-xs text-white">
-                            {format(new Date(post.createdAt), 'MMM d, yyyy')}
-                          </div>
-                        </div>
+                  {/* Alternating vertical timeline (tree style) */}
+                  <div className="w-full max-h-[60vh] overflow-y-auto overflow-x-hidden" ref={timelineRef}>
+                    {activePetPosts.length > 0 ? (
+                      <div className="relative w-full">
+                        {/* Central timeline line */}
+                        <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-orange-400 to-orange-200 -translate-x-1/2"></div>
+                        {activePetPosts.map((post, index) => {
+                          const postDate = new Date(post.createdAt);
+                          const isToday = (() => {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const postDay = new Date(postDate);
+                            postDay.setHours(0, 0, 0, 0);
+                            return postDay.getTime() === today.getTime();
+                          })();
+                          const isLeft = index % 2 === 0;
+                          return (
+                            <div key={post.id} className={`flex w-full mb-12 relative ${isLeft ? 'justify-start' : 'justify-end'}`}> 
+                              <div className={`flex items-center w-1/2 ${isLeft ? 'justify-end pr-8' : 'justify-start pl-8'}`}> 
+                                {isLeft && (
+                                  <div className="flex flex-col items-end">
+                                    <div className={`w-4 h-4 rounded-full border-2 ${isToday ? 'bg-orange-400 border-orange-600' : 'bg-orange-200 border-orange-400'} mb-1`}></div>
+                                    <div className="text-xs text-muted-foreground text-right mb-2">
+                                      {isToday ? 'Today' : format(postDate, 'MMM d, yyyy')}
+                                    </div>
+                                  </div>
+                                )}
+                                <div className="relative aspect-square w-40 rounded-lg overflow-hidden shadow-lg border border-orange-100 group-hover:scale-105 transition-transform cursor-pointer bg-white">
+                                  <img src={post.image || '/avatar.png'} alt={activePet.name + ' photo'} className="w-full h-full object-cover" />
+                                </div>
+                                {!isLeft && (
+                                  <div className="flex flex-col items-start ml-4">
+                                    <div className={`w-4 h-4 rounded-full border-2 ${isToday ? 'bg-orange-400 border-orange-600' : 'bg-orange-200 border-orange-400'} mb-1`}></div>
+                                    <div className="text-xs text-muted-foreground text-left mb-2">
+                                      {isToday ? 'Today' : format(postDate, 'MMM d, yyyy')}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    ))}
-                    {activePetPosts.length === 0 && (
-                      <div className="col-span-full text-center py-8 text-muted-foreground">
-                        No photos for this pet yet.
-                      </div>
+                    ) : (
+                      <div className="text-center text-muted-foreground py-8">No photos for this pet yet.</div>
                     )}
                   </div>
                 </div>
@@ -751,77 +780,43 @@ function ProfilePageClient({
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-3 gap-4">
-                    <Button
-                      variant="outline"
-                      className="flex flex-col items-center gap-2 h-auto py-4"
-                      onClick={() => document.getElementById('file-upload')?.click()}
-                    >
-                      <ImageIcon className="w-6 h-6" />
-                      <span className="text-sm">Choose Photo</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex flex-col items-center gap-2 h-auto py-4"
-                      onClick={handleTakePhoto}
-                    >
-                      <CameraIcon className="w-6 h-6" />
-                      <span className="text-sm">Take Photo</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex flex-col items-center gap-2 h-auto py-4"
-                      onClick={() => {
-                        // TODO: Show existing posts modal
-                        toast.error("Selecting existing post not implemented yet");
+                  {/* Image Upload Component */}
+                  <div className="space-y-4">
+                    <div className="text-sm text-muted-foreground">
+                      Upload a photo for {activePet?.name}'s timeline
+                    </div>
+                    <ImageUpload
+                      endpoint="postImage"
+                      value={timelineImageUpload}
+                      onChange={(mediaObj) => {
+                        setTimelineImageUpload(mediaObj);
                       }}
-                    >
-                      <FileTextIcon className="w-6 h-6" />
-                      <span className="text-sm">Existing Post</span>
-                    </Button>
+                    />
                   </div>
 
-                  <input
-                    id="file-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileSelect}
-                  />
-
-                  {previewUrl && (
-                    <div className="space-y-4">
-                      <div className="relative aspect-square rounded-lg overflow-hidden">
-                        <img 
-                          src={previewUrl} 
-                          alt="Preview" 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex justify-end gap-3">
-                        <Button 
-                          variant="outline" 
-                          onClick={() => {
-                            setSelectedFile(null);
-                            setPreviewUrl(null);
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button 
-                          onClick={handleUploadSubmit}
-                          disabled={isUploading}
-                        >
-                          {isUploading ? (
-                            <>
-                              <Loader2Icon className="w-4 h-4 animate-spin mr-2" />
-                              Uploading...
-                            </>
-                          ) : (
-                            'Upload'
-                          )}
-                        </Button>
-                      </div>
+                  {timelineImageUpload && (
+                    <div className="flex justify-end gap-3">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setTimelineImageUpload(null);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleUploadSubmit}
+                        disabled={isUploading}
+                      >
+                        {isUploading ? (
+                          <>
+                            <Loader2Icon className="w-4 h-4 animate-spin mr-2" />
+                            Uploading...
+                          </>
+                        ) : (
+                          'Upload Daily Photo'
+                        )}
+                      </Button>
                     </div>
                   )}
                 </>

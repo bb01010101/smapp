@@ -391,3 +391,36 @@ export async function getExplorePosts() {
     }
 }
 
+export async function getRandomPetPostsWithImages(count: number = 3) {
+  // Get random posts with images and pets
+  const posts = await prisma.post.findMany({
+    where: {
+      image: { not: null },
+      petId: { not: null },
+      mediaType: { not: "video" },
+    },
+    include: {
+      pet: {
+        select: {
+          id: true,
+          name: true,
+          imageUrl: true,
+        },
+      },
+      author: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+        },
+      },
+    },
+  });
+  // Shuffle and return N
+  for (let i = posts.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [posts[i], posts[j]] = [posts[j], posts[i]];
+  }
+  return posts.slice(0, count);
+}
+

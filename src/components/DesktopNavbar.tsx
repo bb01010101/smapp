@@ -69,6 +69,21 @@ async function DesktopNavbar() {
               <span className="hidden lg:inline">Profile</span>
             </Link>
           </Button>
+          
+          {/* Clerk UserButton for account management */}
+          <div className="ml-2">
+            <UserButton 
+              appearance={{
+                elements: {
+                  avatarBox: "w-8 h-8",
+                  userButtonPopoverCard: "shadow-lg border border-gold-200",
+                  userButtonPopoverActionButton: "hover:bg-gold-50",
+                  userButtonPopoverActionButtonText: "text-gold-700",
+                  userButtonPopoverFooter: "border-t border-gold-200"
+                }
+              }}
+            />
+          </div>
         </>
       ) : (
         <SignInButton mode="modal">
