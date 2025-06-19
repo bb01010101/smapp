@@ -1,7 +1,7 @@
 "use client";
 
 import { getProfileByUsername, getUserPosts, updateProfile } from "@/actions/profile.action";
-import { getPosts } from "@/actions/post.action";
+import { getPosts, deletePost } from "@/actions/post.action";
 import { toggleFollow } from "@/actions/user.action";
 import PostCard from "@/components/PostCard";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -42,6 +42,7 @@ import { useRouter } from "next/navigation";
 import { getOrCreateConversation } from "@/actions/dm.action";
 import ImageUpload from "@/components/ImageUpload";
 import EditFamilyModal from "@/components/EditFamilyModal";
+import { createPost } from "@/actions/post.action";
 
 type User = Awaited<ReturnType<typeof getProfileByUsername>>;
 type Posts = Awaited<ReturnType<typeof getUserPosts>>;
@@ -87,17 +88,21 @@ function ProfilePageClient({
   const [isTimelineMode, setIsTimelineMode] = useState(false);
   const [timelineInterval, setTimelineInterval] = useState<NodeJS.Timeout | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [showUploadOptions, setShowUploadOptions] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showExistingPosts, setShowExistingPosts] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<{ url: string; type: string } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Add state for expanded post
+  const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
 
   // Get posts for the active pet
   const activePetPosts = activePet ? posts.filter((post) => 
     post.petId === activePet.id && 
     (!post.mediaType || post.mediaType.startsWith('image'))
-  ) : [];
+  ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [];
   const currentPetPost = activePetPosts[petPostIndex] || null;
 
   // Get today's post for the active pet
@@ -208,11 +213,16 @@ function ProfilePageClient({
 
   const handleRemoveDailyPost = async () => {
     if (!todaysPost) return;
-    
     try {
       setIsUploading(true);
-      // TODO: Implement logic to remove the daily post status
-      toast.success("Daily post removed successfully");
+      const result = await deletePost(todaysPost.id);
+      if (result.success) {
+        toast.success("Daily post removed successfully");
+        setShowUploadOptions(false);
+        window.location.reload();
+      } else {
+        toast.error(result.error || "Failed to remove daily post");
+      }
     } catch (error) {
       toast.error("Failed to remove daily post");
     } finally {
@@ -221,16 +231,23 @@ function ProfilePageClient({
   };
 
   const handleUploadSubmit = async () => {
-    if (!selectedFile) return;
+    if (!uploadedImage?.url) return;
 
     try {
       setIsUploading(true);
-      // TODO: Implement file upload logic
-      toast.success("Daily photo uploaded successfully!");
-      setShowUploadOptions(false);
-      setSelectedFile(null);
-      setPreviewUrl(null);
+      // Create a new post with the uploaded image
+      const result = await createPost("", uploadedImage.url, activePet?.id || null, uploadedImage.type);
+      if (result?.success) {
+        toast.success("Daily photo uploaded successfully!");
+        setShowUploadOptions(false);
+        setUploadedImage(null);
+        // Refresh the page to show the new post
+        window.location.reload();
+      } else {
+        toast.error("Failed to upload daily photo");
+      }
     } catch (error) {
+      console.error("Upload error:", error);
       toast.error("Failed to upload daily photo");
     } finally {
       setIsUploading(false);
@@ -595,7 +612,7 @@ function ProfilePageClient({
                         onClick={prevPetPost}
                         disabled={petPostIndex === 0}
                         className="absolute left-0 top-1/2 -translate-y-1/2 p-2 disabled:opacity-30 z-10"
-                        aria-label="Previous post"
+                        aria-label="Newer photo"
                       >
                         <ChevronLeftIcon className="w-6 h-6" />
                       </button>
@@ -608,7 +625,7 @@ function ProfilePageClient({
                         onClick={nextPetPost}
                         disabled={petPostIndex === activePetPosts.length - 1}
                         className="absolute right-0 top-1/2 -translate-y-1/2 p-2 disabled:opacity-30 z-10"
-                        aria-label="Next post"
+                        aria-label="Older photo"
                       >
                         <ChevronRightIcon className="w-6 h-6" />
                       </button>
@@ -626,8 +643,8 @@ function ProfilePageClient({
         <Dialog open={timelineOpen} onOpenChange={closeTimeline}>
           <DialogContent className="max-w-4xl p-0 overflow-hidden flex items-center justify-center min-h-[80vh] bg-gradient-to-br from-orange-100 via-yellow-50 to-orange-200">
             {activePet && (
-              <div className="relative rounded-lg shadow-lg w-full flex flex-col items-center justify-center min-h-[70vh]">
-                <div className="flex flex-col items-center p-6 w-full">
+              <div className="relative rounded-lg shadow-lg w-full flex flex-col items-center justify-center min-h-[70vh] overflow-hidden">
+                <div className="flex flex-col items-center p-6 w-full h-full overflow-hidden">
                   <div className="flex items-center justify-between w-full mb-6">
                     <div className="flex items-center space-x-4">
                       <Avatar className="w-16 h-16">
@@ -676,34 +693,85 @@ function ProfilePageClient({
                       Press space or double tap to view timeline
                     </div>
                   )}
-                  {/* Timeline grid with click-to-expand */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
-                    {activePetPosts.map((post, index) => (
-                      <div 
-                        key={post.id}
-                        className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer transform hover:scale-105 transition-transform ${index === petPostIndex ? 'ring-2 ring-orange-400' : ''}`}
-                        onClick={() => setPetPostIndex(index)}
-                      >
-                        {post.image ? (
-                          <img 
-                            src={post.image || '/avatar.png'} 
-                            alt={`${activePet.name}'s photo`} 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-muted flex items-center justify-center">
-                            <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-                          <div className="text-xs text-white">
-                            {format(new Date(post.createdAt), 'MMM d, yyyy')}
-                          </div>
-                        </div>
+                  {/* Vertical Timeline with dates on the left */}
+                  <div className="w-full max-h-[60vh] overflow-y-auto overflow-x-hidden">
+                    {activePetPosts.length > 0 ? (
+                      <div className="relative w-full">
+                        {/* Timeline line */}
+                        <div className="absolute left-24 top-0 bottom-0 w-0.5 bg-gradient-to-b from-orange-400 to-orange-200"></div>
+                        
+                        {activePetPosts.map((post, index) => {
+                          const postDate = new Date(post.createdAt);
+                          const isToday = (() => {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const postDay = new Date(postDate);
+                            postDay.setHours(0, 0, 0, 0);
+                            return postDay.getTime() === today.getTime();
+                          })();
+                          const isExpanded = expandedPostId === post.id;
+                          return (
+                            <div
+                              key={post.id}
+                              className={`relative flex flex-col items-start mb-6 w-full ${index === petPostIndex ? 'ring-2 ring-orange-400 rounded-lg p-2 -m-2' : ''}`}
+                              onClick={() => setExpandedPostId(isExpanded ? null : post.id)}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              {/* Date on the left */}
+                              <div className="flex-shrink-0 w-48 text-right pr-6 pt-2">
+                                <div className={`text-sm font-medium ${isToday ? 'text-orange-600' : 'text-muted-foreground'}`}>
+                                  {format(postDate, 'MMM d, yyyy')}
+                                </div>
+                                {isToday && (
+                                  <div className="text-xs text-orange-500 font-medium">Today</div>
+                                )}
+                              </div>
+                              
+                              {/* Timeline dot */}
+                              <div className={`flex-shrink-0 w-3 h-3 rounded-full border-2 border-white shadow-md z-10 ${
+                                isToday ? 'bg-orange-500' : 'bg-orange-300'
+                              }`}></div>
+                              
+                              {/* Photo on the right */}
+                              <div className="flex-1 ml-6 min-w-0">
+                                <div className={`relative ${isExpanded ? 'aspect-auto' : 'aspect-square'} w-32 ${isExpanded ? 'w-64' : 'h-32'} rounded-lg overflow-hidden transform transition-all duration-200 ${isExpanded ? 'scale-105' : 'hover:scale-105'}`}
+                                  style={{ maxWidth: isExpanded ? 320 : 128 }}>
+                                  {post.image ? (
+                                    <img 
+                                      src={post.image || '/avatar.png'} 
+                                      alt={`${activePet.name}'s photo`} 
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                                      <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                                    </div>
+                                  )}
+                                  {isToday && (
+                                    <div className="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                                      Today
+                                    </div>
+                                  )}
+                                </div>
+                                {/* Expanded controls */}
+                                {isExpanded && (
+                                  <div className="mt-3 flex gap-3">
+                                    {/* Only show delete if user is author */}
+                                    {user.id === post.authorId && (
+                                      <Button variant="destructive" size="sm" onClick={async (e) => { e.stopPropagation(); await handleRemoveDailyPost(); setExpandedPostId(null); }} disabled={isUploading}>
+                                        Delete
+                                      </Button>
+                                    )}
+                                    {/* Optionally add Edit button here */}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    ))}
-                    {activePetPosts.length === 0 && (
-                      <div className="col-span-full text-center py-8 text-muted-foreground">
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
                         No photos for this pet yet.
                       </div>
                     )}
@@ -751,59 +819,25 @@ function ProfilePageClient({
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-3 gap-4">
-                    <Button
-                      variant="outline"
-                      className="flex flex-col items-center gap-2 h-auto py-4"
-                      onClick={() => document.getElementById('file-upload')?.click()}
-                    >
-                      <ImageIcon className="w-6 h-6" />
-                      <span className="text-sm">Choose Photo</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex flex-col items-center gap-2 h-auto py-4"
-                      onClick={handleTakePhoto}
-                    >
-                      <CameraIcon className="w-6 h-6" />
-                      <span className="text-sm">Take Photo</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex flex-col items-center gap-2 h-auto py-4"
-                      onClick={() => {
-                        // TODO: Show existing posts modal
-                        toast.error("Selecting existing post not implemented yet");
+                  <div className="space-y-4">
+                    <div className="text-sm text-muted-foreground">
+                      Upload a daily photo for {activePet?.name}
+                    </div>
+                    
+                    <ImageUpload
+                      endpoint="postImage"
+                      value={uploadedImage}
+                      onChange={(mediaObj) => {
+                        setUploadedImage(mediaObj);
                       }}
-                    >
-                      <FileTextIcon className="w-6 h-6" />
-                      <span className="text-sm">Existing Post</span>
-                    </Button>
-                  </div>
+                    />
 
-                  <input
-                    id="file-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileSelect}
-                  />
-
-                  {previewUrl && (
-                    <div className="space-y-4">
-                      <div className="relative aspect-square rounded-lg overflow-hidden">
-                        <img 
-                          src={previewUrl} 
-                          alt="Preview" 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                    {uploadedImage && (
                       <div className="flex justify-end gap-3">
                         <Button 
                           variant="outline" 
                           onClick={() => {
-                            setSelectedFile(null);
-                            setPreviewUrl(null);
+                            setUploadedImage(null);
                           }}
                         >
                           Cancel
@@ -818,12 +852,12 @@ function ProfilePageClient({
                               Uploading...
                             </>
                           ) : (
-                            'Upload'
+                            'Upload Daily Photo'
                           )}
                         </Button>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </>
               )}
             </div>

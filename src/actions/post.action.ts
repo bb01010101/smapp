@@ -10,6 +10,47 @@ export async function createPost(content: string, image: string, petId?: string 
 
         if(!userId) return;
 
+        if (petId) {
+            // Get the pet's last daily post date and streak
+            const pet = await prisma.pet.findUnique({
+                where: { id: petId },
+                select: { streak: true, lastDailyPostDate: true }
+            });
+            if (pet) {
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                let newStreak = pet.streak;
+                let shouldUpdate = false;
+                if (pet.lastDailyPostDate) {
+                    const lastDate = new Date(pet.lastDailyPostDate);
+                    lastDate.setHours(0, 0, 0, 0);
+                    const diffDays = Math.floor((now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+                    if (diffDays === 0) {
+                        // Already posted today, increment streak by 1
+                        newStreak = pet.streak + 1;
+                        shouldUpdate = true;
+                    } else if (diffDays > 1) {
+                        // Missed more than 24 hours, reset streak to 0
+                        newStreak = 0;
+                        shouldUpdate = true;
+                    }
+                } else {
+                    // First post ever, start streak at 1
+                    newStreak = 1;
+                    shouldUpdate = true;
+                }
+                if (shouldUpdate) {
+                    await prisma.pet.update({
+                        where: { id: petId },
+                        data: {
+                            streak: newStreak,
+                            lastDailyPostDate: now
+                        }
+                    });
+                }
+            }
+        }
+
         const post = await prisma.post.create({
             data:{
                 content,  
@@ -215,11 +256,28 @@ export async function toggleLike(postId: string) {
   
       const post = await prisma.post.findUnique({
         where: { id: postId },
-        select: { authorId: true },
+        select: { authorId: true, petId: true, createdAt: true },
       });
   
       if (!post) throw new Error("Post not found");
       if (post.authorId !== userId) throw new Error("Unauthorized - no delete permission");
+
+      // If this post is the most recent daily post for the pet, reset streak
+      if (post.petId) {
+        const latestPost = await prisma.post.findFirst({
+          where: { petId: post.petId },
+          orderBy: { createdAt: "desc" },
+        });
+        if (latestPost && latestPost.id === postId) {
+          await prisma.pet.update({
+            where: { id: post.petId },
+            data: {
+              streak: 0,
+              lastDailyPostDate: null,
+            },
+          });
+        }
+      }
   
       await prisma.post.delete({
         where: { id: postId },

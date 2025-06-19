@@ -160,6 +160,9 @@ model Pet {
 
   posts     Post[]   @relation("PetPosts")
 
+  streak    Int      @default(0)
+  lastDailyPostDate DateTime?
+
   @@index([userId])
 }
 
