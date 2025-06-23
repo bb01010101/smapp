@@ -18,7 +18,7 @@ async function Navbar() {
           {/* Logo in top left */}
           <Link href="/" className="flex items-center gap-2 mr-6">
             <Image src="/logo.jpeg" alt="PetNet Logo" width={40} height={40} className="rounded-full" />
-            <span className="text-2xl font-bold text-gold-700">PetNet</span>
+            <span className="text-2xl font-bold text-foreground">PetNet</span>
           </Link>
           {/* Main navigation shifted right for balance */}
           <div className="flex-1 flex items-center justify-end">

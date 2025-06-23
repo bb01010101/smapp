@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import { Toaster } from "react-hot-toast";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import ColorPreferenceLoader from "@/components/ColorPreferenceLoader";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -49,6 +50,7 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
             > 
+              <ColorPreferenceLoader />
               <div className="min-h-screen">
                 <Navbar/>
 
