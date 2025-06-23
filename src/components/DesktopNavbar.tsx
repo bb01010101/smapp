@@ -2,16 +2,14 @@ import { BellIcon, HomeIcon, UserIcon, PawPrintIcon, StoreIcon, MessageCircleIco
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SignInButton, UserButton } from "@clerk/nextjs";
-import ModeToggle from "./ModeToggle";
+import SettingsDropdown from "./SettingsDropdown";
 import { currentUser } from "@clerk/nextjs/server";
 
 async function DesktopNavbar() {
   const user = await currentUser();
 
   return (
-    <div className="hidden md:flex items-center space-x-4 bg-background text-gold-700">
-      <ModeToggle />
-
+    <div className="hidden md:flex items-center space-x-4 bg-background text-foreground">
       <Button variant="ghost" className="flex items-center gap-2 hover:bg-transparent focus:bg-transparent" asChild>
         <Link href="/">
           <HomeIcon className="w-6 h-6 text-gold-500 hover:text-gold-600 transition" />
@@ -69,6 +67,8 @@ async function DesktopNavbar() {
               <span className="hidden lg:inline">Profile</span>
             </Link>
           </Button>
+          
+          <SettingsDropdown />
           
           {/* Clerk UserButton for account management */}
           <div className="ml-2">

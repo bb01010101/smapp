@@ -5,8 +5,6 @@ import {
   HomeIcon,
   LogOutIcon,
   MenuIcon,
-  MoonIcon,
-  SunIcon,
   UserIcon,
   PawPrintIcon,
   StoreIcon,
@@ -19,28 +17,16 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useAuth, SignInButton, SignOutButton, useUser, UserButton } from "@clerk/nextjs";
-import { useTheme } from "next-themes";
+import SettingsDropdown from "./SettingsDropdown";
 import Link from "next/link";
 
 function MobileNavbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { isSignedIn } = useAuth();
   const { user } = useUser();
-  const { theme, setTheme } = useTheme();
 
   return (
-    <div className="flex md:hidden items-center space-x-2 bg-gold-100 text-gold-700">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-        className="mr-2 hover:bg-transparent focus:bg-transparent"
-      >
-        <SunIcon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-        <MoonIcon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-        <span className="sr-only">Toggle theme</span>
-      </Button>
-
+    <div className="flex md:hidden items-center space-x-2 bg-gold-100 text-foreground">
       {/* UserButton for mobile - shows when signed in */}
       {isSignedIn && (
         <div className="mr-2">
@@ -57,6 +43,8 @@ function MobileNavbar() {
           />
         </div>
       )}
+
+      <SettingsDropdown />
 
       <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
         <SheetTrigger asChild>
@@ -129,7 +117,7 @@ function MobileNavbar() {
 
                 {/* Account management section */}
                 <div className="pt-4 border-t border-gold-200">
-                  <div className="text-sm font-medium text-gold-700 mb-2 px-2">Account</div>
+                  <div className="text-sm font-medium text-foreground mb-2 px-2">Account</div>
                   
                   <Button variant="ghost" className="flex items-center gap-3 justify-start hover:bg-transparent focus:bg-transparent w-full" asChild>
                     <Link href="/user" onClick={() => setShowMobileMenu(false)}>
