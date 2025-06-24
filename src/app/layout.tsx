@@ -41,7 +41,7 @@ export default function RootLayout({
     >
       <html lang="en" suppressHydrationWarning>
         <head>
-          <link rel="icon" href="/logo.jpeg" type="image/jpeg" />
+          <link rel="icon" href="/favicon.ico" type="image/x-icon" />
         </head>
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <ThemeProvider

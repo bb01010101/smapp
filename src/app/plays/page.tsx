@@ -14,6 +14,12 @@ import { useRouter } from 'next/navigation';
 // Placeholder for HLS.js video player
 const VideoPlayer = dynamic(() => import("@/components/VideoFeed"), { ssr: false });
 
+// Simple seeded random number generator
+function seededRandom(seed: number) {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
 export default function PlaysPage() {
   const { user } = useUser();
   const [videos, setVideos] = useState<any[]>([]);
@@ -37,83 +43,56 @@ export default function PlaysPage() {
   const [petCardSwipe, setPetCardSwipe] = useState<{dir: 'left' | 'right' | null, idx: number | null}>({dir: null, idx: null});
   const [loveCounts, setLoveCounts] = useState<{[petIdx: number]: number}>({});
   const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
-  const [stableFeed, setStableFeed] = useState<any[]>([]);
+  const [dataFetched, setDataFetched] = useState(false);
+  const [petMediaIdx, setPetMediaIdx] = useState(0);
+  const [petAspectRatio, setPetAspectRatio] = useState<'square' | 'portrait' | 'landscape'>('portrait');
 
+  // Fetch user data separately from feed data
+  useEffect(() => {
+    async function fetchUserData() {
+      if (user) {
+        try {
+          const userRes = await fetch(`/api/users/by-clerk-id/${user.id}`);
+          const userData = await userRes.json();
+          const userId = userData.user?.id || null;
+          setDbUserId(userId);
+        } catch (err) {
+          console.error("Failed to get database user ID:", err);
+        }
+      }
+    }
+    fetchUserData();
+  }, [user]);
+
+  // Fetch feed data only once
   useEffect(() => {
     async function fetchData() {
+      if (dataFetched) return; // Only fetch once
+      
       setLoading(true);
       try {
-        // Get database user ID if user is logged in
-        let userId = null;
-        if (user) {
-          try {
-            const userRes = await fetch(`/api/users/by-clerk-id/${user.id}`);
-            const userData = await userRes.json();
-            userId = userData.user?.id || null;
-            setDbUserId(userId);
-          } catch (err) {
-            console.error("Failed to get database user ID:", err);
-          }
-        }
-
         // Fetch videos
         const videoRes = await fetch("/api/plays?limit=10");
         const videoData = await videoRes.json();
+        
         // Fetch pet cards
         const petRes = await fetch('/api/pets/random-posts');
         const petData = await petRes.json();
-        // Shuffle videos
-        for (let i = videoData.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [videoData[i], videoData[j]] = [videoData[j], videoData[i]];
+        
+        // Shuffle videos with a fixed seed
+        const shuffledVideos = [...videoData];
+        for (let i = shuffledVideos.length - 1; i > 0; i--) {
+          const j = Math.floor(seededRandom(i * 12345) * (i + 1));
+          [shuffledVideos[i], shuffledVideos[j]] = [shuffledVideos[j], shuffledVideos[i]];
         }
-        setVideos(videoData);
+        
+        setVideos(shuffledVideos);
         setPetCards(petData.posts || []);
-        
-        // Create stable feed array
-        const feed = [];
-        let petCardIndex = 0;
-        
-        // Add videos and randomly insert pet cards
-        videoData.forEach((video: any, idx: number) => {
-          feed.push({ ...video, _type: 'video', _originalIndex: idx });
-          
-          // 35% chance to add a pet card after each video
-          if (Math.random() < 0.35 && petCardIndex < (petData.posts || []).length) {
-            const pet = petData.posts[petCardIndex];
-            if (pet?.image || pet?.pet?.imageUrl) {
-              feed.push({ ...pet, _type: 'pet', _petIdx: petCardIndex });
-            }
-            petCardIndex++;
-          }
-        });
-        
-        // Add any remaining pet cards at the end
-        while (petCardIndex < (petData.posts || []).length) {
-          const pet = petData.posts[petCardIndex];
-          if (pet?.image || pet?.pet?.imageUrl) {
-            feed.push({ ...pet, _type: 'pet', _petIdx: petCardIndex });
-          }
-          petCardIndex++;
-        }
-        
-        setStableFeed(feed);
-        
-        // Set initial like state
-        const likeState: { [id: string]: boolean } = {};
-        const likeCounts: { [id: string]: number } = {};
-        videoData.forEach((video: any) => {
-          // Check if the current user has liked this video using database user ID
-          likeState[video.id] = userId ? video.likes.some((l: any) => l.userId === userId) : false;
-          likeCounts[video.id] = video._count.likes;
-        });
-        setHasLiked(likeState);
-        setOptimisticLikes(likeCounts);
+        setDataFetched(true);
         
         // Set initial love counts for pet cards
         const petLoveCounts: {[petIdx: number]: number} = {};
         (petData.posts || []).forEach((post: any, idx: number) => {
-          // Default to 0 if loveCount doesn't exist yet
           petLoveCounts[idx] = post.pet?.loveCount || 0;
         });
         setLoveCounts(petLoveCounts);
@@ -121,13 +100,60 @@ export default function PlaysPage() {
         console.error("Failed to fetch videos or pets:", err);
         setVideos([]);
         setPetCards([]);
-        setStableFeed([]);
       } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, [user]);
+  }, [dataFetched]);
+
+  // Create stable feed using useMemo
+  const stableFeed = useMemo(() => {
+    if (!videos.length || !petCards.length) return [];
+    
+    const feed = [];
+    let petCardIndex = 0;
+    
+    // Add videos and deterministically insert pet cards
+    videos.forEach((video: any, idx: number) => {
+      feed.push({ ...video, _type: 'video', _originalIndex: idx });
+      
+      // Use seeded random for consistent placement
+      const randomValue = seededRandom(idx * 67890);
+      if (randomValue < 0.35 && petCardIndex < petCards.length) {
+        const pet = petCards[petCardIndex];
+        if (pet?.image || pet?.pet?.imageUrl) {
+          feed.push({ ...pet, _type: 'pet', _petIdx: petCardIndex });
+        }
+        petCardIndex++;
+      }
+    });
+    
+    // Add any remaining pet cards at the end
+    while (petCardIndex < petCards.length) {
+      const pet = petCards[petCardIndex];
+      if (pet?.image || pet?.pet?.imageUrl) {
+        feed.push({ ...pet, _type: 'pet', _petIdx: petCardIndex });
+      }
+      petCardIndex++;
+    }
+    
+    return feed;
+  }, [videos, petCards]);
+
+  // Set initial like state when user data is available
+  useEffect(() => {
+    if (dbUserId && videos.length > 0) {
+      const likeState: { [id: string]: boolean } = {};
+      const likeCounts: { [id: string]: number } = {};
+      videos.forEach((video: any) => {
+        likeState[video.id] = video.likes.some((l: any) => l.userId === dbUserId);
+        likeCounts[video.id] = video._count.likes;
+      });
+      setHasLiked(likeState);
+      setOptimisticLikes(likeCounts);
+    }
+  }, [dbUserId, videos]);
 
   // Prevent body scrolling and lock page
   useEffect(() => {
@@ -473,7 +499,7 @@ export default function PlaysPage() {
       }
       
       const response = await fetch(`/api/pets/${petId}/super-like`, {
-        method: 'POST',
+          method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -522,17 +548,56 @@ export default function PlaysPage() {
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center h-screen bg-black">Loading...</div>;
-  
+  // Helper to get pet media array
+  function getPetMedia(pet: any) {
+    // If pet has multiple posts, return array of images/videos
+    if (pet.pet?.media && Array.isArray(pet.pet.media) && pet.pet.media.length > 0) {
+      return pet.pet.media;
+    }
+    // Fallback to single image
+    return [pet.image || pet.pet?.imageUrl];
+  }
+
+  // Ensure we always have a current item by looping
   const feed = stableFeed;
+  const currentItem = feed[currentVideoIndex % feed.length] || feed[0];
+
+  // Detect aspect ratio when pet card changes
+  useEffect(() => {
+    if (!currentItem || currentItem._type !== 'pet') return;
+    const mediaArr = getPetMedia(currentItem);
+    const img = new window.Image();
+    img.onload = function () {
+      if (img.naturalWidth === img.naturalHeight) setPetAspectRatio('square');
+      else if (img.naturalWidth > img.naturalHeight) setPetAspectRatio('landscape');
+      else setPetAspectRatio('portrait');
+    };
+    img.src = mediaArr[petMediaIdx] || '';
+  }, [currentItem, petMediaIdx]);
+
+  // Reset media index when card changes
+  useEffect(() => {
+    setPetMediaIdx(0);
+  }, [currentItem]);
+
+  if (loading) return <div className="flex justify-center items-center h-screen bg-black">Loading...</div>;
   
   // If no videos at all, show a simple message
   if (!loading && videos.length === 0) {
     return <div className="flex justify-center items-center h-screen bg-black text-white">No videos available.</div>;
   }
   
-  // Ensure we always have a current item by looping
-  const currentItem = feed[currentVideoIndex % feed.length] || feed[0];
+  // Show loading spinner like in pawpad
+  if (loading) {
+    return (
+      <div className="w-full h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-sm">Loading content...</p>
+        </div>
+      </div>
+    );
+  }
   
   if (!currentItem) {
     return <div className="flex justify-center items-center h-screen bg-black text-white">Loading content...</div>;
@@ -604,12 +669,12 @@ export default function PlaysPage() {
                   <VideoPlayer src={currentItem.image} poster={currentItem.poster} />
                 </div>
                 
-                {/* Overlay: Right-side icons */}
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-6 z-10">
+                      {/* Overlay: Right-side icons */}
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-6 z-10">
                   {user && dbUserId ? (
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                          <Button
+                            variant="ghost"
+                            size="icon"
                       className={`hover:text-red-500 transition text-white text-2xl p-0 m-0 shadow-none border-none bg-transparent ${hasLiked[currentItem.id] ? "text-red-500 hover:text-red-600" : ""}`}
                       onClick={(e) => {
                         e.preventDefault();
@@ -620,9 +685,9 @@ export default function PlaysPage() {
                     >
                       <HeartIcon className={`w-20 h-20 ${hasLiked[currentItem.id] ? "fill-current" : ""}`} />
                       <span className="text-base ml-1">{optimisticLikes[currentItem.id]}</span>
-                    </Button>
-                  ) : (
-                    <SignInButton mode="modal">
+                          </Button>
+                        ) : (
+                          <SignInButton mode="modal">
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -632,15 +697,15 @@ export default function PlaysPage() {
                           e.stopPropagation();
                         }}
                       >
-                        <HeartIcon className="w-20 h-20" />
+                              <HeartIcon className="w-20 h-20" />
                         <span className="text-base ml-1">{currentItem._count.likes}</span>
-                      </Button>
-                    </SignInButton>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="hover:text-blue-500 transition text-white text-2xl p-0 m-0 shadow-none border-none bg-transparent"
+                            </Button>
+                          </SignInButton>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:text-blue-500 transition text-white text-2xl p-0 m-0 shadow-none border-none bg-transparent"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -649,23 +714,23 @@ export default function PlaysPage() {
                   >
                     <MessageCircleIcon className={`w-20 h-20 ${showCommentsIdx === currentVideoIndex ? "fill-blue-500 text-blue-500" : ""}`} />
                     <span className="text-base ml-1">{currentItem._count.comments}</span>
-                  </Button>
-                </div>
+                        </Button>
+                      </div>
                 
-                {/* Overlay: Bottom-left blurb */}
-                <div className="absolute left-4 bottom-6 z-10 flex items-end gap-3">
+                      {/* Overlay: Bottom-left blurb */}
+                      <div className="absolute left-4 bottom-6 z-10 flex items-end gap-3">
                   <Link href={`/profile/${currentItem.author.username}`} onClick={(e) => e.stopPropagation()}>
-                    <Avatar className="w-10 h-10 border-2 border-white">
+                          <Avatar className="w-10 h-10 border-2 border-white">
                       <AvatarImage src={currentItem.author.image ?? "/avatar.png"} />
-                    </Avatar>
-                  </Link>
-                  <div className="flex flex-col">
+                          </Avatar>
+                        </Link>
+                        <div className="flex flex-col">
                     <Link href={`/profile/${currentItem.author.username}`} className="text-white font-semibold text-base hover:underline" onClick={(e) => e.stopPropagation()}>
                       {currentItem.author.name ?? currentItem.author.username}
-                    </Link>
+                          </Link>
                     <span className="text-white text-sm line-clamp-2 max-w-xs opacity-90">{currentItem.content || currentItem["content"] || currentItem.title || "No description."}</span>
-                  </div>
-                </div>
+                        </div>
+                      </div>
                 
                 {/* Comments Section (positioned below video) */}
                 {showCommentsIdx === currentVideoIndex && (
@@ -679,16 +744,16 @@ export default function PlaysPage() {
                     {/* Header */}
                     <div className="flex items-center justify-between p-4 border-b">
                       <h3 className="font-semibold text-lg">Comments</h3>
-                      <button
+                            <button
                         className="text-gray-400 hover:text-gray-600 text-2xl"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleCommentToggle(currentVideoIndex);
                         }}
-                        aria-label="Close"
-                      >
-                        ×
-                      </button>
+                              aria-label="Close"
+                            >
+                              ×
+                            </button>
                     </div>
                     {/* Comments List */}
                     <div className="flex-1 overflow-y-auto p-4">
@@ -697,37 +762,37 @@ export default function PlaysPage() {
                           <div className="text-muted-foreground text-center py-8">No comments yet.</div>
                         ) : (
                           currentItem.comments.map((comment: any) => (
-                            <div key={comment.id} className="flex space-x-3">
-                              <Avatar className="size-8 flex-shrink-0">
-                                <AvatarImage src={comment.author?.image ?? "/avatar.png"} />
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                  <span className="font-medium text-sm">{comment.author?.name || "User"}</span>
+                                  <div key={comment.id} className="flex space-x-3">
+                                    <Avatar className="size-8 flex-shrink-0">
+                                      <AvatarImage src={comment.author?.image ?? "/avatar.png"} />
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                        <span className="font-medium text-sm">{comment.author?.name || "User"}</span>
                                   <span className="text-xs text-muted-foreground">
                                     {new Date(comment.createdAt).toLocaleDateString()}
                                   </span>
-                                </div>
+                                      </div>
                                 <p className="text-sm break-words mt-1">{comment.content}</p>
-                              </div>
+                                    </div>
+                                  </div>
+                                ))
+                              )}
                             </div>
-                          ))
-                        )}
-                      </div>
                     </div>
                     {/* Comment Input */}
                     {user && dbUserId ? (
                       <div className="p-4 border-t bg-gray-50">
                         <div className="flex space-x-3">
-                          <Avatar className="size-8 flex-shrink-0">
-                            <AvatarImage src={user.imageUrl || "/avatar.png"} />
-                          </Avatar>
-                          <div className="flex-1">
-                            <Textarea
-                              placeholder="Write a comment..."
-                              value={newComment}
-                              onChange={(e) => setNewComment(e.target.value)}
-                              className="min-h-[60px] resize-none"
+                                <Avatar className="size-8 flex-shrink-0">
+                                  <AvatarImage src={user.imageUrl || "/avatar.png"} />
+                                </Avatar>
+                                <div className="flex-1">
+                                  <Textarea
+                                    placeholder="Write a comment..."
+                                    value={newComment}
+                                    onChange={(e) => setNewComment(e.target.value)}
+                                    className="min-h-[60px] resize-none"
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                   e.preventDefault();
@@ -739,35 +804,35 @@ export default function PlaysPage() {
                               onFocus={(e) => e.stopPropagation()}
                               onBlur={(e) => e.stopPropagation()}
                               onInput={(e) => e.stopPropagation()}
-                            />
-                            <div className="flex justify-end mt-2">
-                              <Button
-                                size="sm"
+                                  />
+                                  <div className="flex justify-end mt-2">
+                                    <Button
+                                      size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleAddComment(currentItem);
                                 }}
-                                disabled={!newComment.trim() || isCommenting}
-                                className="flex items-center gap-2"
-                              >
-                                {isCommenting ? "Posting..." : "Post"}
-                              </Button>
+                                      disabled={!newComment.trim() || isCommenting}
+                                      className="flex items-center gap-2"
+                                    >
+                                      {isCommenting ? "Posting..." : "Post"}
+                                    </Button>
                             </div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
                       <div className="flex justify-center p-4 border-t bg-gray-50">
-                        <SignInButton mode="modal">
+                                <SignInButton mode="modal">
                           <Button variant="outline" className="gap-2" onClick={(e) => e.stopPropagation()}>Sign in to comment</Button>
-                        </SignInButton>
-                      </div>
-                    )}
+                                </SignInButton>
+                              </div>
+                            )}
                   </div>
                 )}
               </div>
             ) : currentItem._type === 'pet' ? (
-              <div className="flex justify-center items-center h-full relative">
+              <div className="flex justify-center items-center h-full relative w-full">
                 {/* Animation Overlays for Pet Cards */}
                 {showBoneAnimation.show && showBoneAnimation.petIdx === currentItem._petIdx && (
                   <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
@@ -781,9 +846,9 @@ export default function PlaysPage() {
                   <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
                     <div className="heart-burst-animation">
                       <HeartIcon className="w-32 h-32 text-green-500 fill-current" />
-                    </div>
-                  </div>
-                )}
+                          </div>
+                        </div>
+                      )}
                 
                 {showXAnimation.show && showXAnimation.petIdx === currentItem._petIdx && (
                   <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
@@ -793,9 +858,9 @@ export default function PlaysPage() {
                   </div>
                 )}
 
-                {/* Tinder-style Card */}
+                {/* Tinder-style Card - Now full screen size */}
                 <div
-                  className={`relative w-[340px] h-[480px] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden select-none mx-auto transition-transform duration-300 ${petCardSwipe.idx === currentItem._petIdx && petCardSwipe.dir === 'left' ? '-translate-x-[500px] opacity-0' : ''} ${petCardSwipe.idx === currentItem._petIdx && petCardSwipe.dir === 'right' ? 'translate-x-[500px] opacity-0' : ''}`}
+                  className={`relative w-full h-full bg-white flex flex-col overflow-hidden select-none transition-transform duration-300 ${petCardSwipe.idx === currentItem._petIdx && petCardSwipe.dir === 'left' ? '-translate-x-[500px] opacity-0' : ''} ${petCardSwipe.idx === currentItem._petIdx && petCardSwipe.dir === 'right' ? 'translate-x-[500px] opacity-0' : ''}`}
                   onTouchStart={(e) => {
                     if (e.touches.length === 1) {
                       longPressTimeout.current = setTimeout(() => handleSuperLove(currentItem), 1200);
@@ -825,50 +890,78 @@ export default function PlaysPage() {
                     }
                   }}
                 >
-                  {/* Pet Image */}
-                  <img
-                    src={currentItem?.image || currentItem?.pet?.imageUrl}
-                    alt={currentItem?.pet?.name || 'Dog'}
-                    className="w-full h-[65%] object-cover bg-black"
-                    style={{ minHeight: 220 }}
-                    onError={() => handlePetImageError(currentItem._petIdx)}
-                  />
-                  {/* Info Bar */}
-                  <div className="flex-1 flex flex-col justify-between p-4 bg-gradient-to-t from-black/80 via-black/60 to-transparent absolute bottom-0 left-0 right-0">
+                  {/* Pet Image - Framed in 9:16 black box, object-contain for letterboxing */}
+                  <div
+                    className="w-full h-full flex items-center justify-center bg-black relative"
+                    style={{ 
+                      cursor: getPetMedia(currentItem).length > 1 ? 'pointer' : 'default', 
+                      aspectRatio: '9/16', 
+                      maxHeight: '100vh', 
+                      maxWidth: '100vw', 
+                      margin: '0 auto' 
+                    }}
+                    onClick={(e) => {
+                      const mediaArr = getPetMedia(currentItem);
+                      if (mediaArr.length > 1) {
+                        // Tap right half: next, left half: prev
+                        const x = (e.nativeEvent as any).offsetX;
+                        const width = (e.target as HTMLElement).clientWidth;
+                        if (x > width / 2) setPetMediaIdx((idx) => (idx + 1) % mediaArr.length);
+                        else setPetMediaIdx((idx) => (idx - 1 + mediaArr.length) % mediaArr.length);
+                      }
+                    }}
+                  >
+                    <img
+                      src={getPetMedia(currentItem)[petMediaIdx]}
+                      alt={currentItem?.pet?.name || 'Dog'}
+                      className="object-contain w-full h-full bg-black"
+                      onError={() => handlePetImageError(currentItem._petIdx)}
+                    />
+                    {/* Dots for multiple media */}
+                    {getPetMedia(currentItem).length > 1 && (
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1 z-20">
+                        {getPetMedia(currentItem).map((_: any, idx: number) => (
+                          <div key={idx} className={`w-2 h-2 rounded-full ${idx === petMediaIdx ? 'bg-white' : 'bg-gray-400/60'}`}></div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {/* Info Bar - moved above action buttons */}
+                  <div className="absolute bottom-32 left-0 right-0 flex flex-col justify-between px-6 pb-2 bg-gradient-to-t from-black/80 via-black/60 to-transparent pointer-events-none">
                     <div>
-                      <span className="text-white text-2xl font-bold drop-shadow-lg">
+                      <span className="text-white text-3xl font-bold drop-shadow-lg">
                         {currentItem?.pet?.name || 'Dog'}
                       </span>
-                      <span className="text-white text-lg ml-2 drop-shadow-lg">
+                      <span className="text-white text-xl ml-2 drop-shadow-lg">
                         {currentItem?.pet?.age ? `• ${currentItem.pet.age}` : ''}
                       </span>
                     </div>
-                    <div className="text-white text-sm opacity-90 mt-2 drop-shadow-lg">
+                    <div className="text-white text-base opacity-90 mt-3 drop-shadow-lg">
                       Owner: {currentItem?.author?.name || currentItem?.author?.username}
                     </div>
                   </div>
                   {/* Overlay Action Buttons */}
-                  <div className="absolute bottom-6 left-0 right-0 flex justify-center items-end gap-8 z-20 pointer-events-auto">
-                    {/* X Button (Nope) */}
-                    <button
-                      className="bg-white border-2 border-gray-300 md:border-gray-300 hover:bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center shadow-xl text-3xl transition active:scale-90 md:text-gray-500 text-red-500"
+                  <div className="absolute bottom-8 left-0 right-0 flex justify-center items-end gap-8 z-20 pointer-events-auto">
+                    {/* X Button (Nope) - red border and icon */}
+                        <button
+                      className="bg-white border-2 border-red-500 hover:bg-red-100 rounded-full w-16 h-16 flex items-center justify-center shadow-xl text-3xl transition active:scale-90 text-red-500"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSwipeLeft(currentItem._petIdx);
                       }}
                       aria-label="Nope"
                     >
-                      <XIcon className="w-8 h-8 md:text-gray-500 text-red-500" />
-                    </button>
+                      <XIcon className="w-8 h-8 text-red-500" />
+                        </button>
                     {/* Blue Bone Button (Love) */}
-                    <button
+                        <button
                       className="bg-blue-100 border-2 border-blue-400 hover:bg-blue-200 rounded-full w-20 h-20 flex flex-col items-center justify-center shadow-xl text-3xl transition active:scale-90 relative"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSwipeRight(currentItem);
                       }}
-                      aria-label="Love"
-                    >
+                          aria-label="Love"
+                        >
                       <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full shadow">{loveCounts[currentItem._petIdx] || 0}</span>
                       {/* Show only icon on mobile, icon+text on desktop */}
                       <Bone className="w-9 h-9 text-blue-500" />
@@ -884,12 +977,12 @@ export default function PlaysPage() {
                       aria-label="Super Love"
                     >
                       <HeartIcon className="w-8 h-8 text-green-500 fill-current" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+                        </button>
+                      </div>
+                        </div>
+                      </div>
             ) : null}
-          </div>
+                    </div>
         </div>
       </div>
     </div>

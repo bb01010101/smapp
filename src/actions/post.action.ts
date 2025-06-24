@@ -1,14 +1,19 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { getDbUserId } from "./user.action";
+import { getDbUserId, syncUser } from "./user.action";
 import { revalidatePath } from "next/cache";
 
 export async function createPost(content: string, image: string, petId?: string | null, mediaType?: string) {
     try {
+        // Ensure user is synced first
+        await syncUser();
+        
         const userId = await getDbUserId();
 
-        if(!userId) return;
+        if(!userId) {
+            return { success: false, error: "User not authenticated" };
+        }
 
         const post = await prisma.post.create({
             data:{
