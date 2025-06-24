@@ -13,6 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         image: true,
         title: true,
         description: true,
+        content: true,
         createdAt: true,
         author: {
           select: {
@@ -26,7 +27,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           select: { userId: true },
         },
         comments: {
-          select: { id: true },
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            author: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                image: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
         },
         _count: {
           select: { likes: true, comments: true },

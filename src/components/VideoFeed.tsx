@@ -28,6 +28,7 @@ export default function VideoFeed({ src, poster }: { src: string; poster?: strin
         controls={showControls}
         autoPlay
         muted
+        loop
         playsInline
         className="max-h-[80vh] max-w-full rounded-lg shadow-lg bg-black"
         style={{ width: "100%", height: "100%", objectFit: "cover" }}

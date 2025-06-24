@@ -70,7 +70,6 @@ async function DesktopNavbar() {
           
           <SettingsDropdown />
           
-          {/* Clerk UserButton for account management */}
           <div className="ml-2">
             <UserButton 
               appearance={{

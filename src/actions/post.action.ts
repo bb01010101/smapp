@@ -405,6 +405,7 @@ export async function getRandomPetPostsWithImages(count: number = 3) {
           id: true,
           name: true,
           imageUrl: true,
+          loveCount: true,
         },
       },
       author: {
