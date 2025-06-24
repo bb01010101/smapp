@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getDbUserId, syncUser } from "./user.action";
 import { revalidatePath } from "next/cache";
+import { auth } from "@clerk/nextjs/server";
 
 export async function createPost(content: string, image: string, petId?: string | null, mediaType?: string) {
     try {
@@ -10,23 +11,25 @@ export async function createPost(content: string, image: string, petId?: string 
         await syncUser();
         
         const userId = await getDbUserId();
-
-        if(!userId) {
+        const { userId: clerkId } = await auth();
+        if (!userId || !clerkId) {
             return { success: false, error: "User not authenticated" };
         }
 
-        // If posting for a pet, validate ownership
+        // If posting for a pet, validate ownership using Clerk ID
         if (petId) {
             const pet = await prisma.pet.findUnique({
                 where: { id: petId },
                 select: { userId: true }
             });
 
+            console.log("DEBUG: Clerk userId:", clerkId, "pet.userId:", pet?.userId); // Debug log
+
             if (!pet) {
                 return { success: false, error: "Pet not found" };
             }
 
-            if (pet.userId !== userId) {
+            if (pet.userId !== clerkId) {
                 return { success: false, error: "You can only post for your own pets" };
             }
         }
