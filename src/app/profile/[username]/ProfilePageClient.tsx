@@ -231,7 +231,7 @@ function ProfilePageClient({
         window.location.reload();
         toast.success("Daily photo uploaded successfully!");
       } else {
-        toast.error("Failed to upload daily photo");
+        toast.error(result?.error || "Failed to upload daily photo");
       }
     } catch (error) {
       console.error("Failed to upload daily photo:", error);
@@ -657,23 +657,26 @@ function ProfilePageClient({
                       <FlameIcon className="w-6 h-6 text-orange-700 animate-pulse" />
                       <span className="font-bold text-lg text-orange-900">{activePet.streak ?? 0}</span>
                     </div>
-                    <Button 
-                      onClick={handleUploadDaily}
-                      disabled={isUploading}
-                      className="flex items-center space-x-2 bg-gradient-to-tr from-orange-400 via-yellow-400 to-orange-600 text-white hover:scale-105"
-                    >
-                      {isUploading ? (
-                        <>
-                          <Loader2Icon className="w-4 h-4 animate-spin" />
-                          <span>Uploading...</span>
-                        </>
-                      ) : (
-                        <>
-                          <ImageIcon className="w-4 h-4" />
-                          <span>Upload Daily Photo</span>
-                        </>
-                      )}
-                    </Button>
+                    {/* Only show upload button if user owns this pet */}
+                    {isOwnProfile && (
+                      <Button 
+                        onClick={handleUploadDaily}
+                        disabled={isUploading}
+                        className="flex items-center space-x-2 bg-gradient-to-tr from-orange-400 via-yellow-400 to-orange-600 text-white hover:scale-105"
+                      >
+                        {isUploading ? (
+                          <>
+                            <Loader2Icon className="w-4 h-4 animate-spin" />
+                            <span>Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <ImageIcon className="w-4 h-4" />
+                            <span>Upload Daily Photo</span>
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                   {/* Timeline progress bar */}
                   {isTimelineMode && (

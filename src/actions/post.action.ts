@@ -15,6 +15,22 @@ export async function createPost(content: string, image: string, petId?: string 
             return { success: false, error: "User not authenticated" };
         }
 
+        // If posting for a pet, validate ownership
+        if (petId) {
+            const pet = await prisma.pet.findUnique({
+                where: { id: petId },
+                select: { userId: true }
+            });
+
+            if (!pet) {
+                return { success: false, error: "Pet not found" };
+            }
+
+            if (pet.userId !== userId) {
+                return { success: false, error: "You can only post for your own pets" };
+            }
+        }
+
         const post = await prisma.post.create({
             data:{
                 content,  
