@@ -2,7 +2,7 @@
 
 import { createComment, deletePost, getPosts, toggleLike } from "@/actions/post.action";
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { Card, CardContent } from "./ui/card";
 import Link from "next/link";
@@ -27,6 +27,8 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
   const [hasLiked, setHasLiked] = useState(post.likes.some(like => like.userId === dbUserId));
   const [optimisticLikes, setOptimisticLikes] = useState(post._count.likes);
   const [showComments, setShowComments] = useState(false);
+  const [showHeartAnimation, setShowHeartAnimation] = useState(false);
+  const lastTapRef = useRef<number>(0);
 
   const handleLike = async () => {
     if(isLiking) return;
@@ -71,6 +73,19 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  // Double-tap/double-click handler
+  const handleImageClick = (e: React.MouseEvent | React.TouchEvent) => {
+    const now = Date.now();
+    const lastTap = lastTapRef.current;
+    if (now - lastTap < 300 && now - lastTap > 0) {
+      // Double tap/click detected
+      setShowHeartAnimation(true);
+      handleLike();
+      setTimeout(() => setShowHeartAnimation(false), 800);
+    }
+    lastTapRef.current = now;
   };
 
   return (
@@ -136,7 +151,12 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
 
           {/* POST IMAGE/VIDEO */}
           {post.image && (
-            <div className="rounded-lg overflow-hidden">
+            <div className="relative w-full" onClick={handleImageClick} onTouchEnd={handleImageClick} style={{ cursor: "pointer" }}>
+              {showHeartAnimation && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                  <HeartIcon className="w-32 h-32 text-red-500 fill-current heart-burst-animation" />
+                </div>
+              )}
               {post.mediaType?.startsWith("video") ? (
                 <VideoWithToggleControls src={post.image} />
               ) : (
@@ -155,16 +175,16 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
                 onClick={handleLike}
               >
                 {hasLiked ? (
-                  <HeartIcon className="size-5 fill-current" />
+                  <HeartIcon className="size-5 fill-current text-red-500" />
                 ) : (
-                  <HeartIcon className="size-5" />
+                  <HeartIcon className="size-5 text-red-500" />
                 )}
                 <span>{optimisticLikes}</span>
               </Button>
             ) : (
               <SignInButton mode="modal">
                 <Button variant="ghost" size="sm" className="text-muted-foreground gap-2">
-                  <HeartIcon className="size-5" />
+                  <HeartIcon className="size-5 text-red-500" />
                   <span>{optimisticLikes}</span>
                 </Button>
               </SignInButton>
