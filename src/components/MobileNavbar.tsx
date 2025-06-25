@@ -26,7 +26,7 @@ function MobileNavbar() {
   const { user } = useUser();
 
   return (
-    <div className="flex md:hidden items-center space-x-2 bg-gold-100 text-foreground">
+    <div className="flex md:hidden items-center space-x-2 bg-background text-foreground">
       {/* Hamburger menu only, no UserButton or SettingsDropdown outside */}
       <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
         <SheetTrigger asChild>
@@ -84,7 +84,7 @@ function MobileNavbar() {
                   </Link>
                 </Button>
                 <Button variant="ghost" className="flex items-center gap-3 justify-start hover:bg-transparent focus:bg-transparent" asChild>
-                  <Link href={`/profile/${user?.username ?? user?.emailAddresses[0].emailAddress.split("@")[0]}`} onClick={() => setShowMobileMenu(false)}>
+                  <Link href={`/profile/${user?.username ?? user?.emailAddresses[0].emailAddress.split("@")[0]}`} onClick={() => setShowMobileMenu(false)}> 
                     <UserIcon className="w-6 h-6 text-gold-500 hover:text-gold-600 transition" />
                     Profile
                   </Link>

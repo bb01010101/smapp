@@ -55,8 +55,8 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: #fffbea;
+    --foreground: #228B22;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
@@ -92,8 +92,8 @@
     --gold-900: 45 100% 15%;
   }
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: #111;
+    --foreground: #fff;
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
@@ -125,6 +125,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    background: var(--background);
+    color: var(--foreground);
   }
 }
 

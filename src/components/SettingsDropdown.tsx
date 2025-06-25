@@ -15,184 +15,136 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { useState, useEffect } from "react";
 import { SignOutButton } from "@clerk/nextjs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function SettingsDropdown() {
   const { theme, setTheme } = useTheme();
-  const [hue, setHue] = useState(120); // Default forest green hue
-  const [saturation, setSaturation] = useState(61); // Default saturation
-  const [lightness, setLightness] = useState(34); // Default lightness
+  // Default colors
+  const defaultColors = {
+    background: "#fffbea", // gold-50
+    foreground: "#228B22" // light forest green
+  };
+  const [colors, setColors] = useState({
+    background: defaultColors.background,
+    foreground: defaultColors.foreground,
+  });
   const [showColorTheme, setShowColorTheme] = useState(false);
+  const [colorThemeOpen, setColorThemeOpen] = useState(false);
 
   // Load saved color preferences from localStorage
   useEffect(() => {
-    const savedHue = localStorage.getItem('app-hue');
-    const savedSaturation = localStorage.getItem('app-saturation');
-    const savedLightness = localStorage.getItem('app-lightness');
-    
-    if (savedHue) setHue(parseInt(savedHue));
-    if (savedSaturation) setSaturation(parseInt(savedSaturation));
-    if (savedLightness) setLightness(parseInt(savedLightness));
+    const saved = localStorage.getItem('app-theme');
+    if (saved) {
+      setColors(JSON.parse(saved));
+    }
   }, []);
 
-  // Update CSS custom property when color changes
+  // Update CSS custom properties when colors change
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty('--foreground', `${hue} ${saturation}% ${lightness}%`);
-    
-    // Save to localStorage
-    localStorage.setItem('app-hue', hue.toString());
-    localStorage.setItem('app-saturation', saturation.toString());
-    localStorage.setItem('app-lightness', lightness.toString());
-  }, [hue, saturation, lightness]);
+    root.style.setProperty('--background', colors.background);
+    root.style.setProperty('--foreground', colors.foreground);
+    localStorage.setItem('app-theme', JSON.stringify(colors));
+  }, [colors]);
 
-  const handleHueChange = (value: number[]) => {
-    setHue(value[0]);
-  };
-
-  const handleSaturationChange = (value: number[]) => {
-    setSaturation(value[0]);
-  };
-
-  const handleLightnessChange = (value: number[]) => {
-    setLightness(value[0]);
+  const handleColorChange = (key: keyof typeof colors, value: string) => {
+    setColors((prev) => ({ ...prev, [key]: value }));
   };
 
   const resetToDefault = () => {
-    setHue(120);
-    setSaturation(61);
-    setLightness(34);
+    setColors(defaultColors);
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="hover:bg-transparent focus:bg-transparent">
-          <SettingsIcon className="h-5 w-5 text-gold-500 hover:text-gold-600 transition" />
-          <span className="sr-only">Settings</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
-        {!showColorTheme ? (
-          <>
-            <DropdownMenuLabel className="flex items-center gap-2">
-              <SettingsIcon className="h-4 w-4 text-gold-500" />
-              Settings
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {/* Theme Toggle */}
-            <DropdownMenuItem 
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                {theme === "dark" ? (
-                  <SunIcon className="h-4 w-4 text-gold-500 hover:text-gold-600 transition" />
-                ) : (
-                  <MoonIcon className="h-4 w-4 text-gold-500 hover:text-gold-600 transition" />
-                )}
-                <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {/* Color Theme Button */}
-            <DropdownMenuItem
-              onClick={() => setShowColorTheme(true)}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <PaletteIcon className="h-4 w-4 text-gold-500" />
-              <span>Color Theme</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {/* Sign Out Button */}
-            <SignOutButton>
-              <DropdownMenuItem className="flex items-center gap-2 text-red-600 hover:text-red-700 cursor-pointer">
-                <LogOutIcon className="h-4 w-4" />
-                <span>Sign Out</span>
-              </DropdownMenuItem>
-            </SignOutButton>
-          </>
-        ) : (
-          <div className="p-4 space-y-4">
-            <button
-              className="flex items-center gap-2 text-sm font-medium mb-2 hover:underline"
-              onClick={() => setShowColorTheme(false)}
-              type="button"
-            >
-              <ArrowLeftIcon className="h-4 w-4" />
-              Back
-            </button>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="hover:bg-transparent focus:bg-transparent">
+            <SettingsIcon className="h-5 w-5 text-gold-500 hover:text-gold-600 transition" />
+            <span className="sr-only">Settings</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-80">
+          <DropdownMenuLabel className="flex items-center gap-2">
+            <SettingsIcon className="h-4 w-4 text-gold-500" />
+            Settings
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {/* Theme Toggle */}
+          <DropdownMenuItem 
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="flex items-center gap-2 cursor-pointer"
+          >
             <div className="flex items-center gap-2">
-              <PaletteIcon className="h-4 w-4 text-gold-500" />
-              <span className="text-sm font-medium">Color Theme</span>
+              {theme === "dark" ? (
+                <SunIcon className="h-4 w-4 text-gold-500 hover:text-gold-600 transition" />
+              ) : (
+                <MoonIcon className="h-4 w-4 text-gold-500 hover:text-gold-600 transition" />
+              )}
+              <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
             </div>
-            {/* Hue Slider */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs">
-                <span>Hue</span>
-                <span>{hue}°</span>
-              </div>
-              <Slider
-                value={[hue]}
-                onValueChange={handleHueChange}
-                max={360}
-                min={0}
-                step={1}
-                className="w-full"
-              />
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          {/* Color Theme Button */}
+          <DropdownMenuItem
+            onClick={() => setColorThemeOpen(true)}
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            <PaletteIcon className="h-4 w-4 text-gold-500" />
+            <span>Color Theme</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          {/* Sign Out Button */}
+          <SignOutButton>
+            <DropdownMenuItem className="flex items-center gap-2 text-red-600 hover:text-red-700 cursor-pointer">
+              <LogOutIcon className="h-4 w-4" />
+              <span>Sign Out</span>
+            </DropdownMenuItem>
+          </SignOutButton>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {/* Color Theme Modal */}
+      <Dialog open={colorThemeOpen} onOpenChange={setColorThemeOpen}>
+        <DialogContent className="max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Color Theme</DialogTitle>
+          </DialogHeader>
+          {/* App Theme Color Picker */}
+          <div className="space-y-2 mb-4">
+            <div className="flex justify-between text-xs">
+              <span>App Theme</span>
+              <span>{colors.background}</span>
             </div>
-            {/* Saturation Slider */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs">
-                <span>Saturation</span>
-                <span>{saturation}%</span>
-              </div>
-              <Slider
-                value={[saturation]}
-                onValueChange={handleSaturationChange}
-                max={100}
-                min={0}
-                step={1}
-                className="w-full"
-              />
-            </div>
-            {/* Lightness Slider */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs">
-                <span>Lightness</span>
-                <span>{lightness}%</span>
-              </div>
-              <Slider
-                value={[lightness]}
-                onValueChange={handleLightnessChange}
-                max={100}
-                min={0}
-                step={1}
-                className="w-full"
-              />
-            </div>
-            {/* Color Preview */}
-            <div className="flex items-center gap-2 pt-2">
-              <span className="text-xs">Preview:</span>
-              <div 
-                className="w-6 h-6 rounded border"
-                style={{ backgroundColor: `hsl(${hue}, ${saturation}%, ${lightness}%)` }}
-              />
-              <span className="text-xs font-mono">
-                hsl({hue}, {saturation}%, {lightness}%)
-              </span>
-            </div>
-            {/* Reset Button */}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={resetToDefault}
-              className="w-full text-xs"
-            >
-              Reset to Default
-            </Button>
+            <input type="color" value={colors.background} onChange={e => handleColorChange('background', e.target.value)} className="w-12 h-8 border rounded" />
           </div>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          {/* Text Color Picker */}
+          <div className="space-y-2 mb-4">
+            <div className="flex justify-between text-xs">
+              <span>Text</span>
+              <span>{colors.foreground}</span>
+            </div>
+            <input type="color" value={colors.foreground} onChange={e => handleColorChange('foreground', e.target.value)} className="w-12 h-8 border rounded" />
+          </div>
+          <div className="text-xs text-muted-foreground pt-2">Default text color is light forest green (#228B22). If you don't see changes, try reloading the page.</div>
+          {/* Reset Button */}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={resetToDefault}
+            className="w-full text-xs mt-4"
+          >
+            Reset to Default
+          </Button>
+          <Button 
+            variant="secondary"
+            size="sm"
+            onClick={() => setColorThemeOpen(false)}
+            className="w-full text-xs mt-2"
+          >
+            Close
+          </Button>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 } 

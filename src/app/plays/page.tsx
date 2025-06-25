@@ -307,7 +307,7 @@ export default function PlaysPage() {
       }, 3000); // Show for 3 seconds
       
       return () => clearTimeout(timer);
-    }
+  }
   }, [showInstructions]);
 
   const handleLike = async (video: any) => {
@@ -586,7 +586,7 @@ export default function PlaysPage() {
   if (!loading && videos.length === 0) {
     return <div className="flex justify-center items-center h-screen bg-black text-white">No videos available.</div>;
   }
-  
+
   // Show loading spinner like in pawpad
   if (loading) {
     return (
@@ -682,7 +682,7 @@ export default function PlaysPage() {
                         handleLike(currentItem);
                       }}
                       disabled={isLiking}
-                    >
+                          >
                       <HeartIcon className={`w-20 h-20 ${hasLiked[currentItem.id] ? "fill-current" : ""}`} />
                       <span className="text-base ml-1">{optimisticLikes[currentItem.id]}</span>
                           </Button>
@@ -711,7 +711,7 @@ export default function PlaysPage() {
                       e.stopPropagation();
                       handleCommentToggle(currentVideoIndex);
                     }}
-                  >
+                        >
                     <MessageCircleIcon className={`w-20 h-20 ${showCommentsIdx === currentVideoIndex ? "fill-blue-500 text-blue-500" : ""}`} />
                     <span className="text-base ml-1">{currentItem._count.comments}</span>
                         </Button>
@@ -760,7 +760,7 @@ export default function PlaysPage() {
                       <div className="space-y-4">
                         {currentItem.comments.length === 0 ? (
                           <div className="text-muted-foreground text-center py-8">No comments yet.</div>
-                        ) : (
+                              ) : (
                           currentItem.comments.map((comment: any) => (
                                   <div key={comment.id} className="flex space-x-3">
                                     <Avatar className="size-8 flex-shrink-0">
@@ -911,12 +911,12 @@ export default function PlaysPage() {
                       }
                     }}
                   >
-                    <img
+                      <img
                       src={getPetMedia(currentItem)[petMediaIdx]}
                       alt={currentItem?.pet?.name || 'Dog'}
                       className="object-contain w-full h-full bg-black"
                       onError={() => handlePetImageError(currentItem._petIdx)}
-                    />
+                      />
                     {/* Dots for multiple media */}
                     {getPetMedia(currentItem).length > 1 && (
                       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1 z-20">
@@ -950,7 +950,7 @@ export default function PlaysPage() {
                         handleSwipeLeft(currentItem._petIdx);
                       }}
                       aria-label="Nope"
-                    >
+                        >
                       <XIcon className="w-8 h-8 text-red-500" />
                         </button>
                     {/* Blue Bone Button (Love) */}

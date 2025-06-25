@@ -659,23 +659,23 @@ function ProfilePageClient({
                     </div>
                     {/* Only show upload button if user owns this pet */}
                     {isOwnProfile && (
-                      <Button 
-                        onClick={handleUploadDaily}
-                        disabled={isUploading}
-                        className="flex items-center space-x-2 bg-gradient-to-tr from-orange-400 via-yellow-400 to-orange-600 text-white hover:scale-105"
-                      >
-                        {isUploading ? (
-                          <>
-                            <Loader2Icon className="w-4 h-4 animate-spin" />
-                            <span>Uploading...</span>
-                          </>
-                        ) : (
-                          <>
-                            <ImageIcon className="w-4 h-4" />
-                            <span>Upload Daily Photo</span>
-                          </>
-                        )}
-                      </Button>
+                    <Button 
+                      onClick={handleUploadDaily}
+                      disabled={isUploading}
+                      className="flex items-center space-x-2 bg-gradient-to-tr from-orange-400 via-yellow-400 to-orange-600 text-white hover:scale-105"
+                    >
+                      {isUploading ? (
+                        <>
+                          <Loader2Icon className="w-4 h-4 animate-spin" />
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <ImageIcon className="w-4 h-4" />
+                          <span>Upload Daily Photo</span>
+                        </>
+                      )}
+                    </Button>
                     )}
                   </div>
                   {/* Timeline progress bar */}

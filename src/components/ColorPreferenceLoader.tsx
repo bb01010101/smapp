@@ -4,17 +4,12 @@ import { useEffect } from 'react';
 
 export default function ColorPreferenceLoader() {
   useEffect(() => {
-    // Load saved color preferences from localStorage
-    const savedHue = localStorage.getItem('app-hue');
-    const savedSaturation = localStorage.getItem('app-saturation');
-    const savedLightness = localStorage.getItem('app-lightness');
-    
-    if (savedHue && savedSaturation && savedLightness) {
+    const saved = localStorage.getItem('app-theme');
+    if (saved) {
+      const { background, foreground } = JSON.parse(saved);
       const root = document.documentElement;
-      root.style.setProperty(
-        '--foreground', 
-        `${savedHue} ${savedSaturation}% ${savedLightness}%`
-      );
+      if (background) root.style.setProperty('--background', background);
+      if (foreground) root.style.setProperty('--foreground', foreground);
     }
   }, []);
 
