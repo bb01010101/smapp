@@ -19,11 +19,17 @@ import { useState } from "react";
 import { useAuth, SignInButton, SignOutButton, useUser, UserButton } from "@clerk/nextjs";
 import SettingsDropdown from "./SettingsDropdown";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 
 function MobileNavbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { isSignedIn } = useAuth();
   const { user } = useUser();
+  const { theme } = useTheme();
+
+  const sheetBg = theme === "dark"
+    ? { backgroundColor: "#111" }
+    : { backgroundColor: "var(--background)" };
 
   return (
     <div className="flex md:hidden items-center space-x-2 bg-background text-foreground">
@@ -34,7 +40,7 @@ function MobileNavbar() {
             <MenuIcon className="h-5 w-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="right" className="w-[300px]">
+        <SheetContent side="right" className="w-[300px] bg-background">
           <SheetHeader>
             <SheetTitle>Menu</SheetTitle>
           </SheetHeader>

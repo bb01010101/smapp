@@ -57,8 +57,8 @@
   :root {
     --background: #fffbea;
     --foreground: #228B22;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: #fffbea;
+    --card-foreground: #228B22;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
     --primary: 222.2 47.4% 11.2%;
@@ -94,8 +94,8 @@
   .dark {
     --background: #111;
     --foreground: #fff;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: #fffbea;
+    --card-foreground: #228B22;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
     --primary: 210 40% 98%;
@@ -127,6 +127,16 @@
     @apply bg-background text-foreground;
     background: var(--background);
     color: var(--foreground);
+  }
+  nav, .bg-background, [class*=nav], .dark nav, .dark .bg-background, .dark [class*=nav] {
+    /* Remove forced black background here */
+    background: var(--background) !important;
+  }
+  .dark nav, .dark .bg-background, .dark [class*=nav] {
+    background: #111 !important;
+  }
+  .dark body {
+    background: #111 !important;
   }
 }
 
