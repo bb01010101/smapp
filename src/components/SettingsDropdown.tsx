@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { MoonIcon, SunIcon, SettingsIcon, PaletteIcon, ArrowLeftIcon, LogOutIcon } from "lucide-react";
+import { MoonIcon, SunIcon, SettingsIcon, PaletteIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,10 +12,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Slider } from "@/components/ui/slider";
 import { useState, useEffect } from "react";
-import { SignOutButton } from "@clerk/nextjs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import Link from "next/link";
 
 export default function SettingsDropdown() {
   const { theme, setTheme } = useTheme();
@@ -28,10 +28,9 @@ export default function SettingsDropdown() {
     background: defaultColors.background,
     foreground: defaultColors.foreground,
   });
-  const [showColorTheme, setShowColorTheme] = useState(false);
   const [colorThemeOpen, setColorThemeOpen] = useState(false);
 
-  // Load saved color preferences from localStorage
+  // Load saved color preferences and Save n' Swipe from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('app-theme');
     if (saved) {
@@ -65,9 +64,11 @@ export default function SettingsDropdown() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80">
-          <DropdownMenuLabel className="flex items-center gap-2">
-            <SettingsIcon className="h-4 w-4 text-gold-500" />
-            Settings
+          <DropdownMenuLabel asChild>
+            <Link href="/settings" className="flex items-center gap-2 font-bold cursor-pointer px-2 py-1.5 rounded-md transition-colors hover:bg-accent focus:bg-accent">
+              <SettingsIcon className="h-4 w-4 text-gold-500" />
+              Settings
+            </Link>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           {/* Theme Toggle */}
@@ -93,14 +94,6 @@ export default function SettingsDropdown() {
             <PaletteIcon className="h-4 w-4 text-gold-500" />
             <span>Color Theme</span>
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          {/* Sign Out Button */}
-          <SignOutButton>
-            <DropdownMenuItem className="flex items-center gap-2 text-red-600 hover:text-red-700 cursor-pointer">
-              <LogOutIcon className="h-4 w-4" />
-              <span>Sign Out</span>
-            </DropdownMenuItem>
-          </SignOutButton>
         </DropdownMenuContent>
       </DropdownMenu>
       {/* Color Theme Modal */}

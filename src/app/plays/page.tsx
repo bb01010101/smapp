@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import toast from "react-hot-toast";
 import { useRouter } from 'next/navigation';
+import { usePersistentToggle } from "@/components/ui/usePersistentToggle";
 
 // Placeholder for HLS.js video player
 const VideoPlayer = dynamic(() => import("@/components/VideoFeed"), { ssr: false });
@@ -46,6 +47,12 @@ export default function PlaysPage() {
   const [dataFetched, setDataFetched] = useState(false);
   const [petMediaIdx, setPetMediaIdx] = useState(0);
   const [petAspectRatio, setPetAspectRatio] = useState<'square' | 'portrait' | 'landscape'>('portrait');
+  const [mounted, setMounted] = useState(false);
+  const [saveNSwipe] = usePersistentToggle('save-n-swipe', true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch user data separately from feed data
   useEffect(() => {
@@ -138,8 +145,13 @@ export default function PlaysPage() {
       petCardIndex++;
     }
     
+    // If Save n' Swipe is off, filter out pet cards
+    if (!saveNSwipe) {
+      return feed.filter(item => item._type !== 'pet');
+    }
+    
     return feed;
-  }, [videos, petCards]);
+  }, [videos, petCards, saveNSwipe]);
 
   // Set initial like state when user data is available
   useEffect(() => {
@@ -329,13 +341,14 @@ export default function PlaysPage() {
   };
 
   const handleDoubleLike = useCallback(async (video: any) => {
-    if (!dbUserId || hasLiked[video.id]) return;
-    
+    if (!dbUserId) return;
     setShowHeartAnimation({petIdx: -1, show: true});
     setTimeout(() => setShowHeartAnimation({petIdx: -1, show: false}), 1000);
-    
-    // Like the video
-    await handleLike(video);
+    if (!hasLiked[video.id]) {
+      // Like the video if not already liked
+      await handleLike(video);
+    }
+    // If already liked, just play the animation (do not unlike)
   }, [dbUserId, hasLiked, handleLike]);
 
   const handleVideoClick = useCallback((video: any, e: React.MouseEvent) => {
@@ -580,6 +593,8 @@ export default function PlaysPage() {
     setPetMediaIdx(0);
   }, [currentItem]);
 
+  if (!mounted) return null;
+  
   if (loading) return <div className="flex justify-center items-center h-screen bg-black">Loading...</div>;
   
   // If no videos at all, show a simple message
@@ -609,7 +624,7 @@ export default function PlaysPage() {
       {showHeartAnimation.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
           <div className="heart-burst-animation">
-            <HeartIcon className="w-32 h-32 text-green-500 fill-current" />
+            <HeartIcon className="w-32 h-32 text-red-500 fill-current" />
           </div>
         </div>
       )}
@@ -845,7 +860,7 @@ export default function PlaysPage() {
                 {showHeartAnimation.show && showHeartAnimation.petIdx === currentItem._petIdx && (
                   <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
                     <div className="heart-burst-animation">
-                      <HeartIcon className="w-32 h-32 text-green-500 fill-current" />
+                      <HeartIcon className="w-32 h-32 text-red-500 fill-current" />
                           </div>
                         </div>
                       )}

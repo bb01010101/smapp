@@ -18,6 +18,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useState } from "react";
 import { useAuth, SignInButton, SignOutButton, useUser, UserButton } from "@clerk/nextjs";
 import ProfileDropdown from "./ProfileDropdown";
+import SettingsDropdown from "./SettingsDropdown";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 
@@ -79,6 +80,9 @@ function MobileNavbar() {
               <>
                 <div className="pt-4 border-t border-gold-200">
                   <ProfileDropdown />
+                </div>
+                <div className="pt-2">
+                  <SettingsDropdown />
                 </div>
                 <div className="mb-4">
                   <UserButton 

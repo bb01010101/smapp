@@ -18,7 +18,6 @@ export default function VideoFeed({ src, poster }: { src: string; poster?: strin
   return (
     <div
       className="w-full h-full flex items-center justify-center bg-black relative"
-      onClick={() => setShowControls((v) => !v)}
       style={{ cursor: "pointer" }}
     >
       <video

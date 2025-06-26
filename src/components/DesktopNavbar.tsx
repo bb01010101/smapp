@@ -1,8 +1,9 @@
-import { BellIcon, HomeIcon, UserIcon, PawPrintIcon, StoreIcon, MessageCircleIcon, PlayCircle, DogIcon } from "lucide-react";
+import { BellIcon, HomeIcon, UserIcon, PawPrintIcon, StoreIcon, MessageCircleIcon, PlayCircle, DogIcon, SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SignInButton, UserButton } from "@clerk/nextjs";
 import ProfileDropdown from "./ProfileDropdown";
+import SettingsDropdown from "./SettingsDropdown";
 import { currentUser } from "@clerk/nextjs/server";
 
 async function DesktopNavbar() {
@@ -48,7 +49,7 @@ async function DesktopNavbar() {
       {user ? (
         <>
           <ProfileDropdown />
-          
+          <SettingsDropdown />
           <div className="ml-2">
             <UserButton 
               appearance={{
