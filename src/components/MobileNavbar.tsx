@@ -12,6 +12,7 @@ import {
   PlayCircle,
   DogIcon,
   SettingsIcon,
+  MapIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -61,6 +62,12 @@ function MobileNavbar() {
               <Link href="/plays" onClick={() => setShowMobileMenu(false)}>
                 <PlayCircle className="w-6 h-6 text-gold-500 hover:text-gold-600 transition" />
                 Plays
+              </Link>
+            </Button>
+            <Button variant="ghost" className="flex items-center gap-3 justify-start hover:bg-transparent focus:bg-transparent" asChild>
+              <Link href="/map" onClick={() => setShowMobileMenu(false)}>
+                <MapIcon className="w-6 h-6 text-gold-500 hover:text-gold-600 transition" />
+                Map
               </Link>
             </Button>
             <Button variant="ghost" className="flex items-center gap-3 justify-start hover:bg-transparent focus:bg-transparent" asChild>

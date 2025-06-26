@@ -1,4 +1,4 @@
-import { BellIcon, HomeIcon, UserIcon, PawPrintIcon, StoreIcon, MessageCircleIcon, PlayCircle, DogIcon } from "lucide-react";
+import { BellIcon, HomeIcon, UserIcon, PawPrintIcon, StoreIcon, MessageCircleIcon, PlayCircle, DogIcon, MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SignInButton, UserButton } from "@clerk/nextjs";
@@ -28,6 +28,13 @@ async function DesktopNavbar() {
         <Link href="/plays">
           <PlayCircle className="w-6 h-6 text-gold-500 hover:text-gold-600 transition" />
           <span className="hidden lg:inline">Plays</span>
+        </Link>
+      </Button>
+
+      <Button variant="ghost" className="flex items-center gap-2 hover:bg-transparent focus:bg-transparent" asChild>
+        <Link href="/map">
+          <MapIcon className="w-6 h-6 text-gold-500 hover:text-gold-600 transition" />
+          <span className="hidden lg:inline">Map</span>
         </Link>
       </Button>
 

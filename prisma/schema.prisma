@@ -26,6 +26,13 @@ model User {
   createdAt DateTime @default(now())  // member since 2025
   updatedAt DateTime @updatedAt
   isAdmin Boolean @default(false)
+  
+  // Location sharing fields for Map feature
+  latitude Float?
+  longitude Float?
+  locationSharingEnabled Boolean @default(false)
+  lastLocationUpdate DateTime?
+  
   barks Bark[]
   barkVotes BarkVote[]
 
@@ -47,6 +54,9 @@ model User {
   barkCommentVotes BarkCommentVote[]
 
   communitiesCreated Community[] @relation("CommunityCreator")
+
+  @@index([locationSharingEnabled, lastLocationUpdate])
+  @@index([latitude, longitude])
 }
 
 

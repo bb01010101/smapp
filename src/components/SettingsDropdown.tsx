@@ -57,50 +57,50 @@ export default function SettingsDropdown() {
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="hover:bg-transparent focus:bg-transparent">
-            <SettingsIcon className="h-5 w-5 text-gold-500 hover:text-gold-600 transition" />
-            <span className="sr-only">Settings</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-80">
-          <DropdownMenuLabel className="flex items-center gap-2">
-            <SettingsIcon className="h-4 w-4 text-gold-500" />
-            Settings
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {/* Theme Toggle */}
-          <DropdownMenuItem 
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="flex items-center gap-2 cursor-pointer"
-          >
-            <div className="flex items-center gap-2">
-              {theme === "dark" ? (
-                <SunIcon className="h-4 w-4 text-gold-500 hover:text-gold-600 transition" />
-              ) : (
-                <MoonIcon className="h-4 w-4 text-gold-500 hover:text-gold-600 transition" />
-              )}
-              <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-            </div>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          {/* Color Theme Button */}
-          <DropdownMenuItem
-            onClick={() => setColorThemeOpen(true)}
-            className="flex items-center gap-2 cursor-pointer"
-          >
-            <PaletteIcon className="h-4 w-4 text-gold-500" />
-            <span>Color Theme</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          {/* Sign Out Button */}
-          <SignOutButton>
-            <DropdownMenuItem className="flex items-center gap-2 text-red-600 hover:text-red-700 cursor-pointer">
-              <LogOutIcon className="h-4 w-4" />
-              <span>Sign Out</span>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="hover:bg-transparent focus:bg-transparent">
+          <SettingsIcon className="h-5 w-5 text-gold-500 hover:text-gold-600 transition" />
+          <span className="sr-only">Settings</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuLabel className="flex items-center gap-2">
+              <SettingsIcon className="h-4 w-4 text-gold-500" />
+              Settings
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {/* Theme Toggle */}
+            <DropdownMenuItem 
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                {theme === "dark" ? (
+                  <SunIcon className="h-4 w-4 text-gold-500 hover:text-gold-600 transition" />
+                ) : (
+                  <MoonIcon className="h-4 w-4 text-gold-500 hover:text-gold-600 transition" />
+                )}
+                <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+              </div>
             </DropdownMenuItem>
-          </SignOutButton>
+            <DropdownMenuSeparator />
+            {/* Color Theme Button */}
+            <DropdownMenuItem
+            onClick={() => setColorThemeOpen(true)}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <PaletteIcon className="h-4 w-4 text-gold-500" />
+              <span>Color Theme</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {/* Sign Out Button */}
+            <SignOutButton>
+              <DropdownMenuItem className="flex items-center gap-2 text-red-600 hover:text-red-700 cursor-pointer">
+                <LogOutIcon className="h-4 w-4" />
+                <span>Sign Out</span>
+              </DropdownMenuItem>
+            </SignOutButton>
         </DropdownMenuContent>
       </DropdownMenu>
       {/* Color Theme Modal */}
@@ -111,30 +111,30 @@ export default function SettingsDropdown() {
           </DialogHeader>
           {/* App Theme Color Picker */}
           <div className="space-y-2 mb-4">
-            <div className="flex justify-between text-xs">
+              <div className="flex justify-between text-xs">
               <span>App Theme</span>
               <span>{colors.background}</span>
             </div>
             <input type="color" value={colors.background} onChange={e => handleColorChange('background', e.target.value)} className="w-12 h-8 border rounded" />
-          </div>
+              </div>
           {/* Text Color Picker */}
           <div className="space-y-2 mb-4">
-            <div className="flex justify-between text-xs">
+              <div className="flex justify-between text-xs">
               <span>Text</span>
               <span>{colors.foreground}</span>
             </div>
             <input type="color" value={colors.foreground} onChange={e => handleColorChange('foreground', e.target.value)} className="w-12 h-8 border rounded" />
-          </div>
+            </div>
           <div className="text-xs text-muted-foreground pt-2">Default text color is light forest green (#228B22). If you don't see changes, try reloading the page.</div>
-          {/* Reset Button */}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={resetToDefault}
+            {/* Reset Button */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={resetToDefault}
             className="w-full text-xs mt-4"
-          >
-            Reset to Default
-          </Button>
+            >
+              Reset to Default
+            </Button>
           <Button 
             variant="secondary"
             size="sm"
