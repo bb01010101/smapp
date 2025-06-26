@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useAuth, SignInButton, SignOutButton, useUser, UserButton } from "@clerk/nextjs";
-import SettingsDropdown from "./SettingsDropdown";
+import ProfileDropdown from "./ProfileDropdown";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 
@@ -33,7 +33,7 @@ function MobileNavbar() {
 
   return (
     <div className="flex md:hidden items-center space-x-2 bg-background text-foreground">
-      {/* Hamburger menu only, no UserButton or SettingsDropdown outside */}
+      {/* Hamburger menu only, no UserButton or ProfileDropdown outside */}
       <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon">
@@ -77,25 +77,9 @@ function MobileNavbar() {
             </Button>
             {isSignedIn && (
               <>
-                <Button variant="ghost" className="flex items-center gap-3 justify-start hover:bg-transparent focus:bg-transparent" asChild>
-                  <Link href="/messages" onClick={() => setShowMobileMenu(false)}>
-                    <MessageCircleIcon className="w-6 h-6 text-gold-500 hover:text-gold-600 transition" />
-                    Messages
-                  </Link>
-                </Button>
-                <Button variant="ghost" className="flex items-center gap-3 justify-start hover:bg-transparent focus:bg-transparent" asChild>
-                  <Link href="/notifications" onClick={() => setShowMobileMenu(false)}>
-                    <BellIcon className="w-6 h-6 text-gold-500 hover:text-gold-600 transition" />
-                    Notifications
-                  </Link>
-                </Button>
-                <Button variant="ghost" className="flex items-center gap-3 justify-start hover:bg-transparent focus:bg-transparent" asChild>
-                  <Link href={`/profile/${user?.username ?? user?.emailAddresses[0].emailAddress.split("@")[0]}`} onClick={() => setShowMobileMenu(false)}> 
-                    <UserIcon className="w-6 h-6 text-gold-500 hover:text-gold-600 transition" />
-                    Profile
-                  </Link>
-                </Button>
-                <SettingsDropdown />
+                <div className="pt-4 border-t border-gold-200">
+                  <ProfileDropdown />
+                </div>
                 <div className="mb-4">
                   <UserButton 
                     appearance={{
@@ -108,13 +92,6 @@ function MobileNavbar() {
                       }
                     }}
                   />
-                </div>
-                <div className="pt-4 border-t border-gold-200">
-                  <SignOutButton>
-                    <Button variant="default" className="w-full">
-                      Sign Out
-                    </Button>
-                  </SignOutButton>
                 </div>
               </>
             )}

@@ -2,7 +2,7 @@ import { BellIcon, HomeIcon, UserIcon, PawPrintIcon, StoreIcon, MessageCircleIco
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SignInButton, UserButton } from "@clerk/nextjs";
-import SettingsDropdown from "./SettingsDropdown";
+import ProfileDropdown from "./ProfileDropdown";
 import { currentUser } from "@clerk/nextjs/server";
 
 async function DesktopNavbar() {
@@ -47,28 +47,7 @@ async function DesktopNavbar() {
 
       {user ? (
         <>
-          <Button variant="ghost" className="flex items-center gap-2 hover:bg-transparent focus:bg-transparent" asChild>
-            <Link href="/messages">
-              <MessageCircleIcon className="w-6 h-6 text-gold-500 hover:text-gold-600 transition" />
-              <span className="hidden lg:inline">Messages</span>
-            </Link>
-          </Button>
-          <Button variant="ghost" className="flex items-center gap-2 hover:bg-transparent focus:bg-transparent" asChild>
-            <Link href="/notifications">
-              <BellIcon className="w-6 h-6 text-gold-500 hover:text-gold-600 transition" />
-              <span className="hidden lg:inline">Notifications</span>
-            </Link>
-          </Button>
-          <Button variant="ghost" className="flex items-center gap-2 hover:bg-transparent focus:bg-transparent" asChild>
-            <Link
-              href={`/profile/${user.username ?? user.emailAddresses[0].emailAddress.split("@")[0]}`}
-            >
-              <UserIcon className="w-6 h-6 text-gold-500 hover:text-gold-600 transition" />
-              <span className="hidden lg:inline">Profile</span>
-            </Link>
-          </Button>
-          
-          <SettingsDropdown />
+          <ProfileDropdown />
           
           <div className="ml-2">
             <UserButton 
