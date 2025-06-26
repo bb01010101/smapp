@@ -661,7 +661,7 @@ export default function PlaysPage() {
       )}
       
       <div className="w-full flex justify-center items-center h-full">
-        <div className="w-full max-w-[400px] h-full flex items-center justify-center">
+        <div className="w-full max-w-[600px] h-full flex items-center justify-center">
           <div 
             key={currentVideoIndex}
             className="w-full h-full flex items-center justify-center transition-all duration-500 ease-in-out transform"
