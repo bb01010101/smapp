@@ -45,6 +45,7 @@ import { getOrCreateConversation } from "@/actions/dm.action";
 import dynamic from "next/dynamic";
 import EditFamilyModal from "@/components/EditFamilyModal";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import Link from "next/link";
 
 
 // This is the main client-side component for rendering a user's profile page
@@ -675,10 +676,11 @@ function ProfilePageClient({
                            return postDate.getTime() === today.getTime();
                          });
                          return (
-                           <div
+                           <Link
                              key={pet.id}
+                             href={`/pet/${pet.id}`}
                              className="flex flex-col items-center cursor-pointer group"
-                             onClick={() => openPetStory(pet)}
+                             prefetch={false}
                            >
                              <div className={
                                !hasPostedToday
@@ -690,7 +692,7 @@ function ProfilePageClient({
                                </Avatar>
                              </div>
                              <div className="font-medium text-xs mt-2 text-center w-16 truncate">{pet.name}</div>
-                           </div>
+                           </Link>
                          );
                        })}
                      </div>

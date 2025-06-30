@@ -234,4 +234,32 @@ export async function getProfileByUsername(username: string) {
     }
   }
 
+  export async function getProfileByUserId(userId: string) {
+    try {
+      return await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          image: true,
+          bio: true,
+          location: true,
+          website: true,
+          createdAt: true,
+          _count: {
+            select: {
+              followers: true,
+              following: true,
+              posts: true,
+            },
+          },
+        },
+      });
+    } catch (error) {
+      console.error('Error fetching user by ID:', error);
+      return null;
+    }
+  }
+
   
