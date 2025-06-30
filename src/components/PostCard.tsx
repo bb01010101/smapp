@@ -103,7 +103,12 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 truncate">
-                      <span className="font-semibold truncate">{post.pet.name}</span>
+                      <Link
+                        href={`/profile/${post.author.username}`}
+                        className="font-semibold truncate hover:underline"
+                      >
+                        {post.pet.name}
+                      </Link>
                       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                         <span>{post.pet.species}</span>
                         <span>•</span>
