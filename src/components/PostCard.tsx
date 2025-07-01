@@ -95,16 +95,16 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
           <div className="flex space-x-3 sm:space-x-4">
             {post.pet ? (
               <>
-                <Link href={`/profile/${post.author.username}`}>
-                <Avatar className="size-8 sm:w-10 sm:h-10">
-                  <AvatarImage src={post.pet.imageUrl || "/avatar.png"} />
-                </Avatar>
+                <Link href={`/pet/${post.pet.id}`}>
+                  <Avatar className="size-8 sm:w-10 sm:h-10">
+                    <AvatarImage src={post.pet.imageUrl || "/avatar.png"} />
+                  </Avatar>
                 </Link>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 truncate">
                       <Link
-                        href={`/profile/${post.author.username}`}
+                        href={`/pet/${post.pet.id}`}
                         className="font-semibold truncate hover:underline"
                       >
                         {post.pet.name}
