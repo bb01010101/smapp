@@ -7,7 +7,10 @@ export default async function PetProfilePage({ params }: { params: { petId: stri
   const pet = await getPetById(params.petId);
   if (!pet) return notFound();
   const posts = await getPetPosts(params.petId);
+  // Debug logs
+  console.log('pet.userId', pet.userId);
   const owner = pet.userId ? await getProfileByUserId(pet.userId) : null;
+  console.log('owner', owner);
 
   return <PetProfileClient pet={pet} posts={posts} owner={owner} />;
 } 

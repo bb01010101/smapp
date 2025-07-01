@@ -78,12 +78,18 @@ function MobileNavbar() {
             </Button>
             {isSignedIn && (
               <>
-                <div className="pt-4 border-t border-gold-200">
-                  <ProfileDropdown />
-                </div>
-                <div className="pt-2">
-                  <SettingsDropdown />
-                </div>
+                <Button variant="ghost" className="flex items-center gap-3 justify-start hover:bg-transparent focus:bg-transparent" asChild>
+                  <Link href={user ? `/profile/${user.username ?? user.emailAddresses?.[0]?.emailAddress?.split("@")[0]}` : "/profile"} onClick={() => setShowMobileMenu(false)}>
+                    <UserIcon className="w-6 h-6 text-gold-500 hover:text-gold-600 transition" />
+                    Profile
+                  </Link>
+                </Button>
+                <Button variant="ghost" className="flex items-center gap-3 justify-start hover:bg-transparent focus:bg-transparent" asChild>
+                  <Link href="/settings" onClick={() => setShowMobileMenu(false)}>
+                    <SettingsIcon className="w-6 h-6 text-gold-500 hover:text-gold-600 transition" />
+                    Settings
+                  </Link>
+                </Button>
                 <div className="mb-4">
                   <UserButton 
                     appearance={{

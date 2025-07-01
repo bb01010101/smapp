@@ -48,8 +48,8 @@ async function DesktopNavbar() {
 
       {user ? (
         <>
-          <ProfileDropdown />
-          <SettingsDropdown />
+          <ProfileDropdown showLabel />
+          <SettingsDropdown showLabel />
           <div className="ml-2">
             <UserButton 
               appearance={{

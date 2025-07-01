@@ -237,9 +237,10 @@ export async function getProfileByUsername(username: string) {
   export async function getProfileByUserId(userId: string) {
     try {
       return await prisma.user.findUnique({
-        where: { id: userId },
+        where: { clerkId: userId },
         select: {
           id: true,
+          clerkId: true,
           name: true,
           username: true,
           image: true,
@@ -257,7 +258,7 @@ export async function getProfileByUsername(username: string) {
         },
       });
     } catch (error) {
-      console.error('Error fetching user by ID:', error);
+      console.error('Error fetching user by Clerk ID:', error);
       return null;
     }
   }

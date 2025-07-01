@@ -34,6 +34,7 @@ export async function createPost(content: string, image: string, petId?: string 
             }
         }
 
+        // Create the post
         const post = await prisma.post.create({
             data:{
                 content,  
@@ -43,6 +44,42 @@ export async function createPost(content: string, image: string, petId?: string 
                 petId: petId || null,
             }
         })
+
+        // --- Pet streak logic ---
+        if (petId) {
+            // Find the most recent post for this pet (excluding the new one)
+            const lastPost = await prisma.post.findFirst({
+                where: {
+                    petId,
+                    id: { not: post.id },
+                    mediaType: { not: "video" }, // Only count image posts for streak
+                },
+                orderBy: { createdAt: "desc" },
+            });
+
+            let newStreak = 1;
+            if (lastPost) {
+                const lastDate = new Date(lastPost.createdAt);
+                const now = new Date(post.createdAt);
+                // Set both to midnight for day comparison
+                lastDate.setHours(0,0,0,0);
+                now.setHours(0,0,0,0);
+                const diffDays = Math.round((now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+                if (diffDays === 1) {
+                    // Increment streak
+                    const pet = await prisma.pet.findUnique({ where: { id: petId }, select: { streak: true } });
+                    newStreak = (pet?.streak || 0) + 1;
+                } else {
+                    // Reset streak
+                    newStreak = 1;
+                }
+            }
+            // Update the pet's streak
+            await prisma.pet.update({
+                where: { id: petId },
+                data: { streak: newStreak },
+            });
+        }
 
         revalidatePath("/"); // Purge the cache for the home page
         return { success:true, post }
@@ -447,5 +484,32 @@ export async function getRandomPetPostsWithImages(count: number = 3) {
     [posts[i], posts[j]] = [posts[j], posts[i]];
   }
   return posts.slice(0, count);
+}
+
+export async function updatePost(postId: string, data: { content?: string; image?: string }) {
+  try {
+    const userId = await getDbUserId();
+    if (!userId) return { success: false, error: "Unauthorized" };
+
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { authorId: true },
+    });
+    if (!post) return { success: false, error: "Post not found" };
+    if (post.authorId !== userId) return { success: false, error: "Unauthorized" };
+
+    const updated = await prisma.post.update({
+      where: { id: postId },
+      data: {
+        ...(data.content !== undefined ? { content: data.content } : {}),
+        ...(data.image !== undefined ? { image: data.image } : {}),
+      },
+    });
+    revalidatePath("/");
+    return { success: true, post: updated };
+  } catch (error) {
+    console.error("Failed to update post:", error);
+    return { success: false, error: "Failed to update post" };
+  }
 }
 

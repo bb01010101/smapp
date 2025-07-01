@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Switch } from "@/components/ui/switch";
 import Link from "next/link";
 
-export default function SettingsDropdown() {
+export default function SettingsDropdown({ showLabel = false }: { showLabel?: boolean }) {
   const { theme, setTheme } = useTheme();
   // Default colors
   const defaultColors = {
@@ -58,9 +58,9 @@ export default function SettingsDropdown() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="hover:bg-transparent focus:bg-transparent">
+          <Button variant="ghost" size="default" className="flex items-center gap-2 hover:bg-transparent focus:bg-transparent">
             <SettingsIcon className="h-5 w-5 text-gold-500 hover:text-gold-600 transition" />
-            <span className="sr-only">Settings</span>
+            {showLabel && <span className="hidden lg:inline">Settings</span>}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80">

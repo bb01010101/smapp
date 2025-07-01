@@ -19,15 +19,15 @@ import {
 import { SignOutButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 
-export default function ProfileDropdown() {
+export default function ProfileDropdown({ showLabel = false }: { showLabel?: boolean }) {
   const { user } = useUser();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="hover:bg-transparent focus:bg-transparent">
+        <Button variant="ghost" size="default" className="flex items-center gap-2 hover:bg-transparent focus:bg-transparent">
           <UserIcon className="h-5 w-5 text-gold-500 hover:text-gold-600 transition" />
-          <span className="sr-only">Profile</span>
+          {showLabel && <span className="hidden lg:inline">Profile</span>}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
