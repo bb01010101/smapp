@@ -50,7 +50,7 @@ export default function BarksPage() {
   const [barks, setBarks] = useState<any[]>([]);
   const [communities, setCommunities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
