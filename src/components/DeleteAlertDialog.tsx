@@ -19,6 +19,7 @@ interface DeleteAlertDialogProps {
   onDelete: () => Promise<void>;
   title?: string;
   description?: string;
+  triggerClassName?: string;
 }
 
 export function DeleteAlertDialog({
@@ -26,6 +27,7 @@ export function DeleteAlertDialog({
   onDelete,
   title = "Delete Post",
   description = "This action cannot be undone.",
+  triggerClassName,
 }: DeleteAlertDialogProps) {
   return (
     <AlertDialog>
@@ -33,7 +35,7 @@ export function DeleteAlertDialog({
         <Button
           variant="ghost"
           size="sm"
-          className="text-muted-foreground hover:text-red-500 -mr-2"
+          className={triggerClassName || "text-muted-foreground hover:text-red-500 -mr-2"}
         >
           {isDeleting ? (
             <Loader2Icon className="size-4 animate-spin" />

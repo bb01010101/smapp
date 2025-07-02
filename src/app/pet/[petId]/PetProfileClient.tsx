@@ -18,6 +18,7 @@ import dynamic from "next/dynamic";
 import { DeleteAlertDialog } from "@/components/DeleteAlertDialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import HorizontalTimeline from "@/components/HorizontalTimeline";
 
 // Dynamically import ImageUpload to avoid SSR issues
 const ImageUpload = dynamic(() => import("@/components/ImageUpload"), {
@@ -160,6 +161,46 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
   return (
     <div className="max-w-3xl mx-auto">
       <div className="grid grid-cols-1 gap-6">
+        {/* Horizontal Timeline */}
+        <div className="w-full">
+                     <HorizontalTimeline
+             posts={petPosts.map(post => ({
+               id: post.id,
+               image: post.image,
+               content: post.content,
+               createdAt: post.createdAt,
+               petId: post.petId,
+               pet: {
+                 id: pet.id,
+                 name: pet.name,
+                 imageUrl: pet.imageUrl,
+                 streak: pet.streak
+               }
+             }))}
+             pet={pet}
+             isOwnPet={isOwnPet}
+             onPostClick={(post) => {
+               const originalPost = posts.find(p => p.id === post.id);
+               if (originalPost) {
+                 setActivePost(originalPost);
+                 setModalOpen(true);
+               }
+             }}
+             onEditPost={(post) => {
+               const originalPost = posts.find(p => p.id === post.id);
+               if (originalPost) {
+                 openEditModal(originalPost);
+               }
+             }}
+             onDeletePost={handleDeletePost}
+             onUploadDaily={handleUploadDaily}
+             isUploading={isUploading}
+             expandable={true}
+             defaultExpanded={false}
+             className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-2xl p-6 shadow-lg border border-orange-100"
+           />
+        </div>
+
         <div className="w-full max-w-lg mx-auto">
           <Card className="bg-card">
             <CardContent className="pt-6">
