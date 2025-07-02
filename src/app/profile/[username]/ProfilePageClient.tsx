@@ -48,6 +48,7 @@ import EditFamilyModal from "@/components/EditFamilyModal";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import Link from "next/link";
 import { DeleteAlertDialog } from "@/components/DeleteAlertDialog";
+import HorizontalTimeline from "@/components/HorizontalTimeline";
 
 
 // This is the main client-side component for rendering a user's profile page
@@ -624,6 +625,43 @@ function ProfilePageClient({
  const [isEditing, setIsEditing] = useState(false);
  const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
 
+ // Pet colors for merged timeline
+ const petColors = {
+   ...currentPets.reduce((acc, pet, index) => {
+     const colors = [
+       'from-orange-400 via-yellow-400 to-orange-600',
+       'from-pink-400 via-rose-400 to-pink-600',
+       'from-blue-400 via-indigo-400 to-blue-600',
+       'from-green-400 via-emerald-400 to-green-600',
+       'from-purple-400 via-violet-400 to-purple-600',
+       'from-red-400 via-pink-400 to-red-600'
+     ];
+     acc[pet.id] = colors[index % colors.length];
+     return acc;
+   }, {} as { [key: string]: string })
+ };
+
+ // Get all timeline posts from all pets
+ const allTimelinePosts = posts
+   .filter(post => post.petId && (!post.mediaType || post.mediaType.startsWith('image')))
+   .map(post => {
+     const pet = currentPets.find(p => p.id === post.petId);
+     return {
+       id: post.id,
+       image: post.image,
+       content: post.content,
+       createdAt: post.createdAt,
+       petId: post.petId,
+       pet: pet ? {
+         id: pet.id,
+         name: pet.name,
+         imageUrl: pet.imageUrl,
+         streak: pet.streak
+       } : undefined
+     };
+   })
+   .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
 
  // --- Handler to open edit modal ---
  const openEditModal = (post: Post) => {
@@ -658,6 +696,45 @@ function ProfilePageClient({
      <div className="max-w-3xl mx-auto w-full h-full overflow-y-auto pt-20 scrollbar-hide">
      {/* Main grid layout for sidebar and content */}
        <div className="grid grid-cols-1 gap-6 p-6">
+       {/* Merged Family Timeline */}
+       {currentPets.length > 0 && allTimelinePosts.length > 0 && (
+         <div className="w-full">
+           <HorizontalTimeline
+             posts={allTimelinePosts}
+             isOwnPet={isOwnProfile}
+             onPostClick={(post) => {
+               const originalPost = posts.find(p => p.id === post.id);
+               if (originalPost) {
+                 setActivePost(originalPost);
+                 setModalOpen(true);
+               }
+             }}
+             onEditPost={(post) => {
+               const originalPost = posts.find(p => p.id === post.id);
+               if (originalPost) {
+                 openEditModal(originalPost);
+               }
+             }}
+             onDeletePost={async (postId) => {
+               const res = await deletePost(postId);
+               if (res.success) {
+                 window.location.reload();
+               } else {
+                 toast.error(res.error || "Failed to delete post");
+               }
+             }}
+             variant="merged"
+             petColors={petColors}
+             showPetInfo={true}
+             showStreak={false}
+             showUploadButton={false}
+             expandable={true}
+             defaultExpanded={false}
+             className="bg-gradient-to-r from-orange-50 via-yellow-50 to-orange-50 rounded-2xl p-6 shadow-lg border border-orange-100"
+           />
+         </div>
+       )}
+
        {/* Sidebar card with avatar, stats, and actions */}
        <div className="w-full max-w-lg mx-auto">
          <Card className="bg-card">
