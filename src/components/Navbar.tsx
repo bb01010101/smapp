@@ -14,14 +14,14 @@ async function Navbar() {
   return (
     <>
       {/* Top bar: logo and likes/messages for mobile, full nav for desktop */}
-      <nav className="shadow-md sticky top-0 w-full border-b bg-background text-foreground z-50">
-        <div className="max-w-7xl mx-auto px-4">
+    <nav className="shadow-md sticky top-0 w-full border-b bg-background text-foreground z-50">
+      <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center h-16 justify-between">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2">
-              <Image src="/logo.jpeg" alt="PetNet Logo" width={40} height={40} className="rounded-full" />
-              <span className="text-2xl font-bold text-foreground">PetNet</span>
-            </Link>
+            <Image src="/logo.jpeg" alt="PetNet Logo" width={40} height={40} className="rounded-full" />
+            <span className="text-2xl font-bold text-foreground">PetNet</span>
+          </Link>
             {/* Likes and messages for mobile, hidden on desktop */}
             <div className="flex md:hidden items-center gap-4">
               <Link href="/notifications" aria-label="Notifications">
@@ -33,7 +33,7 @@ async function Navbar() {
             </div>
             {/* Desktop nav */}
             <div className="hidden md:flex flex-1 items-center justify-end">
-              <DesktopNavbar />
+            <DesktopNavbar />
             </div>
           </div>
         </div>
@@ -43,7 +43,7 @@ async function Navbar() {
         <MobileNavbar />
       </div>
     </>
-  );
+    );
 }
 
 export default Navbar

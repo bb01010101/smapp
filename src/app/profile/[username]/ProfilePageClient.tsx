@@ -41,7 +41,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { getOrCreateConversation } from "@/actions/dm.action";
 import dynamic from "next/dynamic";
 import EditFamilyModal from "@/components/EditFamilyModal";
@@ -301,6 +301,8 @@ function ProfilePageClient({
  const [currentPets, setCurrentPets] = useState(pets);
  // Router for navigation
  const router = useRouter();
+ const params = useParams();
+ const username = params?.username || user.username;
 
 
  // State for the edit profile form
@@ -689,6 +691,37 @@ function ProfilePageClient({
    }
  };
 
+ const [followersOpen, setFollowersOpen] = useState(false);
+ const [followingOpen, setFollowingOpen] = useState(false);
+ const [followers, setFollowers] = useState<any[]>([]);
+ const [following, setFollowing] = useState<any[]>([]);
+ const [followersLoading, setFollowersLoading] = useState(false);
+ const [followingLoading, setFollowingLoading] = useState(false);
+
+ const fetchFollowers = async () => {
+   setFollowersLoading(true);
+   try {
+     const res = await fetch(`/api/users/${username}/followers`);
+     const data = await res.json();
+     setFollowers(data || []);
+   } catch {
+     setFollowers([]);
+   } finally {
+     setFollowersLoading(false);
+   }
+ };
+ const fetchFollowing = async () => {
+   setFollowingLoading(true);
+   try {
+     const res = await fetch(`/api/users/${username}/following`);
+     const data = await res.json();
+     setFollowing(data || []);
+   } catch {
+     setFollowing([]);
+   } finally {
+     setFollowingLoading(false);
+   }
+ };
 
  // Main return: renders the profile page layout
  return (
@@ -818,14 +851,14 @@ function ProfilePageClient({
                {/* PROFILE STATS */}
                <div className="w-full mt-6">
                  <div className="flex justify-between mb-4">
-                   <div>
-                     <div className="font-semibold">{user._count.following.toLocaleString()}</div>
-                     <div className="text-sm text-muted-foreground">Following</div>
+                   <div onClick={() => { setFollowingOpen(true); fetchFollowing(); }} className="cursor-pointer group">
+                     <div className="font-semibold group-hover:underline">{user._count.following.toLocaleString()}</div>
+                     <div className="text-sm text-muted-foreground group-hover:underline">Following</div>
                    </div>
                    <Separator orientation="vertical" />
-                   <div>
-                     <div className="font-semibold">{user._count.followers.toLocaleString()}</div>
-                     <div className="text-sm text-muted-foreground">Followers</div>
+                   <div onClick={() => { setFollowersOpen(true); fetchFollowers(); }} className="cursor-pointer group">
+                     <div className="font-semibold group-hover:underline">{user._count.followers.toLocaleString()}</div>
+                     <div className="text-sm text-muted-foreground group-hover:underline">Followers</div>
                    </div>
                    <Separator orientation="vertical" />
                    <div>
@@ -1495,6 +1528,62 @@ function ProfilePageClient({
                {isEditing ? "Saving..." : "Save Changes"}
              </Button>
            </div>
+         </DialogContent>
+       </Dialog>
+
+       {/* Followers Modal */}
+       <Dialog open={followersOpen} onOpenChange={setFollowersOpen}>
+         <DialogContent className="max-w-md w-full">
+           <DialogHeader>
+             <DialogTitle>Followers</DialogTitle>
+           </DialogHeader>
+           {followersLoading ? (
+             <div className="py-8 text-center">Loading...</div>
+           ) : followers.length === 0 ? (
+             <div className="py-8 text-center text-muted-foreground">No followers yet.</div>
+           ) : (
+             <ul className="divide-y">
+               {followers.map(f => (
+                 <li key={f.id} className="flex items-center gap-3 py-3">
+                   <Link href={`/profile/${f.username}`} className="flex items-center gap-3">
+                     <Avatar className="w-8 h-8"><AvatarImage src={f.image || "/avatar.png"} /></Avatar>
+                     <div>
+                       <div className="font-medium hover:underline">{f.name || f.username}</div>
+                       <div className="text-xs text-muted-foreground">@{f.username}</div>
+                     </div>
+                   </Link>
+                 </li>
+               ))}
+             </ul>
+           )}
+         </DialogContent>
+       </Dialog>
+
+       {/* Following Modal */}
+       <Dialog open={followingOpen} onOpenChange={setFollowingOpen}>
+         <DialogContent className="max-w-md w-full">
+           <DialogHeader>
+             <DialogTitle>Following</DialogTitle>
+           </DialogHeader>
+           {followingLoading ? (
+             <div className="py-8 text-center">Loading...</div>
+           ) : following.length === 0 ? (
+             <div className="py-8 text-center text-muted-foreground">Not following anyone yet.</div>
+           ) : (
+             <ul className="divide-y">
+               {following.map(f => (
+                 <li key={f.id} className="flex items-center gap-3 py-3">
+                   <Link href={`/profile/${f.username}`} className="flex items-center gap-3">
+                     <Avatar className="w-8 h-8"><AvatarImage src={f.image || "/avatar.png"} /></Avatar>
+                     <div>
+                       <div className="font-medium hover:underline">{f.name || f.username}</div>
+                       <div className="text-xs text-muted-foreground">@{f.username}</div>
+                     </div>
+                   </Link>
+                 </li>
+               ))}
+             </ul>
+           )}
          </DialogContent>
        </Dialog>
        </div>

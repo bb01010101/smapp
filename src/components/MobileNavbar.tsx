@@ -26,13 +26,13 @@ function MobileNavbar() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-gold-200 flex md:hidden justify-around items-center h-16 shadow-lg">
       <Link href="/" className="flex flex-col items-center justify-center flex-1 py-2">
         <HomeIcon className="w-7 h-7 text-gold-500" />
-      </Link>
+              </Link>
       <Link href="/pawpad" className="flex flex-col items-center justify-center flex-1 py-2">
         <PawPrintIcon className="w-7 h-7 text-gold-500" />
-      </Link>
+              </Link>
       <Link href="/marketplace" className="flex flex-col items-center justify-center flex-1 py-2">
         <StoreIcon className="w-7 h-7 text-gold-500" />
-      </Link>
+              </Link>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <button
@@ -49,14 +49,14 @@ function MobileNavbar() {
       </Dialog>
       <Link href="/plays" className="flex flex-col items-center justify-center flex-1 py-2">
         <PlayCircle className="w-7 h-7 text-gold-500" />
-      </Link>
+              </Link>
       <Link href="/barks" className="flex flex-col items-center justify-center flex-1 py-2">
         <DogIcon className="w-7 h-7 text-gold-500" />
-      </Link>
+              </Link>
       <Link href={isSignedIn && user ? `/profile/${user.username ?? user.emailAddresses?.[0]?.emailAddress?.split("@")[0]}` : "/profile"} className="flex flex-col items-center justify-center flex-1 py-2">
         <UserIcon className="w-7 h-7 text-gold-500" />
-      </Link>
-    </nav>
+                  </Link>
+          </nav>
   );
 }
 
