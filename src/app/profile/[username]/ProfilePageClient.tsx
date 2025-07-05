@@ -959,7 +959,7 @@ function ProfilePageClient({
          {/* User's posts grid */}
          <TabsContent value="posts" className="mt-6">
            <>
-             {posts.length > 0 ? (
+             {posts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).length > 0 ? (
                <>
                  <style>{`
                    .profile-grid {
@@ -982,7 +982,7 @@ function ProfilePageClient({
                    }
                  `}</style>
                  <div className="profile-grid">
-                   {posts.map((post, idx) => (
+                   {posts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).map((post, idx) => (
                      <div
                        key={post.id}
                        className="profile-item group relative"
@@ -1047,7 +1047,7 @@ function ProfilePageClient({
          {/* User's liked posts grid */}
          <TabsContent value="likes" className="mt-6">
            <>
-             {likedPosts.length > 0 ? (
+             {likedPosts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).length > 0 ? (
                <>
                  <style>{`
                    .profile-grid {
@@ -1070,7 +1070,7 @@ function ProfilePageClient({
                    }
                  `}</style>
                  <div className="profile-grid">
-                   {likedPosts.map((post, idx) => (
+                   {likedPosts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).map((post, idx) => (
                      <div
                        key={post.id}
                        className="profile-item"
