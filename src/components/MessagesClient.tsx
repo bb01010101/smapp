@@ -24,7 +24,8 @@ export default function MessagesClient({ conversations }: { conversations: any[]
   const [convoList, setConvoList] = useState(conversations);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
+  if (!isLoaded) return <div>Loading...</div>;
 
   // Find selected conversation
   const selected = convoList.find((c) => c.id === selectedId) || convoList[0];

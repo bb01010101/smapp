@@ -5,7 +5,7 @@ import MobileNavbar from './MobileNavbar';
 import { currentUser } from '@clerk/nextjs/server';
 import { syncUser } from '@/actions/user.action';
 import Image from "next/image";
-import { BellIcon, MessageCircleIcon } from "lucide-react";
+import { BellIcon, MessageCircleIcon, StoreIcon } from "lucide-react";
 
 async function Navbar() {
   const user = await currentUser();
@@ -19,11 +19,13 @@ async function Navbar() {
           <div className="flex items-center h-16 justify-between">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.jpeg" alt="PetNet Logo" width={40} height={40} className="rounded-full" />
-            <span className="text-2xl font-bold text-foreground">PetNet</span>
+            <span className="text-4xl font-bold text-foreground tracking-wide" style={{ fontFamily: "'Lobster', cursive", letterSpacing: "0.04em" }}>PetNet</span>
           </Link>
             {/* Likes and messages for mobile, hidden on desktop */}
             <div className="flex md:hidden items-center gap-4">
+              <Link href="/marketplace" aria-label="Marketplace">
+                <StoreIcon className="w-7 h-7 text-gold-500 hover:text-gold-600 transition" />
+              </Link>
               <Link href="/notifications" aria-label="Notifications">
                 <BellIcon className="w-7 h-7 text-gold-500 hover:text-gold-600 transition" />
               </Link>

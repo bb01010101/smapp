@@ -5,6 +5,12 @@ import { formatDistanceToNow } from "date-fns";
 import { useUser } from "@clerk/nextjs";
 import React, { useState } from "react";
 
+// Simple markdown link renderer
+function renderMarkdownLinks(text: string) {
+  // Replace [text](url) with <a href="url" target="_blank" rel="noopener noreferrer">text</a>
+  return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="underline text-blue-200 hover:text-blue-400">$1</a>');
+}
+
 export default function ChatWindow({ messages, other, handleSend }: any) {
   const { user } = useUser();
   const [localMessages, setLocalMessages] = useState(messages);
@@ -59,7 +65,7 @@ export default function ChatWindow({ messages, other, handleSend }: any) {
                 <div key={msg.id} className="flex justify-end items-end gap-2 mb-1">
                   <div className="flex flex-col items-end max-w-xs ml-auto">
                     <div className="rounded-2xl px-4 py-2 inline-block mt-1 mb-1 bg-blue-500 text-white shadow-md text-base">
-                      {msg.content}
+                      <span dangerouslySetInnerHTML={{ __html: renderMarkdownLinks(msg.content) }} />
                     </div>
                     <div className="text-xs text-muted-foreground pr-2 mt-1">
                       {formatDistanceToNow(new Date(msg.createdAt))} ago
@@ -82,7 +88,7 @@ export default function ChatWindow({ messages, other, handleSend }: any) {
                   </div>
                   <div className="flex flex-col items-start max-w-xs">
                     <div className="rounded-2xl px-4 py-2 inline-block mt-1 mb-1 bg-gray-200 dark:bg-gray-700 text-black dark:text-white shadow text-base">
-                      {msg.content}
+                      <span dangerouslySetInnerHTML={{ __html: renderMarkdownLinks(msg.content) }} />
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       {formatDistanceToNow(new Date(msg.createdAt))} ago

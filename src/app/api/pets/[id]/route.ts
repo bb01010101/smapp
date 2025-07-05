@@ -2,6 +2,35 @@ import { getAuth } from '@clerk/nextjs/server';
 import { NextResponse, NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 
+// GET /api/pets/[id] - get pet and up to 6 recent posts with images
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const pet = await prisma.pet.findUnique({
+      where: { id: params.id },
+      select: {
+        id: true,
+        name: true,
+        imageUrl: true,
+        userId: true,
+        bio: true,
+        breed: true,
+        species: true,
+        age: true,
+        posts: {
+          where: { image: { not: null } },
+          orderBy: { createdAt: 'desc' },
+          take: 6,
+          select: { image: true }
+        }
+      }
+    });
+    if (!pet) return NextResponse.json({ error: 'Pet not found' }, { status: 404 });
+    return NextResponse.json({ pet, posts: pet.posts });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch pet posts' }, { status: 500 });
+  }
+}
+
 // PUT /api/pets/[id] - update a pet
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   const { userId } = getAuth(req);
