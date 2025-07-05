@@ -316,6 +316,43 @@ export default function PawPad() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [activePost, setActivePost] = useState<Post | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (!value) {
+      setSearchResults([]);
+      return;
+    }
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(value)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data.results);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (err) {
+        setSearchResults([]);
+      }
+    }, 300);
+  };
+
+  const handleResultClick = (item: any) => {
+    // TODO: Navigate to user, pet, or post page
+    if (item.type === 'user') {
+      window.location.href = `/profile/${item.username}`;
+    } else if (item.type === 'pet') {
+      window.location.href = `/pet/${item.id}`;
+    } else if (item.type === 'post') {
+      window.location.href = `/posts/${item.id}`;
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -376,6 +413,58 @@ export default function PawPad() {
         <div className="flex items-center justify-center gap-2 mb-8">
           <PawPrintIcon className="w-8 h-8 text-primary" />
           <h1 className="text-4xl font-bold text-center">Explore</h1>
+        </div>
+        {/* Universal Search Bar */}
+        <div className="flex justify-center mb-6">
+          <div className="w-full max-w-xl relative">
+            <input
+              type="text"
+              placeholder="Search users, pets, posts..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
+            {searchResults.length > 0 && searchQuery && (
+              <div className="absolute left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-80 overflow-y-auto">
+                {/* Grouped Results */}
+                {searchResults.some(r => r.type === 'user') && (
+                  <div>
+                    <div className="px-4 py-2 text-xs text-gray-500">Users</div>
+                    {searchResults.filter(r => r.type === 'user').map(user => (
+                      <div key={user.id} className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2" onClick={() => handleResultClick(user)}>
+                        <Avatar className="w-6 h-6"><AvatarImage src={user.image || '/avatar.png'} /></Avatar>
+                        <span className="font-medium">{user.name || user.username}</span>
+                        <span className="text-xs text-gray-400">@{user.username}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {searchResults.some(r => r.type === 'pet') && (
+                  <div>
+                    <div className="px-4 py-2 text-xs text-gray-500">Pets</div>
+                    {searchResults.filter(r => r.type === 'pet').map(pet => (
+                      <div key={pet.id} className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2" onClick={() => handleResultClick(pet)}>
+                        <Avatar className="w-6 h-6"><AvatarImage src={pet.imageUrl || '/avatar.png'} /></Avatar>
+                        <span className="font-medium">{pet.name}</span>
+                        <span className="text-xs text-gray-400">{pet.species}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {searchResults.some(r => r.type === 'post') && (
+                  <div>
+                    <div className="px-4 py-2 text-xs text-gray-500">Posts</div>
+                    {searchResults.filter(r => r.type === 'post').map(post => (
+                      <div key={post.id} className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2" onClick={() => handleResultClick(post)}>
+                        <img src={post.image || '/placeholder.png'} alt="Post" className="w-6 h-6 rounded object-cover" />
+                        <span className="font-medium truncate max-w-xs">{post.content || post.title || 'Post'}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         {loading ? (
           <div className="text-center py-8">
