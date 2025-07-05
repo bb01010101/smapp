@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   title: "Petnet",
   description: "A modern social media app powered by Next.js",
   icons: {
-    icon: '/favicon.ico',
+    icon: '/otis-v2.png',
   },
 };
 
@@ -41,7 +41,7 @@ export default function RootLayout({
     >
       <html lang="en" suppressHydrationWarning>
         <head>
-          <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+          <link rel="icon" href="/otis-v2.png" type="image/png" />
           <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet" />
         </head>
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
