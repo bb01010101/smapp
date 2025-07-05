@@ -595,7 +595,11 @@ export default function PlaysPage() {
 
   if (!mounted) return null;
   
-  if (loading) return <div className="flex justify-center items-center h-screen bg-black">Loading...</div>;
+  if (loading) return (
+    <div className="flex justify-center items-center h-screen">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+    </div>
+  );
   
   // If no videos at all, show a simple message
   if (!loading && videos.length === 0) {

@@ -10,6 +10,7 @@ import {
   PlayCircle,
   DogIcon,
   PlusIcon,
+  HeartIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth, useUser } from "@clerk/nextjs";
@@ -26,6 +27,9 @@ function MobileNavbar() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-gold-200 flex md:hidden justify-around items-center h-16 shadow-lg">
       <Link href="/" className="flex flex-col items-center justify-center flex-1 py-2">
         <HomeIcon className="w-7 h-7 text-gold-500" />
+              </Link>
+      <Link href="/swipensave" className="flex flex-col items-center justify-center flex-1 py-2">
+        <HeartIcon className="w-7 h-7 text-gold-500" />
               </Link>
       <Link href="/pawpad" className="flex flex-col items-center justify-center flex-1 py-2">
         <PawPrintIcon className="w-7 h-7 text-gold-500" />

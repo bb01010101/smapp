@@ -1550,7 +1550,7 @@ function ProfilePageClient({
                      <div>
                        <div className="font-medium hover:underline">{f.name || f.username}</div>
                        <div className="text-xs text-muted-foreground">@{f.username}</div>
-                     </div>
+       </div>
                    </Link>
                  </li>
                ))}
