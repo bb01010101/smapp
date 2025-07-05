@@ -5,29 +5,44 @@ import MobileNavbar from './MobileNavbar';
 import { currentUser } from '@clerk/nextjs/server';
 import { syncUser } from '@/actions/user.action';
 import Image from "next/image";
-import { HomeIcon, SearchIcon, PawPrintIcon, MessageCircleIcon, BellIcon, UserIcon } from "lucide-react";
+import { BellIcon, MessageCircleIcon } from "lucide-react";
 
 async function Navbar() {
   const user = await currentUser();
   if(user) await syncUser(); // POST
 
   return (
+    <>
+      {/* Top bar: logo and likes/messages for mobile, full nav for desktop */}
     <nav className="shadow-md sticky top-0 w-full border-b bg-background text-foreground z-50">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center h-16">
-          {/* Logo in top left */}
-          <Link href="/" className="flex items-center gap-2 mr-6">
+          <div className="flex items-center h-16 justify-between">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2">
             <Image src="/logo.jpeg" alt="PetNet Logo" width={40} height={40} className="rounded-full" />
             <span className="text-2xl font-bold text-foreground">PetNet</span>
           </Link>
-          {/* Main navigation shifted right for balance */}
-          <div className="flex-1 flex items-center justify-end">
+            {/* Likes and messages for mobile, hidden on desktop */}
+            <div className="flex md:hidden items-center gap-4">
+              <Link href="/notifications" aria-label="Notifications">
+                <BellIcon className="w-7 h-7 text-gold-500 hover:text-gold-600 transition" />
+              </Link>
+              <Link href="/messages" aria-label="Messages">
+                <MessageCircleIcon className="w-7 h-7 text-gold-500 hover:text-gold-600 transition" />
+              </Link>
+            </div>
+            {/* Desktop nav */}
+            <div className="hidden md:flex flex-1 items-center justify-end">
             <DesktopNavbar />
-            <MobileNavbar />
+            </div>
           </div>
         </div>
+      </nav>
+      {/* Bottom nav for mobile only */}
+      <div className="md:hidden">
+        <MobileNavbar />
       </div>
-    </nav>  
+    </>
     );
 }
 

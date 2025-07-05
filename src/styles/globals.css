@@ -100,3 +100,26 @@
   transform: scale(1.1) rotate(45deg);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
 }
+
+/* Fixed bottom navigation bar for mobile */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--background);
+  border-top: 1px solid var(--gold-200);
+  box-shadow: 0 -2px 8px 0 rgba(0,0,0,0.04);
+  height: 4rem;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media (min-width: 768px) {
+  .mobile-bottom-nav {
+    display: none;
+  }
+}
