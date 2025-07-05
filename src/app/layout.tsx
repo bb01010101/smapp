@@ -42,6 +42,7 @@ export default function RootLayout({
       <html lang="en" suppressHydrationWarning>
         <head>
           <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+          <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet" />
         </head>
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <ThemeProvider

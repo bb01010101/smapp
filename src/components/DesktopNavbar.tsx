@@ -1,13 +1,24 @@
+"use client";
+
 import { BellIcon, HomeIcon, UserIcon, PawPrintIcon, StoreIcon, MessageCircleIcon, PlayCircle, DogIcon, SettingsIcon, HeartIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { SignInButton, UserButton } from "@clerk/nextjs";
+import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import ProfileDropdown from "./ProfileDropdown";
 import SettingsDropdown from "./SettingsDropdown";
-import { currentUser } from "@clerk/nextjs/server";
 
-async function DesktopNavbar() {
-  const user = await currentUser();
+function DesktopNavbar() {
+  const { user, isLoaded } = useUser();
+
+  if (!isLoaded) {
+    return (
+      <div className="hidden md:flex items-center space-x-4 bg-background text-foreground">
+        <div className="animate-pulse bg-gray-200 h-6 w-20 rounded"></div>
+        <div className="animate-pulse bg-gray-200 h-6 w-20 rounded"></div>
+        <div className="animate-pulse bg-gray-200 h-6 w-20 rounded"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="hidden md:flex items-center space-x-4 bg-background text-foreground">

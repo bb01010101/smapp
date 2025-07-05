@@ -34,9 +34,6 @@ function MobileNavbar() {
       <Link href="/pawpad" className="flex flex-col items-center justify-center flex-1 py-2">
         <PawPrintIcon className="w-7 h-7 text-gold-500" />
               </Link>
-      <Link href="/marketplace" className="flex flex-col items-center justify-center flex-1 py-2">
-        <StoreIcon className="w-7 h-7 text-gold-500" />
-              </Link>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <button
