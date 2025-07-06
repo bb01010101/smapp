@@ -2,15 +2,13 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
-import { HeartIcon, MessageCircleIcon, XIcon, Bone } from "lucide-react";
+import { HeartIcon, MessageCircleIcon } from "lucide-react";
 import Link from "next/link";
 import { toggleLike, createComment } from "@/actions/post.action";
 import { useUser, SignInButton } from "@clerk/nextjs";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import toast from "react-hot-toast";
-import { useRouter } from 'next/navigation';
-import { usePersistentToggle } from "@/components/ui/usePersistentToggle";
 
 // Placeholder for HLS.js video player
 const VideoPlayer = dynamic(() => import("@/components/VideoFeed"), { ssr: false });
@@ -32,23 +30,16 @@ export default function PlaysPage() {
   const [optimisticLikes, setOptimisticLikes] = useState<{ [id: string]: number }>({});
   const [hasLiked, setHasLiked] = useState<{ [id: string]: boolean }>({});
   const [dbUserId, setDbUserId] = useState<string | null>(null);
-  const [showHeartAnimation, setShowHeartAnimation] = useState<{petIdx: number, show: boolean}>({petIdx: -1, show: false});
-  const [showBoneAnimation, setShowBoneAnimation] = useState<{petIdx: number, show: boolean}>({petIdx: -1, show: false});
-  const [showXAnimation, setShowXAnimation] = useState<{petIdx: number, show: boolean}>({petIdx: -1, show: false});
+  const [showHeartAnimation, setShowHeartAnimation] = useState(false);
   const [lastTapTime, setLastTapTime] = useState<{ [id: string]: number }>({});
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [navigationDirection, setNavigationDirection] = useState<'up' | 'down' | null>(null);
   const [showInstructions, setShowInstructions] = useState(true);
-  const router = useRouter();
-  const [petCards, setPetCards] = useState<any[]>([]);
-  const [petCardSwipe, setPetCardSwipe] = useState<{dir: 'left' | 'right' | null, idx: number | null}>({dir: null, idx: null});
-  const [loveCounts, setLoveCounts] = useState<{[petIdx: number]: number}>({});
-  const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
   const [dataFetched, setDataFetched] = useState(false);
-  const [petMediaIdx, setPetMediaIdx] = useState(0);
-  const [petAspectRatio, setPetAspectRatio] = useState<'square' | 'portrait' | 'landscape'>('portrait');
   const [mounted, setMounted] = useState(false);
-  const [saveNSwipe] = usePersistentToggle('save-n-swipe', true);
+  // Add state for touch positions
+  const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{x: number, y: number} | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -82,10 +73,6 @@ export default function PlaysPage() {
         const videoRes = await fetch("/api/plays?limit=10");
         const videoData = await videoRes.json();
         
-        // Fetch pet cards
-        const petRes = await fetch('/api/pets/random-posts');
-        const petData = await petRes.json();
-        
         // Shuffle videos with a fixed seed
         const shuffledVideos = [...videoData];
         for (let i = shuffledVideos.length - 1; i > 0; i--) {
@@ -94,64 +81,16 @@ export default function PlaysPage() {
         }
         
         setVideos(shuffledVideos);
-        setPetCards(petData.posts || []);
         setDataFetched(true);
-        
-        // Set initial love counts for pet cards
-        const petLoveCounts: {[petIdx: number]: number} = {};
-        (petData.posts || []).forEach((post: any, idx: number) => {
-          petLoveCounts[idx] = post.pet?.loveCount || 0;
-        });
-        setLoveCounts(petLoveCounts);
       } catch (err) {
-        console.error("Failed to fetch videos or pets:", err);
+        console.error("Failed to fetch videos:", err);
         setVideos([]);
-        setPetCards([]);
       } finally {
         setLoading(false);
       }
     }
     fetchData();
   }, [dataFetched]);
-
-  // Create stable feed using useMemo
-  const stableFeed = useMemo(() => {
-    if (!videos.length || !petCards.length) return [];
-    
-    const feed = [];
-    let petCardIndex = 0;
-    
-    // Add videos and deterministically insert pet cards
-    videos.forEach((video: any, idx: number) => {
-      feed.push({ ...video, _type: 'video', _originalIndex: idx });
-      
-      // Use seeded random for consistent placement
-      const randomValue = seededRandom(idx * 67890);
-      if (randomValue < 0.35 && petCardIndex < petCards.length) {
-        const pet = petCards[petCardIndex];
-        if (pet?.image || pet?.pet?.imageUrl) {
-          feed.push({ ...pet, _type: 'pet', _petIdx: petCardIndex });
-        }
-        petCardIndex++;
-      }
-    });
-    
-    // Add any remaining pet cards at the end
-    while (petCardIndex < petCards.length) {
-      const pet = petCards[petCardIndex];
-      if (pet?.image || pet?.pet?.imageUrl) {
-        feed.push({ ...pet, _type: 'pet', _petIdx: petCardIndex });
-      }
-      petCardIndex++;
-    }
-    
-    // If Save n' Swipe is off, filter out pet cards
-    if (!saveNSwipe) {
-      return feed.filter(item => item._type !== 'pet');
-    }
-    
-    return feed;
-  }, [videos, petCards, saveNSwipe]);
 
   // Set initial like state when user data is available
   useEffect(() => {
@@ -193,16 +132,16 @@ export default function PlaysPage() {
       
       if (e.code === 'Space' && !e.repeat) {
         e.preventDefault();
-        if (stableFeed.length > 1) {
+        if (videos.length > 1) {
           setNavigationDirection('up');
-          setCurrentVideoIndex(prev => (prev + 1) % stableFeed.length);
+          setCurrentVideoIndex(prev => (prev + 1) % videos.length);
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [stableFeed, showCommentsIdx]);
+  }, [videos, showCommentsIdx]);
 
   // Handle mousewheel navigation with smooth scrolling
   useEffect(() => {
@@ -219,15 +158,15 @@ export default function PlaysPage() {
       
       if (isScrolling) return;
       
-      if (stableFeed.length > 1) {
+      if (videos.length > 1) {
         isScrolling = true;
         
         if (e.deltaY > 0) {
           setNavigationDirection('up');
-          setCurrentVideoIndex(prev => (prev + 1) % stableFeed.length);
+          setCurrentVideoIndex(prev => (prev + 1) % videos.length);
         } else {
           setNavigationDirection('down');
-          setCurrentVideoIndex(prev => prev === 0 ? stableFeed.length - 1 : prev - 1);
+          setCurrentVideoIndex(prev => prev === 0 ? videos.length - 1 : prev - 1);
         }
         
         // Reset scrolling flag after delay
@@ -239,7 +178,7 @@ export default function PlaysPage() {
 
     window.addEventListener('wheel', handleWheel, { passive: false });
     return () => window.removeEventListener('wheel', handleWheel);
-  }, [stableFeed, showCommentsIdx]);
+  }, [videos, showCommentsIdx]);
 
   // Handle touch/swipe navigation for mobile
   useEffect(() => {
@@ -270,17 +209,17 @@ export default function PlaysPage() {
       const deltaTime = endTime - startTime;
       
       // Only trigger if it's a quick swipe (less than 300ms) and significant distance (more than 50px)
-      if (deltaTime < 300 && Math.abs(deltaY) > 50 && stableFeed.length > 1) {
+      if (deltaTime < 300 && Math.abs(deltaY) > 50 && videos.length > 1) {
         isScrolling = true;
         
         if (deltaY < 0) {
           // Swipe up - next video
           setNavigationDirection('up');
-          setCurrentVideoIndex(prev => (prev + 1) % stableFeed.length);
+          setCurrentVideoIndex(prev => (prev + 1) % videos.length);
         } else {
           // Swipe down - previous video
           setNavigationDirection('down');
-          setCurrentVideoIndex(prev => prev === 0 ? stableFeed.length - 1 : prev - 1);
+          setCurrentVideoIndex(prev => prev === 0 ? videos.length - 1 : prev - 1);
         }
         
         setTimeout(() => {
@@ -298,7 +237,7 @@ export default function PlaysPage() {
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [stableFeed, showCommentsIdx]);
+  }, [videos, showCommentsIdx]);
 
   // Reset navigation direction after animation
   useEffect(() => {
@@ -342,8 +281,8 @@ export default function PlaysPage() {
 
   const handleDoubleLike = useCallback(async (video: any) => {
     if (!dbUserId) return;
-    setShowHeartAnimation({petIdx: -1, show: true});
-    setTimeout(() => setShowHeartAnimation({petIdx: -1, show: false}), 1000);
+    setShowHeartAnimation(true);
+    setTimeout(() => setShowHeartAnimation(false), 1000);
     if (!hasLiked[video.id]) {
       // Like the video if not already liked
       await handleLike(video);
@@ -426,172 +365,33 @@ export default function PlaysPage() {
     setShowCommentsIdx(idx === showCommentsIdx ? null : idx);
   };
 
-  // Save-n-swipe actions
-  const handleSwipeLeft = (petIdx: number) => {
-    setShowXAnimation({petIdx, show: true});
-    setPetCardSwipe({dir: 'left', idx: petIdx});
-    setTimeout(() => {
-      setPetCardSwipe({dir: null, idx: null});
-      setShowXAnimation({petIdx: -1, show: false});
-      // Navigate to next item
-      const feed = stableFeed;
-      if (feed.length > 1) {
-        setNavigationDirection('up');
-        setCurrentVideoIndex(prev => (prev + 1) % feed.length);
-      }
-    }, 600); // Match animation duration
+  // Touch event handlers for vertical swipe navigation
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setTouchStart({ x: touch.clientX, y: touch.clientY });
   };
-
-  const handleSwipeRight = async (pet: any) => {
-    try {
-      // Show bone animation immediately
-      setShowBoneAnimation({petIdx: pet._petIdx, show: true});
-      setPetCardSwipe({dir: 'right', idx: pet._petIdx});
-      
-      // Optimistically update UI
-      setLoveCounts((prev) => ({...prev, [pet._petIdx]: (prev[pet._petIdx] || 0) + 1}));
-      
-      // Call backend API using pet ID
-      const petId = pet.pet?.id;
-      if (!petId) {
-        throw new Error('Pet ID not found');
-      }
-      
-      const response = await fetch(`/api/pets/${petId}/like`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to like pet');
-      }
-      
-      const data = await response.json();
-      
-      // Update with actual count from backend
-      setLoveCounts((prev) => ({...prev, [pet._petIdx]: data.pet.loveCount}));
-      
-      // Show success toast
-      toast.success('Pet loved! 💙');
-      
-    } catch (error) {
-      console.error('Error liking pet:', error);
-      // Revert optimistic update on error
-      setLoveCounts((prev) => ({...prev, [pet._petIdx]: Math.max(0, (prev[pet._petIdx] || 0) - 1)}));
-      toast.error('Failed to like pet');
-    } finally {
-      // Hide animation and move to next card
-      setTimeout(() => {
-        setPetCardSwipe({dir: null, idx: null});
-        setShowBoneAnimation({petIdx: -1, show: false});
-        // Navigate to next item
-        const feed = stableFeed;
-        if (feed.length > 1) {
-          setNavigationDirection('up');
-          setCurrentVideoIndex(prev => (prev + 1) % feed.length);
-        }
-      }, 800); // Match animation duration
-    }
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setTouchEnd({ x: touch.clientX, y: touch.clientY });
   };
-
-  const handleSuperLove = async (pet: any) => {
-    try {
-      // Show heart animation immediately
-      setShowHeartAnimation({petIdx: pet._petIdx, show: true});
-      setPetCardSwipe({dir: 'right', idx: pet._petIdx});
-      
-      // Optimistically update UI
-      setLoveCounts((prev) => ({...prev, [pet._petIdx]: (prev[pet._petIdx] || 0) + 1}));
-      
-      // Call backend API using pet ID
-      const petId = pet.pet?.id;
-      if (!petId) {
-        throw new Error('Pet ID not found');
-      }
-      
-      const response = await fetch(`/api/pets/${petId}/super-like`, {
-          method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to super like pet');
-      }
-      
-      const data = await response.json();
-      
-      // Navigate to pet owner's profile or general messages
-      setTimeout(() => {
-        setPetCardSwipe({dir: null, idx: null});
-        setShowHeartAnimation({petIdx: -1, show: false});
-        
-        if (data.petOwner?.username) {
-          // Navigate to pet owner's profile
-          router.push(`/profile/${data.petOwner.username}`);
-        } else {
-          // Navigate to general messages page
-          router.push('/messages');
-        }
-      }, 600); // Match animation duration
-      
-      toast.success('Super like! Opening DMs...');
-      
-    } catch (error) {
-      console.error('Error super liking pet:', error);
-      toast.error('Failed to super like pet');
-      
-      // Reset UI state on error
-      setPetCardSwipe({dir: null, idx: null});
-      setShowHeartAnimation({petIdx: -1, show: false});
-      setLoveCounts((prev) => ({...prev, [pet._petIdx]: (prev[pet._petIdx] || 1) - 1}));
-    }
-  };
-
-  // Save-n-swipe image error handler
-  const handlePetImageError = (petIdx: number) => {
-    // Navigate to next item instead of marking as skipped
-    const feed = stableFeed;
-    if (feed.length > 1) {
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const dy = touchEnd.y - touchStart.y;
+    // Vertical swipe for videos
+    if (Math.abs(dy) > 50) {
+      if (dy < 0) {
+        // Swipe up: next video
       setNavigationDirection('up');
-      setCurrentVideoIndex(prev => (prev + 1) % feed.length);
+        setCurrentVideoIndex(prev => (prev + 1) % videos.length);
+      } else if (dy > 0) {
+        // Swipe down: previous video
+        setNavigationDirection('down');
+        setCurrentVideoIndex(prev => (prev - 1 + videos.length) % videos.length);
+      }
     }
+    setTouchStart(null);
+    setTouchEnd(null);
   };
-
-  // Helper to get pet media array
-  function getPetMedia(pet: any) {
-    // If pet has multiple posts, return array of images/videos
-    if (pet.pet?.media && Array.isArray(pet.pet.media) && pet.pet.media.length > 0) {
-      return pet.pet.media;
-    }
-    // Fallback to single image
-    return [pet.image || pet.pet?.imageUrl];
-  }
-
-  // Ensure we always have a current item by looping
-  const feed = stableFeed;
-  const currentItem = feed[currentVideoIndex % feed.length] || feed[0];
-
-  // Detect aspect ratio when pet card changes
-  useEffect(() => {
-    if (!currentItem || currentItem._type !== 'pet') return;
-    const mediaArr = getPetMedia(currentItem);
-    const img = new window.Image();
-    img.onload = function () {
-      if (img.naturalWidth === img.naturalHeight) setPetAspectRatio('square');
-      else if (img.naturalWidth > img.naturalHeight) setPetAspectRatio('landscape');
-      else setPetAspectRatio('portrait');
-    };
-    img.src = mediaArr[petMediaIdx] || '';
-  }, [currentItem, petMediaIdx]);
-
-  // Reset media index when card changes
-  useEffect(() => {
-    setPetMediaIdx(0);
-  }, [currentItem]);
 
   if (!mounted) return null;
   
@@ -618,14 +418,16 @@ export default function PlaysPage() {
     );
   }
   
-  if (!currentItem) {
+  const currentVideo = videos[currentVideoIndex % videos.length] || videos[0];
+  
+  if (!currentVideo) {
     return <div className="flex justify-center items-center h-screen bg-black text-white">Loading content...</div>;
   }
 
   return (
     <div className="w-full h-screen bg-black flex items-center justify-center relative overflow-hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
       {/* Heart Animation Overlay */}
-      {showHeartAnimation.show && (
+      {showHeartAnimation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
           <div className="heart-burst-animation">
             <HeartIcon className="w-32 h-32 text-red-500 fill-current" />
@@ -633,27 +435,9 @@ export default function PlaysPage() {
         </div>
       )}
       
-      {/* Bone Animation Overlay */}
-      {showBoneAnimation.show && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-          <div className="bone-burst-animation">
-            <Bone className="w-32 h-32 text-blue-500" />
-          </div>
-        </div>
-      )}
-      
-      {/* X Animation Overlay */}
-      {showXAnimation.show && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-          <div className="swipe-x-animation">
-            <XIcon className="w-32 h-32 text-red-500" />
-          </div>
-        </div>
-      )}
-      
       {/* Navigation Indicator */}
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 bg-black/50 text-white px-4 py-2 rounded-full text-sm">
-        {currentVideoIndex + 1} / {feed.length}
+        {currentVideoIndex + 1} / {videos.length}
       </div>
       
       {/* Navigation Instructions */}
@@ -676,16 +460,16 @@ export default function PlaysPage() {
                 ? 'slideDown 0.3s ease-out'
                 : 'slideUp 0.3s ease-out'
             }}
+            onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
           >
-            {currentItem._type === 'video' ? (
               <div className="flex justify-center items-center h-full relative w-full">
                 {/* Video with double-click handler */}
                 <div 
                   className="w-full h-full flex items-center justify-center"
-                  onClick={(e) => handleVideoClick(currentItem, e)}
-                  onTouchEnd={(e) => handleVideoTouch(currentItem, e)}
+                onClick={(e) => handleVideoClick(currentVideo, e)}
+                onTouchEnd={(e) => handleVideoTouch(currentVideo, e)}
                 >
-                  <VideoPlayer src={currentItem.image} poster={currentItem.poster} />
+                <VideoPlayer src={currentVideo.image} poster={currentVideo.poster} />
                 </div>
                 
                       {/* Overlay: Right-side icons */}
@@ -694,16 +478,16 @@ export default function PlaysPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                      className={`hover:text-red-500 transition text-white text-2xl p-0 m-0 shadow-none border-none bg-transparent ${hasLiked[currentItem.id] ? "text-red-500 hover:text-red-600" : ""}`}
+                    className={`hover:text-red-500 transition text-white text-2xl p-0 m-0 shadow-none border-none bg-transparent ${hasLiked[currentVideo.id] ? "text-red-500 hover:text-red-600" : ""}`}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        handleLike(currentItem);
+                      handleLike(currentVideo);
                       }}
                       disabled={isLiking}
                           >
-                      <HeartIcon className={`w-20 h-20 ${hasLiked[currentItem.id] ? "fill-current" : ""}`} />
-                      <span className="text-base ml-1">{optimisticLikes[currentItem.id]}</span>
+                    <HeartIcon className={`w-20 h-20 ${hasLiked[currentVideo.id] ? "fill-current" : ""}`} />
+                    <span className="text-base ml-1">{optimisticLikes[currentVideo.id]}</span>
                           </Button>
                         ) : (
                           <SignInButton mode="modal">
@@ -717,7 +501,7 @@ export default function PlaysPage() {
                         }}
                       >
                               <HeartIcon className="w-20 h-20" />
-                        <span className="text-base ml-1">{currentItem._count.likes}</span>
+                      <span className="text-base ml-1">{currentVideo._count.likes}</span>
                             </Button>
                           </SignInButton>
                         )}
@@ -732,22 +516,22 @@ export default function PlaysPage() {
                     }}
                         >
                     <MessageCircleIcon className={`w-20 h-20 ${showCommentsIdx === currentVideoIndex ? "fill-blue-500 text-blue-500" : ""}`} />
-                    <span className="text-base ml-1">{currentItem._count.comments}</span>
+                  <span className="text-base ml-1">{currentVideo._count.comments}</span>
                         </Button>
                       </div>
                 
                       {/* Overlay: Bottom-left blurb */}
                       <div className="absolute left-4 bottom-6 z-10 flex items-end gap-3">
-                  <Link href={`/profile/${currentItem.author.username}`} onClick={(e) => e.stopPropagation()}>
+                <Link href={`/profile/${currentVideo.author.username}`} onClick={(e) => e.stopPropagation()}>
                           <Avatar className="w-10 h-10 border-2 border-white">
-                      <AvatarImage src={currentItem.author.image ?? "/avatar.png"} />
+                    <AvatarImage src={currentVideo.author.image ?? "/avatar.png"} />
                           </Avatar>
                         </Link>
                         <div className="flex flex-col">
-                    <Link href={`/profile/${currentItem.author.username}`} className="text-white font-semibold text-base hover:underline" onClick={(e) => e.stopPropagation()}>
-                      {currentItem.author.name ?? currentItem.author.username}
+                  <Link href={`/profile/${currentVideo.author.username}`} className="text-white font-semibold text-base hover:underline" onClick={(e) => e.stopPropagation()}>
+                    {currentVideo.author.name ?? currentVideo.author.username}
                           </Link>
-                    <span className="text-white text-sm line-clamp-2 max-w-xs opacity-90">{currentItem.content || currentItem["content"] || currentItem.title || "No description."}</span>
+                  <span className="text-white text-sm line-clamp-2 max-w-xs opacity-90">{currentVideo.content || currentVideo["content"] || currentVideo.title || "No description."}</span>
                         </div>
                       </div>
                 
@@ -777,10 +561,10 @@ export default function PlaysPage() {
                     {/* Comments List */}
                     <div className="flex-1 overflow-y-auto p-4">
                       <div className="space-y-4">
-                        {currentItem.comments.length === 0 ? (
+                      {currentVideo.comments.length === 0 ? (
                           <div className="text-muted-foreground text-center py-8">No comments yet.</div>
                               ) : (
-                          currentItem.comments.map((comment: any) => (
+                        currentVideo.comments.map((comment: any) => (
                                   <div key={comment.id} className="flex space-x-3">
                                     <Avatar className="size-8 flex-shrink-0">
                                       <AvatarImage src={comment.author?.image ?? "/avatar.png"} />
@@ -816,7 +600,7 @@ export default function PlaysPage() {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  handleAddComment(currentItem);
+                                handleAddComment(currentVideo);
                                 }
                               }}
                               onClick={(e) => e.stopPropagation()}
@@ -829,7 +613,7 @@ export default function PlaysPage() {
                                       size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleAddComment(currentItem);
+                                handleAddComment(currentVideo);
                                 }}
                                       disabled={!newComment.trim() || isCommenting}
                                       className="flex items-center gap-2"
@@ -850,157 +634,6 @@ export default function PlaysPage() {
                   </div>
                 )}
               </div>
-            ) : currentItem._type === 'pet' ? (
-              <div className="flex justify-center items-center h-full relative w-full">
-                {/* Animation Overlays for Pet Cards */}
-                {showBoneAnimation.show && showBoneAnimation.petIdx === currentItem._petIdx && (
-                  <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
-                    <div className="bone-burst-animation">
-                      <Bone className="w-32 h-32 text-blue-500" />
-                    </div>
-                  </div>
-                )}
-                
-                {showHeartAnimation.show && showHeartAnimation.petIdx === currentItem._petIdx && (
-                  <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
-                    <div className="heart-burst-animation">
-                      <HeartIcon className="w-32 h-32 text-red-500 fill-current" />
-                          </div>
-                        </div>
-                      )}
-                
-                {showXAnimation.show && showXAnimation.petIdx === currentItem._petIdx && (
-                  <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
-                    <div className="swipe-x-animation">
-                      <XIcon className="w-32 h-32 text-red-500" />
-                    </div>
-                  </div>
-                )}
-
-                {/* Tinder-style Card - Now full screen size */}
-                <div
-                  className={`relative w-full h-full bg-white flex flex-col overflow-hidden select-none transition-transform duration-300 ${petCardSwipe.idx === currentItem._petIdx && petCardSwipe.dir === 'left' ? '-translate-x-[500px] opacity-0' : ''} ${petCardSwipe.idx === currentItem._petIdx && petCardSwipe.dir === 'right' ? 'translate-x-[500px] opacity-0' : ''}`}
-                  onTouchStart={(e) => {
-                    if (e.touches.length === 1) {
-                      longPressTimeout.current = setTimeout(() => handleSuperLove(currentItem), 1200);
-                      (e.target as HTMLElement).setAttribute('data-touch-x', e.touches[0].clientX.toString());
-                    }
-                  }}
-                  onTouchEnd={(e) => {
-                    if (longPressTimeout.current) clearTimeout(longPressTimeout.current);
-                    const startX = parseFloat((e.target as HTMLElement).getAttribute('data-touch-x') || '0');
-                    const endX = e.changedTouches[0].clientX;
-                    if (startX && Math.abs(endX - startX) > 80) {
-                      if (endX < startX) handleSwipeLeft(currentItem._petIdx);
-                      else handleSwipeRight(currentItem);
-                    }
-                  }}
-                  onMouseDown={(e) => {
-                    longPressTimeout.current = setTimeout(() => handleSuperLove(currentItem), 1200);
-                    (e.target as HTMLElement).setAttribute('data-mouse-x', e.clientX.toString());
-                  }}
-                  onMouseUp={(e) => {
-                    if (longPressTimeout.current) clearTimeout(longPressTimeout.current);
-                    const startX = parseFloat((e.target as HTMLElement).getAttribute('data-mouse-x') || '0');
-                    const endX = e.clientX;
-                    if (startX && Math.abs(endX - startX) > 80) {
-                      if (endX < startX) handleSwipeLeft(currentItem._petIdx);
-                      else handleSwipeRight(currentItem);
-                    }
-                  }}
-                >
-                  {/* Pet Image - Framed in 9:16 black box, object-contain for letterboxing */}
-                  <div
-                    className="w-full h-full flex items-center justify-center bg-black relative"
-                    style={{ 
-                      cursor: getPetMedia(currentItem).length > 1 ? 'pointer' : 'default', 
-                      aspectRatio: '9/16', 
-                      maxHeight: '100vh', 
-                      maxWidth: '100vw', 
-                      margin: '0 auto' 
-                    }}
-                    onClick={(e) => {
-                      const mediaArr = getPetMedia(currentItem);
-                      if (mediaArr.length > 1) {
-                        // Tap right half: next, left half: prev
-                        const x = (e.nativeEvent as any).offsetX;
-                        const width = (e.target as HTMLElement).clientWidth;
-                        if (x > width / 2) setPetMediaIdx((idx) => (idx + 1) % mediaArr.length);
-                        else setPetMediaIdx((idx) => (idx - 1 + mediaArr.length) % mediaArr.length);
-                      }
-                    }}
-                  >
-                      <img
-                      src={getPetMedia(currentItem)[petMediaIdx]}
-                      alt={currentItem?.pet?.name || 'Dog'}
-                      className="object-contain w-full h-full bg-black"
-                      onError={() => handlePetImageError(currentItem._petIdx)}
-                      />
-                    {/* Dots for multiple media */}
-                    {getPetMedia(currentItem).length > 1 && (
-                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1 z-20">
-                        {getPetMedia(currentItem).map((_: any, idx: number) => (
-                          <div key={idx} className={`w-2 h-2 rounded-full ${idx === petMediaIdx ? 'bg-white' : 'bg-gray-400/60'}`}></div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {/* Info Bar - moved above action buttons */}
-                  <div className="absolute bottom-32 left-0 right-0 flex flex-col justify-between px-6 pb-2 bg-gradient-to-t from-black/80 via-black/60 to-transparent pointer-events-none">
-                    <div>
-                      <span className="text-white text-3xl font-bold drop-shadow-lg">
-                        {currentItem?.pet?.name || 'Dog'}
-                      </span>
-                      <span className="text-white text-xl ml-2 drop-shadow-lg">
-                        {currentItem?.pet?.age ? `• ${currentItem.pet.age}` : ''}
-                      </span>
-                    </div>
-                    <div className="text-white text-base opacity-90 mt-3 drop-shadow-lg">
-                      Owner: {currentItem?.author?.name || currentItem?.author?.username}
-                    </div>
-                  </div>
-                  {/* Overlay Action Buttons */}
-                  <div className="absolute bottom-8 left-0 right-0 flex justify-center items-end gap-8 z-20 pointer-events-auto">
-                    {/* X Button (Nope) - red border and icon */}
-                        <button
-                      className="bg-white border-2 border-red-500 hover:bg-red-100 rounded-full w-16 h-16 flex items-center justify-center shadow-xl text-3xl transition active:scale-90 text-red-500"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSwipeLeft(currentItem._petIdx);
-                      }}
-                      aria-label="Nope"
-                        >
-                      <XIcon className="w-8 h-8 text-red-500" />
-                        </button>
-                    {/* Blue Bone Button (Love) */}
-                        <button
-                      className="bg-blue-100 border-2 border-blue-400 hover:bg-blue-200 rounded-full w-20 h-20 flex flex-col items-center justify-center shadow-xl text-3xl transition active:scale-90 relative"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSwipeRight(currentItem);
-                      }}
-                          aria-label="Love"
-                        >
-                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full shadow">{loveCounts[currentItem._petIdx] || 0}</span>
-                      {/* Show only icon on mobile, icon+text on desktop */}
-                      <Bone className="w-9 h-9 text-blue-500" />
-                      <span className="text-blue-600 text-xs mt-1 font-bold hidden md:inline">Bone</span>
-                    </button>
-                    {/* Green Heart Button (Super Love) */}
-                    <button
-                      className="bg-green-100 border-2 border-green-400 hover:bg-green-200 rounded-full w-16 h-16 flex items-center justify-center shadow-xl text-3xl transition active:scale-90"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSuperLove(currentItem);
-                      }}
-                      aria-label="Super Love"
-                    >
-                      <HeartIcon className="w-8 h-8 text-green-500 fill-current" />
-                        </button>
-                      </div>
-                        </div>
-                      </div>
-            ) : null}
                     </div>
         </div>
       </div>

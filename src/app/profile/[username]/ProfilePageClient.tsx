@@ -90,10 +90,9 @@ function PostMedia({ post }: { post: Post }) {
  return (
    <div
      style={{
-       aspectRatio: isVideo ? "1/2" : "1/1",
-       width: 400,
+       width: '100%',
        maxWidth: '90vw',
-       maxHeight: '80vh',
+       maxHeight: '90vh',
        background: "#222",
        display: "flex",
        alignItems: "center",
@@ -105,15 +104,27 @@ function PostMedia({ post }: { post: Post }) {
      {isVideo ? (
        <video
          src={post.image || undefined}
-         controls={false}
+         controls={true}
          autoPlay
-         style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 0 }}
+         style={{ 
+           width: "100%", 
+           height: "100%", 
+           objectFit: "contain", 
+           borderRadius: 0,
+           maxHeight: '90vh'
+         }}
        />
      ) : (
        <img
          src={post.image || "/placeholder.png"}
          alt={post.title || "Post"}
-         style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 0 }}
+         style={{ 
+           width: "100%", 
+           height: "auto", 
+           maxHeight: "90vh",
+           objectFit: "contain", 
+           borderRadius: 0 
+         }}
        />
      )}
    </div>
@@ -179,7 +190,7 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
  if (!post) return null;
  return (
    <Dialog open={open} onOpenChange={onOpenChange}>
-     <DialogContent className="p-0 flex flex-col items-center justify-center bg-transparent shadow-none border-none max-w-fit">
+     <DialogContent className="p-0 flex flex-col items-center justify-center bg-transparent shadow-none border-none max-w-none w-auto">
        <div className="relative flex items-center justify-center">
          <PostMedia post={post} />
          <div className="absolute bottom-0 left-0 w-full flex items-center justify-start gap-6 px-4 py-3 bg-gradient-to-t from-black/60 to-transparent z-10">
@@ -647,11 +658,11 @@ function ProfilePageClient({
      } else {
        // Fallback colors for other pets
        const fallbackColors = [
-         'from-purple-400 via-violet-400 to-purple-600',
+       'from-purple-400 via-violet-400 to-purple-600',
          'from-red-400 via-pink-400 to-red-600',
          'from-teal-400 via-cyan-400 to-teal-600',
          'from-amber-400 via-orange-400 to-amber-600'
-       ];
+     ];
        color = fallbackColors[pet.id.length % fallbackColors.length];
      }
      
@@ -1380,8 +1391,8 @@ function ProfilePageClient({
                                      : 'bg-white/90 backdrop-blur-sm text-gray-700'
                                  }`}>
                                    {isToday ? 'Today' : format(postDate, 'MMM d')}
+                                   </div>
                                  </div>
-                               </div>
                              </div>
                            </div>
                          );
@@ -1704,9 +1715,9 @@ function ProfilePageClient({
                                    >
                                      <TrashIcon className="w-3 h-3 text-red-600" />
                                    </button>
-                                 </div>
-                               )}
                              </div>
+                               )}
+                           </div>
                              
                              {/* Date indicator below photo */}
                              <div className="mt-2">

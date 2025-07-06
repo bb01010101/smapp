@@ -437,7 +437,7 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
                                     />
                                   </div>
                                 )}
-                              </div>
+                                    </div>
                               {/* Date indicator below photo */}
                               <div className="mt-2">
                                 <div className={`px-2 py-1 rounded-full text-xs font-medium shadow-lg ${
@@ -446,7 +446,7 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
                                     : 'bg-white/90 backdrop-blur-sm text-gray-700'
                                 }`}>
                                   {isToday ? 'Today' : format(postDate, 'MMM d')}
-                                </div>
+                                  </div>
                               </div>
                             </div>
                           </div>
