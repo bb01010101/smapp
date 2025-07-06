@@ -38,6 +38,7 @@ import {
  FlameIcon,
  MessageCircleIcon,
  PencilIcon,
+ TrashIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import toast from "react-hot-toast";
@@ -89,10 +90,9 @@ function PostMedia({ post }: { post: Post }) {
  return (
    <div
      style={{
-       aspectRatio: isVideo ? "1/2" : "1/1",
-       width: 400,
+       width: '100%',
        maxWidth: '90vw',
-       maxHeight: '80vh',
+       maxHeight: '90vh',
        background: "#222",
        display: "flex",
        alignItems: "center",
@@ -104,15 +104,27 @@ function PostMedia({ post }: { post: Post }) {
      {isVideo ? (
        <video
          src={post.image || undefined}
-         controls={false}
+         controls={true}
          autoPlay
-         style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 0 }}
+         style={{ 
+           width: "100%", 
+           height: "100%", 
+           objectFit: "contain", 
+           borderRadius: 0,
+           maxHeight: '90vh'
+         }}
        />
      ) : (
        <img
          src={post.image || "/placeholder.png"}
          alt={post.title || "Post"}
-         style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 0 }}
+         style={{ 
+           width: "100%", 
+           height: "auto", 
+           maxHeight: "90vh",
+           objectFit: "contain", 
+           borderRadius: 0 
+         }}
        />
      )}
    </div>
@@ -178,7 +190,7 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
  if (!post) return null;
  return (
    <Dialog open={open} onOpenChange={onOpenChange}>
-     <DialogContent className="p-0 flex flex-col items-center justify-center bg-transparent shadow-none border-none max-w-fit">
+     <DialogContent className="p-0 flex flex-col items-center justify-center bg-transparent shadow-none border-none max-w-none w-auto">
        <div className="relative flex items-center justify-center">
          <PostMedia post={post} />
          <div className="absolute bottom-0 left-0 w-full flex items-center justify-start gap-6 px-4 py-3 bg-gradient-to-t from-black/60 to-transparent z-10">
@@ -326,6 +338,7 @@ function ProfilePageClient({
  const [isTimelineMode, setIsTimelineMode] = useState(false);
  const [timelineInterval, setTimelineInterval] = useState<NodeJS.Timeout | null>(null);
  const [timelineOpen, setTimelineOpen] = useState(false);
+ const [familyTimelineOpen, setFamilyTimelineOpen] = useState(false);
  const [isUploading, setIsUploading] = useState(false);
  const [showUploadOptions, setShowUploadOptions] = useState(false);
  const [showExistingPosts, setShowExistingPosts] = useState(false);
@@ -627,18 +640,33 @@ function ProfilePageClient({
  const [isEditing, setIsEditing] = useState(false);
  const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
 
- // Pet colors for merged timeline
+ // Pet colors for merged timeline - specific colors for each pet
  const petColors = {
-   ...currentPets.reduce((acc, pet, index) => {
-     const colors = [
-       'from-orange-400 via-yellow-400 to-orange-600',
-       'from-pink-400 via-rose-400 to-pink-600',
-       'from-blue-400 via-indigo-400 to-blue-600',
-       'from-green-400 via-emerald-400 to-green-600',
+   ...currentPets.reduce((acc, pet) => {
+     // Map specific pet names to their colors
+     const petName = pet.name?.toLowerCase();
+     let color;
+     
+     if (petName === 'buddy') {
+       color = 'from-pink-400 via-rose-400 to-pink-600'; // Buddy pink
+     } else if (petName === 'rocco') {
+       color = 'from-orange-400 via-yellow-400 to-orange-600'; // Rocco gold
+     } else if (petName === 'chip') {
+       color = 'from-green-400 via-emerald-400 to-green-600'; // Chip green
+     } else if (petName === 'buck') {
+       color = 'from-blue-400 via-indigo-400 to-blue-600'; // Buck blue
+     } else {
+       // Fallback colors for other pets
+       const fallbackColors = [
        'from-purple-400 via-violet-400 to-purple-600',
-       'from-red-400 via-pink-400 to-red-600'
+         'from-red-400 via-pink-400 to-red-600',
+         'from-teal-400 via-cyan-400 to-teal-600',
+         'from-amber-400 via-orange-400 to-amber-600'
      ];
-     acc[pet.id] = colors[index % colors.length];
+       color = fallbackColors[pet.id.length % fallbackColors.length];
+     }
+     
+     acc[pet.id] = color;
      return acc;
    }, {} as { [key: string]: string })
  };
@@ -774,9 +802,11 @@ function ProfilePageClient({
            <CardContent className="pt-6">
              <div className="flex flex-col items-center text-center">
                {/* User avatar */}
-               <Avatar className="w-24 h-24">
-                 <AvatarImage src={user.image ?? "/avatar.png"} />
-               </Avatar>
+               <div className="cursor-pointer" onClick={() => setFamilyTimelineOpen(true)}>
+                 <Avatar className="w-24 h-24 hover:scale-105 transition-transform ring-2 ring-primary">
+                   <AvatarImage src={user.image ?? "/avatar.png"} />
+                 </Avatar>
+               </div>
                {/* User name and username */}
                <h1 className="mt-4 text-2xl font-bold">{user.name ?? user.username}</h1>
                <p className="text-muted-foreground">@{user.username}</p>
@@ -959,7 +989,7 @@ function ProfilePageClient({
          {/* User's posts grid */}
          <TabsContent value="posts" className="mt-6">
            <>
-             {posts.length > 0 ? (
+             {posts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).length > 0 ? (
                <>
                  <style>{`
                    .profile-grid {
@@ -982,7 +1012,7 @@ function ProfilePageClient({
                    }
                  `}</style>
                  <div className="profile-grid">
-                   {posts.map((post, idx) => (
+                   {posts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).map((post, idx) => (
                      <div
                        key={post.id}
                        className="profile-item group relative"
@@ -1047,7 +1077,7 @@ function ProfilePageClient({
          {/* User's liked posts grid */}
          <TabsContent value="likes" className="mt-6">
            <>
-             {likedPosts.length > 0 ? (
+             {likedPosts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).length > 0 ? (
                <>
                  <style>{`
                    .profile-grid {
@@ -1070,7 +1100,7 @@ function ProfilePageClient({
                    }
                  `}</style>
                  <div className="profile-grid">
-                   {likedPosts.map((post, idx) => (
+                   {likedPosts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).map((post, idx) => (
                      <div
                        key={post.id}
                        className="profile-item"
@@ -1306,31 +1336,34 @@ function ProfilePageClient({
                          const isLeft = index % 2 === 0;
                          return (
                            <div key={post.id} className={`flex w-full mb-12 relative ${isLeft ? 'justify-start' : 'justify-end'}`}>
-                             <div className={`flex items-center w-1/2 ${isLeft ? 'justify-end pr-8' : 'justify-start pl-8'}`}>
-                               {isLeft && (
-                                 <div className="flex flex-col items-end">
-                                   <div className={`w-4 h-4 rounded-full border-2 ${isToday ? 'bg-orange-400 border-orange-600' : 'bg-orange-200 border-orange-400'} mb-1`}></div>
-                                   <div className="text-xs text-muted-foreground text-right mb-2">
-                                     {isToday ? 'Today' : format(postDate, 'MMM d, yyyy')}
-                                   </div>
-                                 </div>
-                               )}
+                             <div className={`flex flex-col items-center w-1/2 ${isLeft ? 'items-end pr-4' : 'items-start pl-4'}`}>
+                               {/* Photo container */}
                                <div 
-                                 className="relative aspect-square w-40 rounded-lg overflow-hidden shadow-lg border border-orange-100 group-hover:scale-105 transition-transform cursor-pointer bg-white"
+                                 className="relative aspect-square w-48 rounded-lg overflow-hidden shadow-lg border-2 transition-all duration-300 cursor-pointer group-hover:scale-105 ${
+                                   isToday 
+                                     ? 'border-orange-400 shadow-orange-200' 
+                                     : 'border-gray-200 hover:border-orange-300'
+                                 } bg-white"
                                  onClick={() => setActivePhotoId(post.id === activePhotoId ? null : post.id)}
                                >
                                  <img src={post.image || '/avatar.png'} alt={activePet.name + ' photo'} className="w-full h-full object-cover" />
+                                 
+                                 {/* Golden overlay for today's post */}
+                                 {isToday && (
+                                   <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-yellow-400/20 pointer-events-none" />
+                                 )}
+                                 
                                  {/* Edit/Delete buttons for owner, only show if this photo is active */}
                                  {isOwnProfile && activePhotoId === post.id && (
-                                   <div className="absolute top-2 right-2 flex gap-2 z-10">
+                                   <div className="absolute top-2 right-2 flex gap-1 z-20">
                                      <Button
                                        variant="ghost"
                                        size="sm"
-                                       className="text-muted-foreground hover:text-yellow-500"
+                                       className="h-7 w-7 p-0 bg-white/90 backdrop-blur-sm hover:bg-white"
                                        onClick={e => { e.stopPropagation(); openEditModal(post); }}
                                        title="Edit Photo"
                                      >
-                                       <PencilIcon className="size-4" />
+                                       <PencilIcon className="w-3 h-3 text-gray-700" />
                                      </Button>
                                      <DeleteAlertDialog
                                        isDeleting={isEditing && editPost?.id === post.id}
@@ -1344,18 +1377,22 @@ function ProfilePageClient({
                                        }}
                                        title="Delete Timeline Photo"
                                        description="This action cannot be undone."
+                                       triggerClassName="h-7 w-7 p-0 bg-white/90 backdrop-blur-sm hover:bg-red-100 text-gray-700 hover:text-red-500"
                                      />
                                    </div>
                                  )}
                                </div>
-                               {!isLeft && (
-                                 <div className="flex flex-col items-start ml-4">
-                                   <div className={`w-4 h-4 rounded-full border-2 ${isToday ? 'bg-orange-400 border-orange-600' : 'bg-orange-200 border-orange-400'} mb-1`}></div>
-                                   <div className="text-xs text-muted-foreground text-left mb-2">
-                                     {isToday ? 'Today' : format(postDate, 'MMM d, yyyy')}
+                               
+                               {/* Date indicator below photo */}
+                               <div className="mt-2">
+                                 <div className={`px-2 py-1 rounded-full text-xs font-medium shadow-lg ${
+                                   isToday 
+                                     ? 'bg-gradient-to-r from-orange-400 to-yellow-400 text-orange-900' 
+                                     : 'bg-white/90 backdrop-blur-sm text-gray-700'
+                                 }`}>
+                                   {isToday ? 'Today' : format(postDate, 'MMM d')}
                                    </div>
                                  </div>
-                               )}
                              </div>
                            </div>
                          );
@@ -1584,6 +1621,125 @@ function ProfilePageClient({
                ))}
              </ul>
            )}
+         </DialogContent>
+       </Dialog>
+
+       {/* FAMILY TIMELINE MODAL: Shows merged vertical timeline for all pets */}
+       <Dialog open={familyTimelineOpen} onOpenChange={setFamilyTimelineOpen}>
+         <DialogContent className="max-w-6xl p-0 overflow-hidden flex items-center justify-center min-h-[80vh] bg-gradient-to-br from-orange-100 via-yellow-50 to-orange-200">
+           <div className="relative rounded-lg shadow-lg w-full flex flex-col items-center justify-center min-h-[70vh]">
+             <div className="flex flex-col items-center p-6 w-full">
+               <div className="font-bold text-xl mb-2">Family Timeline</div>
+               <div className="text-sm text-muted-foreground mb-4">All pets' daily photos</div>
+               {/* Tree-like branching timeline */}
+               <div className="w-full max-h-[60vh] overflow-y-auto overflow-x-hidden">
+                 {allTimelinePosts.length > 0 ? (
+                   <div className="relative w-full">
+                     {/* Central timeline line */}
+                     <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-orange-400 to-orange-200 -translate-x-1/2"></div>
+                     {allTimelinePosts.map((post, index) => {
+                       const postDate = new Date(post.createdAt);
+                       const isToday = (() => {
+                         const today = new Date();
+                         today.setHours(0, 0, 0, 0);
+                         const postDay = new Date(postDate);
+                         postDay.setHours(0, 0, 0, 0);
+                         return postDay.getTime() === today.getTime();
+                       })();
+                       const isLeft = index % 2 === 0;
+                       const petColor = post.pet ? petColors[post.pet.id] : 'from-orange-400 via-yellow-400 to-orange-600';
+                       
+                       return (
+                         <div key={post.id} className={`flex w-full mb-12 relative ${isLeft ? 'justify-start' : 'justify-end'}`}>
+                           <div className={`flex flex-col items-center w-1/2 ${isLeft ? 'items-end pr-4' : 'items-start pl-4'}`}>
+                             {/* Pet name above photo */}
+                             {post.pet && (
+                               <div className="mb-2">
+                                 <div className={`px-2 py-1 rounded-full text-xs font-medium shadow-lg bg-gradient-to-r ${petColor} text-white`}>
+                                   {post.pet.name}
+                                 </div>
+                               </div>
+                             )}
+                             
+                             {/* Photo container */}
+                             <div 
+                               className="relative aspect-square w-48 rounded-lg overflow-hidden shadow-lg border-2 transition-all duration-300 cursor-pointer group-hover:scale-105 ${
+                                 isToday 
+                                   ? 'border-orange-400 shadow-orange-200' 
+                                   : 'border-gray-200 hover:border-orange-300'
+                               } bg-white"
+                               onClick={() => {
+                                 const originalPost = posts.find(p => p.id === post.id);
+                                 if (originalPost) {
+                                   setActivePost(originalPost);
+                                   setModalOpen(true);
+                                 }
+                               }}
+                             >
+                               <img src={post.image || '/avatar.png'} alt={post.pet?.name || 'Pet'} className="w-full h-full object-cover" />
+                               
+                               {/* Golden overlay for today's post */}
+                               {isToday && (
+                                 <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-yellow-400/20 pointer-events-none" />
+                               )}
+                               
+                               {/* Edit/Delete buttons for owner */}
+                               {isOwnProfile && (
+                                 <div className="absolute top-2 right-2 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                                   <button
+                                     className="h-7 w-7 p-0 bg-white/90 backdrop-blur-sm hover:bg-white rounded"
+                                     onClick={e => { 
+                                       e.stopPropagation(); 
+                                       const originalPost = posts.find(p => p.id === post.id);
+                                       if (originalPost) {
+                                         openEditModal(originalPost);
+                                       }
+                                     }}
+                                     title="Edit Photo"
+                                   >
+                                     <PencilIcon className="w-3 h-3 text-gray-700" />
+                                   </button>
+                                   <button
+                                     className="h-7 w-7 p-0 bg-white/90 backdrop-blur-sm hover:bg-red-100 rounded"
+                                     onClick={e => { 
+                                       e.stopPropagation(); 
+                                       deletePost(post.id).then(res => {
+                                         if (res.success) {
+                                           window.location.reload();
+                                         } else {
+                                           toast.error(res.error || "Failed to delete post");
+                                         }
+                                       });
+                                     }}
+                                     title="Delete Photo"
+                                   >
+                                     <TrashIcon className="w-3 h-3 text-red-600" />
+                                   </button>
+                             </div>
+                               )}
+                           </div>
+                             
+                             {/* Date indicator below photo */}
+                             <div className="mt-2">
+                               <div className={`px-2 py-1 rounded-full text-xs font-medium shadow-lg ${
+                                 isToday 
+                                   ? 'bg-gradient-to-r from-orange-400 to-yellow-400 text-orange-900' 
+                                   : 'bg-white/90 backdrop-blur-sm text-gray-700'
+                               }`}>
+                                 {isToday ? 'Today' : format(postDate, 'MMM d')}
+                               </div>
+                             </div>
+                           </div>
+                         </div>
+                       );
+                     })}
+                   </div>
+                 ) : (
+                   <div className="text-center text-muted-foreground py-8">No timeline photos yet</div>
+                 )}
+               </div>
+             </div>
+           </div>
          </DialogContent>
        </Dialog>
        </div>

@@ -28,13 +28,14 @@ function MobileNavbar() {
       <Link href="/" className="flex flex-col items-center justify-center flex-1 py-2">
         <HomeIcon className="w-7 h-7 text-gold-500" />
               </Link>
-      <Link href="/swipensave" className="flex flex-col items-center justify-center flex-1 py-2">
-        <HeartIcon className="w-7 h-7 text-gold-500" />
-              </Link>
+      
       <Link href="/pawpad" className="flex flex-col items-center justify-center flex-1 py-2">
         <PawPrintIcon className="w-7 h-7 text-gold-500" />
               </Link>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Link href="/swipensave" className="flex flex-col items-center justify-center flex-1 py-2">
+        <HeartIcon className="w-7 h-7 text-gold-500" />
+      </Link> 
+        <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <button
             className="flex items-center justify-center rounded-full bg-gold-500 text-white shadow-lg w-14 h-14 -mt-8 border-4 border-background focus:outline-none focus:ring-2 focus:ring-gold-400"

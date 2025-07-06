@@ -118,6 +118,8 @@ export default function SwipeNSavePage() {
   const [selectedFriend, setSelectedFriend] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [shareMessage, setShareMessage] = useState('Save this pet!');
+  const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{x: number, y: number} | null>(null);
 
   // Fetch pets
   async function fetchPets() {
@@ -213,6 +215,26 @@ export default function SwipeNSavePage() {
 
   const handlePetImageError = () => {
     setCurrentIdx((prev) => prev + 1);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setTouchStart({ x: touch.clientX, y: touch.clientY });
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setTouchEnd({ x: touch.clientX, y: touch.clientY });
+  };
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const dx = touchEnd.x - touchStart.x;
+    const dy = touchEnd.y - touchStart.y;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) handleSwipeLeft(currentIdx);
+      else if (dx > 0) handleSwipeRight(petCards[currentIdx]);
+    }
+    setTouchStart(null);
+    setTouchEnd(null);
   };
 
   // Fetch mutual friends (users you follow and who follow you back)
@@ -320,23 +342,40 @@ export default function SwipeNSavePage() {
         </div>
       )}
       {/* Card */}
-      <div
-        className={`relative w-full max-w-[370px] h-[70vh] flex flex-col items-center justify-end select-none transition-transform duration-300 ${petCardSwipe.idx === pet._petIdx && petCardSwipe.dir === 'left' ? '-translate-x-[500px] opacity-0' : ''} ${petCardSwipe.idx === pet._petIdx && petCardSwipe.dir === 'right' ? 'translate-x-[500px] opacity-0' : ''}`}
-        onTouchStart={(e) => {
-          if (e.touches.length === 1) {
-            longPressTimeout.current = setTimeout(() => handleSuperLove(pet), 1200);
-            (e.target as HTMLElement).setAttribute('data-touch-x', e.touches[0].clientX.toString());
-          }
-        }}
-        onTouchEnd={(e) => {
-          if (longPressTimeout.current) clearTimeout(longPressTimeout.current);
-          const startX = parseFloat((e.target as HTMLElement).getAttribute('data-touch-x') || '0');
-          const endX = e.changedTouches[0].clientX;
-          if (startX && Math.abs(endX - startX) > 80) {
-            if (endX < startX) handleSwipeLeft(pet._petIdx);
-            else handleSwipeRight(pet);
-          }
-        }}
+              <div
+          className={`relative w-full max-w-[370px] h-[70vh] flex flex-col items-center justify-end select-none transition-transform duration-300 ${petCardSwipe.idx === pet._petIdx && petCardSwipe.dir === 'left' ? '-translate-x-[500px] opacity-0' : ''} ${petCardSwipe.idx === pet._petIdx && petCardSwipe.dir === 'right' ? 'translate-x-[500px] opacity-0' : ''}`}
+          onTouchStart={(e) => {
+            const touch = e.touches[0];
+            setTouchStart({ x: touch.clientX, y: touch.clientY });
+            if (e.touches.length === 1) {
+              longPressTimeout.current = setTimeout(() => handleSuperLove(pet), 1200);
+              (e.target as HTMLElement).setAttribute('data-touch-x', e.touches[0].clientX.toString());
+            }
+          }}
+          onTouchMove={(e) => {
+            const touch = e.touches[0];
+            setTouchEnd({ x: touch.clientX, y: touch.clientY });
+          }}
+          onTouchEnd={(e) => {
+            if (longPressTimeout.current) clearTimeout(longPressTimeout.current);
+            const startX = parseFloat((e.target as HTMLElement).getAttribute('data-touch-x') || '0');
+            const endX = e.changedTouches[0].clientX;
+            if (startX && Math.abs(endX - startX) > 80) {
+              if (endX < startX) handleSwipeLeft(pet._petIdx);
+              else handleSwipeRight(pet);
+            }
+            // Also handle the new swipe logic
+            if (touchStart && touchEnd) {
+              const dx = touchEnd.x - touchStart.x;
+              const dy = touchEnd.y - touchStart.y;
+              if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+                if (dx < 0) handleSwipeLeft(currentIdx);
+                else if (dx > 0) handleSwipeRight(petCards[currentIdx]);
+              }
+              setTouchStart(null);
+              setTouchEnd(null);
+            }
+          }}
         onMouseDown={(e) => {
           longPressTimeout.current = setTimeout(() => handleSuperLove(pet), 1200);
           (e.target as HTMLElement).setAttribute('data-mouse-x', e.clientX.toString());

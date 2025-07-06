@@ -72,10 +72,10 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
   });
 
   // Timeline navigation
-  const nextPetPost = () => {
+  const nextPetPost = (): void => {
     if (petPostIndex < petPosts.length - 1) setPetPostIndex((idx) => idx + 1);
   };
-  const prevPetPost = () => {
+  const prevPetPost = (): void => {
     if (petPostIndex > 0) setPetPostIndex((idx) => idx - 1);
   };
 
@@ -134,7 +134,7 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
   };
 
   // Open edit modal
-  const openEditModal = (post: any) => {
+  const openEditModal = (post: any): void => {
     setEditPost(post);
     setEditImage(post.image ? { url: post.image, type: "image" } : null);
     setEditContent(post.content || "");
@@ -401,48 +401,52 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
                         const isLeft = index % 2 === 0;
                         return (
                           <div key={post.id} className={`flex w-full mb-12 relative ${isLeft ? 'justify-start' : 'justify-end'}`}>
-                            <div className={`flex items-center w-1/2 ${isLeft ? 'justify-end pr-8' : 'justify-start pl-8'}`}>
-                              {isLeft && (
-                                <div className="flex flex-col items-end">
-                                  <div className={`w-4 h-4 rounded-full border-2 ${isToday ? 'bg-orange-400 border-orange-600' : 'bg-orange-200 border-orange-400'} mb-1`}></div>
-                                  <div className="text-xs text-muted-foreground text-right mb-2">
-                                    {isToday ? 'Today' : format(postDate, 'MMM d, yyyy')}
-                                  </div>
-                                </div>
-                              )}
+                            <div className={`flex flex-col items-center w-1/2 ${isLeft ? 'items-end pr-4' : 'items-start pl-4'}`}>
+                              {/* Photo container */}
                               <div
-                                className="relative aspect-square w-40 rounded-lg overflow-hidden shadow-lg border border-orange-100 group-hover:scale-105 transition-transform cursor-pointer bg-white"
+                                className="relative aspect-square w-48 rounded-lg overflow-hidden shadow-lg border-2 transition-all duration-300 cursor-pointer group-hover:scale-105 ${
+                                  isToday
+                                    ? 'border-orange-400 shadow-orange-200'
+                                    : 'border-gray-200 hover:border-orange-300'
+                                } bg-white"
                                 onClick={() => setActivePhotoId(post.id === activePhotoId ? null : post.id)}
                               >
                                 <img src={post.image || '/avatar.png'} alt={pet.name + ' photo'} className="w-full h-full object-cover" />
+                                {/* Golden overlay for today's post */}
+                                {isToday && (
+                                  <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-yellow-400/20 pointer-events-none" />
+                                )}
                                 {/* Edit/Delete buttons for owner, only show if this photo is active */}
                                 {isOwnPet && activePhotoId === post.id && (
-                                  <div className="absolute top-2 right-2 flex gap-2 z-10">
+                                  <div className="absolute top-2 right-2 flex gap-1 z-20">
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="text-muted-foreground hover:text-yellow-500"
+                                      className="h-7 w-7 p-0 bg-white/90 backdrop-blur-sm hover:bg-white"
                                       onClick={e => { e.stopPropagation(); openEditModal(post); }}
                                       title="Edit Photo"
                                     >
-                                      <PencilIcon className="size-4" />
+                                      <PencilIcon className="w-3 h-3 text-gray-700" />
                                     </Button>
                                     <DeleteAlertDialog
                                       isDeleting={isEditing && editPost?.id === post.id}
                                       onDelete={async () => { await handleDeletePost(post.id); }}
                                       title="Delete Timeline Photo"
                                       description="This action cannot be undone."
+                                      triggerClassName="h-7 w-7 p-0 bg-white/90 backdrop-blur-sm hover:bg-red-100 text-gray-700 hover:text-red-500"
                                     />
                                   </div>
                                 )}
-                                {!isLeft && (
-                                  <div className="flex flex-col items-start ml-4">
-                                    <div className={`w-4 h-4 rounded-full border-2 ${isToday ? 'bg-orange-400 border-orange-600' : 'bg-orange-200 border-orange-400'} mb-1`}></div>
-                                    <div className="text-xs text-muted-foreground text-left mb-2">
-                                      {isToday ? 'Today' : format(postDate, 'MMM d, yyyy')}
                                     </div>
+                              {/* Date indicator below photo */}
+                              <div className="mt-2">
+                                <div className={`px-2 py-1 rounded-full text-xs font-medium shadow-lg ${
+                                  isToday
+                                    ? 'bg-gradient-to-r from-orange-400 to-yellow-400 text-orange-900'
+                                    : 'bg-white/90 backdrop-blur-sm text-gray-700'
+                                }`}>
+                                  {isToday ? 'Today' : format(postDate, 'MMM d')}
                                   </div>
-                                )}
                               </div>
                             </div>
                           </div>
@@ -612,6 +616,73 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
                 {isEditing ? "Saving..." : "Save Changes"}
               </Button>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Story Modal: Show pet's photos one by one with navigation arrows */}
+        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+          <DialogContent className="max-w-md p-0 overflow-hidden flex items-center justify-center min-h-[70vh]">
+            {currentPetPost && (
+              <div className="relative bg-background rounded-lg shadow-lg w-full flex flex-col items-center justify-center min-h-[60vh]">
+                <div className="flex flex-col items-center p-6 w-full">
+                  <div className="font-bold text-lg mb-2">{pet.name}'s Story</div>
+                  {/* Post navigation for pet story */}
+                  <div className="relative w-full flex items-center justify-center min-h-[300px]">
+                    <button
+                      onClick={prevPetPost}
+                      disabled={petPostIndex === 0}
+                      className="absolute left-0 top-1/2 -translate-y-1/2 p-2 disabled:opacity-30 z-10"
+                      aria-label="Previous post"
+                    >
+                      <ChevronLeftIcon className="w-6 h-6" />
+                    </button>
+                    <div className="mx-10 w-full flex flex-col items-center justify-center">
+                      <div className="max-w-full flex flex-col items-center justify-center">
+                        <img
+                          src={currentPetPost.image || '/avatar.png'}
+                          alt={pet.name + ' photo'}
+                          className="w-72 h-72 object-cover rounded-lg shadow-lg border-2 border-orange-100"
+                        />
+                        {/* Date pill below photo */}
+                        <div className="mt-4">
+                          <div className={`px-2 py-1 rounded-full text-xs font-medium shadow-lg ${
+                            (() => {
+                              const postDate = new Date(currentPetPost.createdAt);
+                              const today = new Date();
+                              today.setHours(0, 0, 0, 0);
+                              const postDay = new Date(postDate);
+                              postDay.setHours(0, 0, 0, 0);
+                              return postDay.getTime() === today.getTime();
+                            })()
+                              ? 'bg-gradient-to-r from-orange-400 to-yellow-400 text-orange-900'
+                              : 'bg-white/90 backdrop-blur-sm text-gray-700'
+                          }`}>
+                            {(() => {
+                              const postDate = new Date(currentPetPost.createdAt);
+                              const today = new Date();
+                              today.setHours(0, 0, 0, 0);
+                              const postDay = new Date(postDate);
+                              postDay.setHours(0, 0, 0, 0);
+                              return postDay.getTime() === today.getTime()
+                                ? 'Today'
+                                : format(postDate, 'MMM d');
+                            })()}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={nextPetPost}
+                      disabled={petPostIndex === petPosts.length - 1}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 p-2 disabled:opacity-30 z-10"
+                      aria-label="Next post"
+                    >
+                      <ChevronRightIcon className="w-6 h-6" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>

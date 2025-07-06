@@ -16,9 +16,9 @@ export default async function Home() {
         {user ? <CreatePost /> : null}
 
         <div className="space-y-6">
-          {posts.length > 0 ? (
-            posts.map((post) => (
-            <PostCard key={post.id} post={post} dbUserId={dbUserId} />
+          {posts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).length > 0 ? (
+            posts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).map((post) => (
+              <PostCard key={post.id} post={post} dbUserId={dbUserId} />
             ))
           ) : (
             <div className="text-center py-8">

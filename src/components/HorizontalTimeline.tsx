@@ -363,7 +363,7 @@ export default function HorizontalTimeline({
                 {/* Timeline item */}
                 <div className="relative">
                   {/* Date indicator */}
-                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-10">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
                     <div className={`px-2 py-1 rounded-full text-xs font-medium shadow-lg ${
                       isToday 
                         ? 'bg-gradient-to-r from-orange-400 to-yellow-400 text-orange-900' 
@@ -384,7 +384,7 @@ export default function HorizontalTimeline({
 
                   {/* Photo container */}
                   <div
-                    className={`relative aspect-square w-32 rounded-xl overflow-hidden shadow-lg border-2 transition-all duration-300 cursor-pointer group-hover/item:scale-105 ${
+                    className={`relative aspect-square w-32 rounded-xl overflow-hidden shadow-lg border-2 transition-all duration-300 cursor-pointer group-hover/item:scale-105 mt-4 ${
                       isToday 
                         ? 'border-orange-400 shadow-orange-200' 
                         : 'border-gray-200 hover:border-orange-300'
