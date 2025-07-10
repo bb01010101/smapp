@@ -827,11 +827,11 @@ function ProfilePageClient({
        {/* Profile card: even wider, main pfp larger and centered, story circles at the bottom, actions to the right */}
        <div className="w-full max-w-4xl mx-auto px-4">
          {/* Profile Header */}
-         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8 py-10">
+         <div className="flex flex-row sm:flex-row items-start gap-6 sm:gap-8 py-8 sm:py-10 px-2 sm:px-0">
            {/* Avatar */}
-           <div className="flex-shrink-0 flex flex-col items-center w-full sm:w-auto">
+           <div className="flex-shrink-0 flex flex-col items-center w-auto">
              <div className="cursor-pointer" onClick={() => setFamilyTimelineOpen(true)}>
-               <Avatar className="w-36 h-36 ring-2 ring-primary">
+               <Avatar className="w-28 h-28 sm:w-36 sm:h-36 ring-2 ring-primary">
                  <AvatarImage src={user.image ?? "/avatar.png"} />
                </Avatar>
              </div>
@@ -840,11 +840,11 @@ function ProfilePageClient({
            <div className="flex-1 flex flex-col gap-4 min-w-0 w-full">
              {/* Username row */}
              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
-               <div className="flex items-center gap-2 text-2xl font-bold truncate">
+               <div className="flex items-center gap-2 text-xl sm:text-2xl font-bold truncate">
                  {user.name ?? user.username}
                  {isUserVerified(user.username) && <BlueCheckIcon className="inline-block w-6 h-6 ml-1" />}
                </div>
-               <span className="text-lg text-muted-foreground truncate">@{user.username}</span>
+               <span className="text-lg sm:text-lg text-muted-foreground truncate">@{user.username}</span>
                <div className="flex gap-2 sm:ml-auto mt-2 sm:mt-0">
                  {!currentUser ? (
                    <SignInButton mode="modal">
@@ -872,25 +872,24 @@ function ProfilePageClient({
                </div>
              </div>
              {/* Stats row */}
-             <div className="flex gap-12 mt-2">
+             <div className="flex gap-10 sm:gap-12 mt-2">
                <div className="flex flex-col items-center">
-                 <span className="font-bold text-lg">{user._count.posts}</span>
-                 <span className="text-xs text-muted-foreground">Posts</span>
+                 <span className="font-bold text-lg sm:text-lg">{user._count.posts}</span>
+                 <span className="text-sm text-muted-foreground">Posts</span>
                </div>
                <div className="flex flex-col items-center">
-                 <span className="font-bold text-lg">{user._count.followers}</span>
-                 <span className="text-xs text-muted-foreground">Followers</span>
+                 <span className="font-bold text-lg sm:text-lg">{user._count.followers}</span>
+                 <span className="text-sm text-muted-foreground">Followers</span>
                </div>
                <div className="flex flex-col items-center">
-                 <span className="font-bold text-lg">{user._count.following}</span>
-                 <span className="text-xs text-muted-foreground">Following</span>
+                 <span className="font-bold text-lg sm:text-lg">{user._count.following}</span>
+                 <span className="text-sm text-muted-foreground">Following</span>
                </div>
              </div>
              {/* Bio section */}
              <div className="mt-2">
-               <span className="font-semibold text-base">{user.name}</span>
-               {user.bio && <div className="text-base text-foreground mt-1 whitespace-pre-line">{user.bio}</div>}
-               <div className="flex flex-wrap gap-6 mt-2 text-xs text-muted-foreground">
+               {user.bio && <div className="text-base sm:text-base text-foreground mt-1 whitespace-pre-line">{user.bio}</div>}
+               <div className="flex flex-wrap gap-6 mt-2 text-sm text-muted-foreground">
                  {user.location && (
                    <span className="flex items-center"><MapPinIcon className="size-4 mr-1" />{user.location}</span>
                  )}
@@ -904,7 +903,7 @@ function ProfilePageClient({
          </div>
          {/* Story Circles */}
          {currentPets && currentPets.length > 0 && (
-           <div className="flex gap-6 justify-center py-4 overflow-x-auto">
+            <div className="flex gap-4 sm:gap-6 justify-start py-4 overflow-x-auto">
              {currentPets.map((pet) => {
                // Check if this pet has posted today
                const petPosts = posts.filter((post) => post.petId === pet.id && (!post.mediaType || post.mediaType.startsWith('image')));
@@ -922,19 +921,19 @@ function ProfilePageClient({
                  >
                    <div className={
                      !hasPostedToday
-                       ? "p-1 rounded-full bg-gradient-to-tr from-orange-400 via-yellow-400 to-orange-600 shadow-lg animate-pulse"
+                       ? "p-1 sm:p-1.5 rounded-full bg-gradient-to-tr from-orange-400 via-yellow-400 to-orange-600 shadow-lg animate-pulse"
                        : ""
                    }>
-                     <Avatar className="w-20 h-20 border-2 border-primary group-hover:scale-105 transition">
-                       <AvatarImage src={pet.imageUrl ? pet.imageUrl : '/avatar.png'} alt={pet.name} />
-                     </Avatar>
-                   </div>
-                   <div className="font-medium text-sm mt-2 text-center w-20 truncate">{pet.name}</div>
-                 </Link>
-               );
-             })}
-           </div>
-         )}
+                      <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-primary group-hover:scale-105 transition">
+                        <AvatarImage src={pet.imageUrl ? pet.imageUrl : '/avatar.png'} alt={pet.name} />
+                      </Avatar>
+                    </div>
+                    <div className="font-medium text-xs sm:text-sm mt-2 text-center w-16 sm:w-20 truncate">{pet.name}</div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
          {/* Post Grid */}
          <div className="mt-8">
            <Tabs defaultValue="posts" className="w-full">
@@ -1577,7 +1576,7 @@ function ProfilePageClient({
                                
                                {/* Edit/Delete buttons for owner */}
                                {isOwnProfile && (
-                                 <div className="absolute top-2 right-2 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                                 <div className="absolute top-2 right-2 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition">
                                    <button
                                      className="h-7 w-7 p-0 bg-white/90 backdrop-blur-sm hover:bg-white rounded"
                                      onClick={e => { 
