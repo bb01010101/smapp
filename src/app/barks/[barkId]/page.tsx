@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
+import { isUserVerified } from "@/lib/utils";
+import BlueCheckIcon from "@/components/BlueCheckIcon";
 
 function CommentThread({ comments, onReply, onVote, userId, onDelete, onEdit }: {
   comments: any[],
@@ -26,7 +28,7 @@ function CommentThread({ comments, onReply, onVote, userId, onDelete, onEdit }: 
         return (
           <li key={comment.id} className="mb-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="font-semibold"><Link href={`/profile/${comment.author.username}`} className="hover:underline">{comment.author.name || comment.author.username}</Link></span>
+              <span className="font-semibold flex items-center gap-1"><Link href={`/profile/${comment.author.username}`} className="hover:underline">{comment.author.name || comment.author.username}</Link>{isUserVerified(comment.author.username) && (<BlueCheckIcon className="inline-block w-3 h-3 ml-1 align-text-bottom" />)}</span>
               <span>· {new Date(comment.createdAt).toLocaleString()}</span>
             </div>
             {editingId === comment.id ? (
@@ -233,7 +235,7 @@ export default function BarkDetailPage() {
           {bark.community && (
             <span className="font-semibold text-primary">b/{bark.community.name}</span>
           )}
-          <span>by <Link href={`/profile/${bark.author.username}`} className="hover:underline">{bark.author.name || bark.author.username}</Link></span>
+          <span>by <Link href={`/profile/${bark.author.username}`} className="hover:underline flex items-center gap-1">{bark.author.name || bark.author.username}{isUserVerified(bark.author.username) && (<BlueCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom" />)}</Link></span>
           <span>· {new Date(bark.createdAt).toLocaleString()}</span>
         </div>
         {editingBark ? (

@@ -9,6 +9,8 @@ import { useUser, SignInButton } from "@clerk/nextjs";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import toast from "react-hot-toast";
+import { isUserVerified } from "@/lib/utils";
+import BlueCheckIcon from "@/components/BlueCheckIcon";
 
 // Placeholder for HLS.js video player
 const VideoPlayer = dynamic(() => import("@/components/VideoFeed"), { ssr: false });
@@ -528,9 +530,12 @@ export default function PlaysPage() {
                           </Avatar>
                         </Link>
                         <div className="flex flex-col">
-                  <Link href={`/profile/${currentVideo.author.username}`} className="text-white font-semibold text-base hover:underline" onClick={(e) => e.stopPropagation()}>
+                  <Link href={`/profile/${currentVideo.author.username}`} className="text-white font-semibold text-base hover:underline flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                     {currentVideo.author.name ?? currentVideo.author.username}
-                          </Link>
+                    {isUserVerified(currentVideo.author.username) && (
+                      <BlueCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom" />
+                    )}
+                  </Link>
                   <span className="text-white text-sm line-clamp-2 max-w-xs opacity-90">{currentVideo.content || currentVideo["content"] || currentVideo.title || "No description."}</span>
                         </div>
                       </div>

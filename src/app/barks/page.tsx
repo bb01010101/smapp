@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } f
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
+import { isUserVerified } from "@/lib/utils";
+import BlueCheckIcon from "@/components/BlueCheckIcon";
 
 function BarkCard({ bark, onVote }: { bark: any, onVote: (barkId: string, value: 1 | -1) => void }) {
   // Calculate score from votes
@@ -18,7 +20,7 @@ function BarkCard({ bark, onVote }: { bark: any, onVote: (barkId: string, value:
         {bark.community && (
           <span className="font-semibold text-primary">b/{bark.community.name}</span>
         )}
-        <span>by <Link href={`/profile/${bark.author.username}`} className="hover:underline">{bark.author.name || bark.author.username}</Link></span>
+        <span>by <Link href={`/profile/${bark.author.username}`} className="hover:underline flex items-center gap-1">{bark.author.name || bark.author.username}{isUserVerified(bark.author.username) && (<BlueCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom" />)}</Link></span>
         <span>· {new Date(bark.createdAt).toLocaleString()}</span>
       </div>
       <Link href={`/barks/${bark.id}`} className="hover:underline">
@@ -28,7 +30,7 @@ function BarkCard({ bark, onVote }: { bark: any, onVote: (barkId: string, value:
       {/* Top comment preview */}
       {bark.comments && bark.comments.length > 0 && (
         <div className="mt-2 p-2 bg-muted rounded text-xs">
-          <span className="font-semibold"><Link href={`/profile/${bark.comments[0].author.username}`} className="hover:underline">{bark.comments[0].author.name || bark.comments[0].author.username}</Link>:</span>{" "}
+          <span className="font-semibold"><Link href={`/profile/${bark.comments[0].author.username}`} className="hover:underline flex items-center gap-1">{bark.comments[0].author.name || bark.comments[0].author.username}{isUserVerified(bark.comments[0].author.username) && (<BlueCheckIcon className="inline-block w-3 h-3 ml-1 align-text-bottom" />)}</Link>:</span>{" "}
           {bark.comments[0].content}
           <span className="ml-2 text-muted-foreground">· {new Date(bark.comments[0].createdAt).toLocaleString()}</span>
         </div>

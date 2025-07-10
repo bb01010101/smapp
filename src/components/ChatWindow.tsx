@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 import { useUser } from "@clerk/nextjs";
 import React, { useState } from "react";
+import { isUserVerified } from "@/lib/utils";
+import BlueCheckIcon from "@/components/BlueCheckIcon";
 
 // Simple markdown link renderer
 function renderMarkdownLinks(text: string) {
@@ -51,7 +53,12 @@ export default function ChatWindow({ messages, other, handleSend }: any) {
         <Avatar>
           <AvatarImage src={other?.image || "/avatar.png"} />
         </Avatar>
-        <div className="font-bold text-xl">{other?.name || other?.username || "User"}</div>
+        <div className="font-bold text-xl flex items-center gap-1">
+          {other?.name || other?.username || "User"}
+          {isUserVerified(other?.username) && (
+            <BlueCheckIcon className="inline-block w-5 h-5 ml-1 align-text-bottom" />
+          )}
+        </div>
       </div>
       <Card className="flex-1 overflow-y-auto bg-background border-none shadow-none">
         <CardContent className="flex flex-col gap-2 p-4">

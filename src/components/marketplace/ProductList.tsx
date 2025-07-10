@@ -18,6 +18,8 @@ import { deleteListing } from "@/actions/marketplace.action";
 import toast from "react-hot-toast";
 import EditProductDialog from "./EditProductDialog";
 import { Button } from "@/components/ui/button";
+import { isUserVerified } from "@/lib/utils";
+import BlueCheckIcon from "@/components/BlueCheckIcon";
 
 type Product = {
   id: string;
@@ -100,9 +102,12 @@ export default function ProductList({ products }: ProductListProps) {
                     <div>
                       <Link
                         href={`/profile/${product.author.username}`}
-                        className="font-medium hover:underline"
+                        className="font-medium hover:underline flex items-center gap-1"
                       >
                         {product.author.name}
+                        {isUserVerified(product.author.username) && (
+                          <BlueCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom" />
+                        )}
                       </Link>
                       <p className="text-sm text-muted-foreground">
                         {formatDistanceToNow(new Date(product.createdAt))} ago

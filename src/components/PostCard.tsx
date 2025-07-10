@@ -12,6 +12,8 @@ import { DeleteAlertDialog } from "./DeleteAlertDialog";
 import { Button } from "./ui/button";
 import { HeartIcon, LogInIcon, MessageCircleIcon, SendIcon } from "lucide-react";
 import { Textarea } from "./ui/textarea";
+import { isUserVerified } from "@/lib/utils";
+import BlueCheckIcon from "@/components/BlueCheckIcon";
 
 
 type Posts = Awaited<ReturnType<typeof getPosts>>
@@ -90,197 +92,172 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
 
   return (
     <Card className="overflow-hidden">
-      <CardContent className="p-4 sm:p-6">
-        <div className="space-y-4">
-          <div className="flex space-x-3 sm:space-x-4">
-            {post.pet ? (
-              <>
-                <Link href={`/pet/${post.pet.id}`}>
-                  <Avatar className="size-8 sm:w-10 sm:h-10">
-                    <AvatarImage src={post.pet.imageUrl || "/avatar.png"} />
-                  </Avatar>
-                </Link>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 truncate">
-                      <Link
-                        href={`/pet/${post.pet.id}`}
-                        className="font-semibold truncate hover:underline"
-                      >
-                        {post.pet.name}
-                      </Link>
-                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                        <span>{post.pet.species}</span>
-                        <span>•</span>
-                        <span suppressHydrationWarning>{formatDistanceToNow(new Date(post.createdAt))} ago</span>
-                      </div>
-                    </div>
-                    {dbUserId === post.author.id && (
-                      <DeleteAlertDialog isDeleting={isDeleting} onDelete={handleDeletePost} />
-                    )}
-                  </div>
-                  <p className="mt-2 text-sm text-foreground break-words">{post.content}</p>
-                </div>
-              </>
-            ) : (
-              <>
-                <Link href={`/profile/${post.author.username}`}>
-                  <Avatar className="size-8 sm:w-10 sm:h-10">
-                    <AvatarImage src={post.author.image ?? "/avatar.png"} />
-                  </Avatar>
-                </Link>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 truncate">
-                      <Link
-                        href={`/profile/${post.author.username}`}
-                        className="font-semibold truncate"
-                      >
-                        {post.author.name}
-                      </Link>
-                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                        <Link href={`/profile/${post.author.username}`}>@{post.author.username}</Link>
-                        <span>•</span>
-                        <span suppressHydrationWarning>{formatDistanceToNow(new Date(post.createdAt))} ago</span>
-                      </div>
-                    </div>
-                    {dbUserId === post.author.id && (
-                      <DeleteAlertDialog isDeleting={isDeleting} onDelete={handleDeletePost} />
-                    )}
-                  </div>
-                  <p className="mt-2 text-sm text-foreground break-words">{post.content}</p>
-                </div>
-              </>
-            )}
+      <CardContent className="p-4 sm:p-5">
+        {/* Header: Avatar, Name, Username, Timestamp, Delete */}
+        <div className="flex items-center w-full mb-2">
+          <Link href={post.pet ? `/pet/${post.pet.id}` : `/profile/${post.author.username}`}
+            className="flex-shrink-0">
+            <Avatar className="w-11 h-11 border-2 border-gold-200">
+              <AvatarImage src={post.pet ? post.pet.imageUrl ?? "/avatar.png" : post.author.image ?? "/avatar.png"} />
+            </Avatar>
+          </Link>
+          <div className="flex flex-col justify-center ml-3 min-w-0 flex-1">
+            <div className="flex items-center gap-1 min-w-0">
+              <Link href={post.pet ? `/pet/${post.pet.id}` : `/profile/${post.author.username}`}
+                className="font-semibold truncate hover:underline flex items-center gap-1 text-base">
+                {post.pet ? post.pet.name : post.author.name}
+                {post.pet ? null : (isUserVerified(post.author.username) && (
+                  <BlueCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom" />
+                ))}
+              </Link>
+              <span className="text-muted-foreground text-xs truncate ml-1">
+                {post.pet ? post.pet.species : `@${post.author.username}`}
+              </span>
+              <span className="text-muted-foreground text-xs mx-1">•</span>
+              <span className="text-muted-foreground text-xs truncate" suppressHydrationWarning>{formatDistanceToNow(new Date(post.createdAt))} ago</span>
+            </div>
           </div>
-
-          {/* POST IMAGE/VIDEO */}
-          {post.image && (
-            <div className="relative w-full" onClick={handleImageClick} onTouchEnd={handleImageClick} style={{ cursor: "pointer" }}>
-              {showHeartAnimation && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                  <HeartIcon className="w-32 h-32 text-red-500 fill-current heart-burst-animation" />
-                </div>
-              )}
-              {post.mediaType?.startsWith("video") ? (
-                <VideoWithToggleControls src={post.image} />
-              ) : (
-                <img src={post.image} alt="Post content" className="w-full h-auto object-cover" />
-              )}
+          {dbUserId === post.author.id && (
+            <div className="ml-2">
+              <DeleteAlertDialog isDeleting={isDeleting} onDelete={handleDeletePost} />
             </div>
           )}
+        </div>
 
-          {/* LIKE & COMMENT BUTTONS */}
-          <div className="flex items-center pt-2 space-x-4">
-            {user ? (
-              <Button
-                variant={hasLiked ? "gold" : "outline"}
-                size="sm"
-                className={`gap-2 ${hasLiked ? "hover:bg-gold-600" : "hover:bg-gold-100"}`}
-                onClick={handleLike}
-              >
-                {hasLiked ? (
-                  <HeartIcon className="size-5 fill-current text-red-500" />
-                ) : (
-                  <HeartIcon className="size-5 text-red-500" />
-                )}
+        {/* Post Content */}
+        {post.content && (
+          <div className="mb-2 text-sm text-foreground break-words whitespace-pre-line">
+            {post.content}
+          </div>
+        )}
+
+        {/* Post Image/Video */}
+        {post.image && (
+          <div className="relative w-full rounded-lg overflow-hidden mb-2" onClick={handleImageClick} onTouchEnd={handleImageClick} style={{ cursor: "pointer" }}>
+            {showHeartAnimation && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                <HeartIcon className="w-32 h-32 text-red-500 fill-current heart-burst-animation" />
+              </div>
+            )}
+            {post.mediaType?.startsWith("video") ? (
+              <VideoWithToggleControls src={post.image} />
+            ) : (
+              <img src={post.image} alt="Post content" className="w-full h-auto object-cover max-h-[400px]" />
+            )}
+          </div>
+        )}
+
+        {/* Like & Comment Buttons */}
+        <div className="flex items-center pt-1 space-x-4">
+          {user ? (
+            <Button
+              variant={hasLiked ? "gold" : "outline"}
+              size="sm"
+              className={`gap-2 ${hasLiked ? "hover:bg-gold-600" : "hover:bg-gold-100"}`}
+              onClick={handleLike}
+            >
+              {hasLiked ? (
+                <HeartIcon className="size-5 fill-current text-red-500" />
+              ) : (
+                <HeartIcon className="size-5 text-red-500" />
+              )}
+              <span>{optimisticLikes}</span>
+            </Button>
+          ) : (
+            <SignInButton mode="modal">
+              <Button variant="outline" size="sm" className="gap-2">
+                <HeartIcon className="size-5 text-red-500" />
                 <span>{optimisticLikes}</span>
               </Button>
-            ) : (
-              <SignInButton mode="modal">
-                <Button variant="ghost" size="sm" className="text-muted-foreground gap-2">
-                  <HeartIcon className="size-5 text-red-500" />
-                  <span>{optimisticLikes}</span>
-                </Button>
-              </SignInButton>
-            )}
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 hover:bg-gold-100 hover:text-gold-700"
-              onClick={() => setShowComments((prev) => !prev)}
-            >
-              <MessageCircleIcon
-                className={`size-5 ${showComments ? "fill-gold-500 text-gold-500" : ""}`}
-              />
-              <span>{post.comments.length}</span>
-            </Button>
-          </div>
-          
-          {/* COMMENTS SECTION */}
-          {showComments && (
-            <div className="space-y-4 pt-4 border-t">
-              <div className="space-y-4">
-                {/* DISPLAY COMMENTS */}
-                {post.comments.map((comment) => (
-                  <div key={comment.id} className="flex space-x-3">
-                    <Avatar className="size-8 flex-shrink-0">
-                      <AvatarImage src={comment.author.image ?? "/avatar.png"} />
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="font-medium text-sm">{comment.author.name}</span>
-                        <span className="text-sm text-muted-foreground">
-                          @{comment.author.username}
-                        </span>
-                        <span className="text-sm text-muted-foreground">·</span>
-                        <span className="text-sm text-muted-foreground">
-                          <span suppressHydrationWarning>{formatDistanceToNow(new Date(comment.createdAt))} ago</span>
-                        </span>
-                      </div>
-                      <p className="text-sm break-words">{comment.content}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {user ? (
-                <div className="flex space-x-3">
-                  <Avatar className="size-8 flex-shrink-0">
-                    <AvatarImage src={user?.imageUrl || "/avatar.png"} />
-                  </Avatar>
-                  <div className="flex-1">
-                    <Textarea
-                      placeholder="Write a comment..."
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      className="min-h-[80px] resize-none"
-                    />
-                    <div className="flex justify-end mt-2">
-                      <Button
-                        size="sm"
-                        onClick={handleAddComment}
-                        className="flex items-center gap-2"
-                        disabled={!newComment.trim() || isCommenting}
-                      >
-                        {isCommenting ? (
-                          "Posting..."
-                        ) : (
-                          <>
-                            <SendIcon className="size-4" />
-                            Comment
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex justify-center p-4 border rounded-lg bg-muted/50">
-                  <SignInButton mode="modal">
-                    <Button variant="outline" className="gap-2">
-                      <LogInIcon className="size-4" />
-                      Sign in to comment
-                    </Button>
-                  </SignInButton>
-                </div>
-              )}
-            </div>
-          )} 
-
-          
+            </SignInButton>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 hover:bg-gold-100 hover:text-gold-700"
+            onClick={() => setShowComments((prev) => !prev)}
+          >
+            <MessageCircleIcon
+              className={`size-5 ${showComments ? "fill-gold-500 text-gold-500" : ""}`}
+            />
+            <span>{post.comments.length}</span>
+          </Button>
         </div>
+
+        {/* Comments Section */}
+        {showComments && (
+          <div className="space-y-4 pt-4 border-t mt-2">
+            <div className="space-y-4">
+              {post.comments.map((comment) => (
+                <div key={comment.id} className="flex space-x-3">
+                  <Avatar className="size-8 flex-shrink-0">
+                    <AvatarImage src={comment.author.image ?? "/avatar.png"} />
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="font-medium text-sm">
+                        {comment.author.name}
+                        {isUserVerified(comment.author.username) && (
+                          <BlueCheckIcon className="inline-block w-3 h-3 ml-1 align-text-bottom" />
+                        )}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        @{comment.author.username}
+                      </span>
+                      <span className="text-sm text-muted-foreground">·</span>
+                      <span className="text-sm text-muted-foreground">
+                        <span suppressHydrationWarning>{formatDistanceToNow(new Date(comment.createdAt))} ago</span>
+                      </span>
+                    </div>
+                    <p className="text-sm break-words">{comment.content}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {user ? (
+              <div className="flex space-x-3">
+                <Avatar className="size-8 flex-shrink-0">
+                  <AvatarImage src={user?.imageUrl || "/avatar.png"} />
+                </Avatar>
+                <div className="flex-1">
+                  <Textarea
+                    placeholder="Write a comment..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    className="min-h-[80px] resize-none"
+                  />
+                  <div className="flex justify-end mt-2">
+                    <Button
+                      size="sm"
+                      onClick={handleAddComment}
+                      className="flex items-center gap-2"
+                      disabled={!newComment.trim() || isCommenting}
+                    >
+                      {isCommenting ? (
+                        "Posting..."
+                      ) : (
+                        <>
+                          <SendIcon className="size-4" />
+                          Comment
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex justify-center p-4 border rounded-lg bg-muted/50">
+                <SignInButton mode="modal">
+                  <Button variant="outline" className="gap-2">
+                    <LogInIcon className="size-4" />
+                    Sign in to comment
+                  </Button>
+                </SignInButton>
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
