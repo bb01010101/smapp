@@ -307,6 +307,12 @@ const gridStyles = `
   .explore-item.video {
     grid-row: span 2;
   }
+  @media (max-width: 640px) {
+    .explore-grid {
+      grid-template-columns: repeat(3, 1fr);
+      grid-auto-rows: 33vw;
+    }
+  }
 `;
 
 export default function PawPad() {
