@@ -535,7 +535,7 @@ export default function PlaysPage() {
                     {isUserVerified(currentVideo.author.username) && (
                       <BlueCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom" />
                     )}
-                  </Link>
+                          </Link>
                   <span className="text-white text-sm line-clamp-2 max-w-xs opacity-90">{currentVideo.content || currentVideo["content"] || currentVideo.title || "No description."}</span>
                         </div>
                       </div>

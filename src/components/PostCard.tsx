@@ -99,8 +99,8 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
             className="flex-shrink-0">
             <Avatar className="w-11 h-11 border-2 border-gold-200">
               <AvatarImage src={post.pet ? post.pet.imageUrl ?? "/avatar.png" : post.author.image ?? "/avatar.png"} />
-            </Avatar>
-          </Link>
+                  </Avatar>
+                </Link>
           <div className="flex flex-col justify-center ml-3 min-w-0 flex-1">
             <div className="flex items-center gap-1 min-w-0">
               <Link href={post.pet ? `/pet/${post.pet.id}` : `/profile/${post.author.username}`}
@@ -109,20 +109,20 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
                 {post.pet ? null : (isUserVerified(post.author.username) && (
                   <BlueCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom" />
                 ))}
-              </Link>
+                      </Link>
               <span className="text-muted-foreground text-xs truncate ml-1">
                 {post.pet ? post.pet.species : `@${post.author.username}`}
               </span>
               <span className="text-muted-foreground text-xs mx-1">•</span>
               <span className="text-muted-foreground text-xs truncate" suppressHydrationWarning>{formatDistanceToNow(new Date(post.createdAt))} ago</span>
-            </div>
-          </div>
-          {dbUserId === post.author.id && (
+                      </div>
+                    </div>
+                    {dbUserId === post.author.id && (
             <div className="ml-2">
-              <DeleteAlertDialog isDeleting={isDeleting} onDelete={handleDeletePost} />
-            </div>
-          )}
-        </div>
+                      <DeleteAlertDialog isDeleting={isDeleting} onDelete={handleDeletePost} />
+                    </div>
+                    )}
+                  </div>
 
         {/* Post Content */}
         {post.content && (
@@ -132,132 +132,132 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
         )}
 
         {/* Post Image/Video */}
-        {post.image && (
+          {post.image && (
           <div className="relative w-full rounded-lg overflow-hidden mb-2" onClick={handleImageClick} onTouchEnd={handleImageClick} style={{ cursor: "pointer" }}>
-            {showHeartAnimation && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                <HeartIcon className="w-32 h-32 text-red-500 fill-current heart-burst-animation" />
-              </div>
-            )}
-            {post.mediaType?.startsWith("video") ? (
-              <VideoWithToggleControls src={post.image} />
-            ) : (
+              {showHeartAnimation && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                  <HeartIcon className="w-32 h-32 text-red-500 fill-current heart-burst-animation" />
+                </div>
+              )}
+              {post.mediaType?.startsWith("video") ? (
+                <VideoWithToggleControls src={post.image} />
+              ) : (
               <img src={post.image} alt="Post content" className="w-full h-auto object-cover max-h-[400px]" />
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
 
         {/* Like & Comment Buttons */}
         <div className="flex items-center pt-1 space-x-4">
-          {user ? (
-            <Button
-              variant={hasLiked ? "gold" : "outline"}
-              size="sm"
-              className={`gap-2 ${hasLiked ? "hover:bg-gold-600" : "hover:bg-gold-100"}`}
-              onClick={handleLike}
-            >
-              {hasLiked ? (
-                <HeartIcon className="size-5 fill-current text-red-500" />
-              ) : (
-                <HeartIcon className="size-5 text-red-500" />
-              )}
-              <span>{optimisticLikes}</span>
-            </Button>
-          ) : (
-            <SignInButton mode="modal">
-              <Button variant="outline" size="sm" className="gap-2">
-                <HeartIcon className="size-5 text-red-500" />
+            {user ? (
+              <Button
+                variant={hasLiked ? "gold" : "outline"}
+                size="sm"
+                className={`gap-2 ${hasLiked ? "hover:bg-gold-600" : "hover:bg-gold-100"}`}
+                onClick={handleLike}
+              >
+                {hasLiked ? (
+                  <HeartIcon className="size-5 fill-current text-red-500" />
+                ) : (
+                  <HeartIcon className="size-5 text-red-500" />
+                )}
                 <span>{optimisticLikes}</span>
               </Button>
-            </SignInButton>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 hover:bg-gold-100 hover:text-gold-700"
-            onClick={() => setShowComments((prev) => !prev)}
-          >
-            <MessageCircleIcon
-              className={`size-5 ${showComments ? "fill-gold-500 text-gold-500" : ""}`}
-            />
-            <span>{post.comments.length}</span>
-          </Button>
-        </div>
-
+            ) : (
+              <SignInButton mode="modal">
+              <Button variant="outline" size="sm" className="gap-2">
+                  <HeartIcon className="size-5 text-red-500" />
+                  <span>{optimisticLikes}</span>
+                </Button>
+              </SignInButton>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 hover:bg-gold-100 hover:text-gold-700"
+              onClick={() => setShowComments((prev) => !prev)}
+            >
+              <MessageCircleIcon
+                className={`size-5 ${showComments ? "fill-gold-500 text-gold-500" : ""}`}
+              />
+              <span>{post.comments.length}</span>
+            </Button>
+          </div>
+          
         {/* Comments Section */}
-        {showComments && (
+          {showComments && (
           <div className="space-y-4 pt-4 border-t mt-2">
-            <div className="space-y-4">
-              {post.comments.map((comment) => (
-                <div key={comment.id} className="flex space-x-3">
-                  <Avatar className="size-8 flex-shrink-0">
-                    <AvatarImage src={comment.author.image ?? "/avatar.png"} />
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <div className="space-y-4">
+                {post.comments.map((comment) => (
+                  <div key={comment.id} className="flex space-x-3">
+                    <Avatar className="size-8 flex-shrink-0">
+                      <AvatarImage src={comment.author.image ?? "/avatar.png"} />
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <span className="font-medium text-sm">
                         {comment.author.name}
                         {isUserVerified(comment.author.username) && (
                           <BlueCheckIcon className="inline-block w-3 h-3 ml-1 align-text-bottom" />
                         )}
                       </span>
-                      <span className="text-sm text-muted-foreground">
-                        @{comment.author.username}
-                      </span>
-                      <span className="text-sm text-muted-foreground">·</span>
-                      <span className="text-sm text-muted-foreground">
-                        <span suppressHydrationWarning>{formatDistanceToNow(new Date(comment.createdAt))} ago</span>
-                      </span>
+                        <span className="text-sm text-muted-foreground">
+                          @{comment.author.username}
+                        </span>
+                        <span className="text-sm text-muted-foreground">·</span>
+                        <span className="text-sm text-muted-foreground">
+                          <span suppressHydrationWarning>{formatDistanceToNow(new Date(comment.createdAt))} ago</span>
+                        </span>
+                      </div>
+                      <p className="text-sm break-words">{comment.content}</p>
                     </div>
-                    <p className="text-sm break-words">{comment.content}</p>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            {user ? (
-              <div className="flex space-x-3">
-                <Avatar className="size-8 flex-shrink-0">
-                  <AvatarImage src={user?.imageUrl || "/avatar.png"} />
-                </Avatar>
-                <div className="flex-1">
-                  <Textarea
-                    placeholder="Write a comment..."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    className="min-h-[80px] resize-none"
-                  />
-                  <div className="flex justify-end mt-2">
-                    <Button
-                      size="sm"
-                      onClick={handleAddComment}
-                      className="flex items-center gap-2"
-                      disabled={!newComment.trim() || isCommenting}
-                    >
-                      {isCommenting ? (
-                        "Posting..."
-                      ) : (
-                        <>
-                          <SendIcon className="size-4" />
-                          Comment
-                        </>
-                      )}
-                    </Button>
+              {user ? (
+                <div className="flex space-x-3">
+                  <Avatar className="size-8 flex-shrink-0">
+                    <AvatarImage src={user?.imageUrl || "/avatar.png"} />
+                  </Avatar>
+                  <div className="flex-1">
+                    <Textarea
+                      placeholder="Write a comment..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      className="min-h-[80px] resize-none"
+                    />
+                    <div className="flex justify-end mt-2">
+                      <Button
+                        size="sm"
+                        onClick={handleAddComment}
+                        className="flex items-center gap-2"
+                        disabled={!newComment.trim() || isCommenting}
+                      >
+                        {isCommenting ? (
+                          "Posting..."
+                        ) : (
+                          <>
+                            <SendIcon className="size-4" />
+                            Comment
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="flex justify-center p-4 border rounded-lg bg-muted/50">
-                <SignInButton mode="modal">
-                  <Button variant="outline" className="gap-2">
-                    <LogInIcon className="size-4" />
-                    Sign in to comment
-                  </Button>
-                </SignInButton>
-              </div>
-            )}
-          </div>
-        )}
+              ) : (
+                <div className="flex justify-center p-4 border rounded-lg bg-muted/50">
+                  <SignInButton mode="modal">
+                    <Button variant="outline" className="gap-2">
+                      <LogInIcon className="size-4" />
+                      Sign in to comment
+                    </Button>
+                  </SignInButton>
+                </div>
+              )}
+            </div>
+          )} 
       </CardContent>
     </Card>
   );

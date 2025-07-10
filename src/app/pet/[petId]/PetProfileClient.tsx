@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileTextIcon, HeartIcon, MapPinIcon, LinkIcon, CalendarIcon, ChevronLeftIcon, ChevronRightIcon, FlameIcon, ImageIcon, Loader2Icon, PencilIcon, TrashIcon } from "lucide-react";
+import { FileTextIcon, HeartIcon, MapPinIcon, LinkIcon, CalendarIcon, ChevronLeftIcon, ChevronRightIcon, FlameIcon, ImageIcon, Loader2Icon, PencilIcon, TrashIcon, MessageCircleIcon } from "lucide-react";
 import Link from "next/link";
 import PostCard from "@/components/PostCard";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
-import { createPost, deletePost, updatePost } from "@/actions/post.action";
+import { createPost, deletePost, updatePost, toggleLike } from "@/actions/post.action";
 import { useUser } from "@clerk/nextjs";
 import toast from "react-hot-toast";
 import dynamic from "next/dynamic";
@@ -19,6 +19,8 @@ import { DeleteAlertDialog } from "@/components/DeleteAlertDialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import HorizontalTimeline from "@/components/HorizontalTimeline";
+import BlueCheckIcon from "@/components/BlueCheckIcon";
+import { isUserVerified } from "@/lib/utils";
 
 // Dynamically import ImageUpload to avoid SSR issues
 const ImageUpload = dynamic(() => import("@/components/ImageUpload"), {
@@ -30,6 +32,373 @@ interface PetProfileClientProps {
   pet: any;
   posts: any[];
   owner: any;
+}
+
+// PostModal component for Instagram-style post viewing
+function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOpenChange: (v: boolean) => void; post: any | null; dbUserId: string | null }) {
+  const { user } = useUser();
+  const [newComment, setNewComment] = useState("");
+  const [isCommenting, setIsCommenting] = useState(false);
+  const [comments, setComments] = useState(post?.comments || []);
+  const [hasLiked, setHasLiked] = useState(post ? post.likes.some((like: any) => like.userId === dbUserId) : false);
+  const [optimisticLikes, setOptimisticLikes] = useState(post ? post._count.likes : 0);
+  const [isLiking, setIsLiking] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [showVideoControls, setShowVideoControls] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const isVideo = post?.mediaType?.startsWith("video");
+  
+  useEffect(() => {
+    setComments(post?.comments || []);
+    setHasLiked(post ? post.likes.some((like: any) => like.userId === dbUserId) : false);
+    setOptimisticLikes(post ? post._count.likes : 0);
+    setShowComments(false);
+    setShowVideoControls(false);
+  }, [post, dbUserId]);
+
+  const handleVideoMouseDown = () => {
+    const timer = setTimeout(() => {
+      setShowVideoControls(true);
+    }, 500); // 500ms long press
+    setLongPressTimer(timer);
+  };
+
+  const handleVideoMouseUp = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  const handleVideoMouseLeave = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  const handleLike = async () => {
+    if (isLiking || !post) return;
+    try {
+      setIsLiking(true);
+      setHasLiked((prev: boolean) => !prev);
+      setOptimisticLikes((prev: number) => prev + (hasLiked ? -1 : 1));
+      await toggleLike(post.id);
+    } catch (error) {
+      setOptimisticLikes(post ? post._count.likes : 0);
+      setHasLiked(post ? post.likes.some((like: any) => like.userId === dbUserId) : false);
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || isCommenting || !post) return;
+    try {
+      setIsCommenting(true);
+      setComments([
+        ...comments,
+        {
+          id: Math.random().toString(),
+          content: newComment,
+          createdAt: new Date(),
+          authorId: user?.id || "",
+          postId: post.id,
+          author: {
+            id: user?.id || "",
+            name: user?.fullName || user?.username || "Anonymous",
+            username: user?.username || "anonymous",
+            image: user?.imageUrl || "/avatar.png",
+          },
+        },
+      ]);
+      setNewComment("");
+    } finally {
+      setIsCommenting(false);
+    }
+  };
+
+  if (!post) return null;
+  
+  // Video layout - vertical/phone-sized
+  if (isVideo) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="p-0 flex flex-col items-stretch justify-center bg-transparent shadow-none border-none max-w-sm w-full h-[90vh]">
+          {/* Video container - phone-sized */}
+          <div className="relative flex-1 bg-black flex items-center justify-center min-h-[400px] max-h-[60vh] rounded-t-xl">
+            <video
+              src={post.image || undefined}
+              controls={showVideoControls}
+              autoPlay
+              loop
+              muted
+              onMouseDown={handleVideoMouseDown}
+              onMouseUp={handleVideoMouseUp}
+              onMouseLeave={handleVideoMouseLeave}
+              className="w-full h-full object-contain max-h-[60vh] rounded-t-xl"
+            />
+            
+            {/* Header overlay */}
+            <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent rounded-t-xl">
+              <div className="flex items-center gap-3">
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={post.author?.image ?? "/avatar.png"} />
+                </Avatar>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="font-semibold truncate text-white text-sm">{post.author?.name ?? post.author?.username}</span>
+                    {isUserVerified(post.author?.username) && (
+                      <BlueCheckIcon className="inline-block w-3 h-3 ml-1 align-text-bottom text-white" />
+                    )}
+                    <span className="text-xs text-white/70 ml-2 truncate">@{post.author?.username}</span>
+                  </div>
+                  <span className="text-xs text-white/70 truncate" suppressHydrationWarning>{formatDistanceToNow(new Date(post.createdAt))} ago</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Content and actions below video */}
+          <div className="bg-white dark:bg-zinc-900 rounded-b-xl">
+            {/* Post content */}
+            {post.content && (
+              <div className="px-4 py-3 text-sm text-foreground break-words whitespace-pre-line border-b border-muted">
+                {post.content}
+              </div>
+            )}
+            
+            {/* Actions */}
+            <div className="flex items-center gap-4 px-4 py-3 border-b border-muted">
+              <button
+                className={`flex items-center gap-2 text-muted-foreground ${hasLiked ? "text-red-500" : "hover:text-red-500"}`}
+                onClick={handleLike}
+                disabled={isLiking}
+              >
+                {hasLiked ? (
+                  <HeartIcon className="size-5 fill-current" />
+                ) : (
+                  <HeartIcon className="size-5" />
+                )}
+                <span className="text-sm">{optimisticLikes}</span>
+              </button>
+              <button
+                className="flex items-center gap-2 text-muted-foreground hover:text-blue-500"
+                onClick={() => setShowComments(true)}
+              >
+                <MessageCircleIcon className="size-5" />
+                <span className="text-sm">{comments.length}</span>
+              </button>
+            </div>
+            
+            {/* Comments section - slides up from bottom */}
+            {showComments && (
+              <div className="border-t border-muted max-h-[40vh] overflow-y-auto">
+                <div className="flex items-center justify-between p-3 border-b border-muted">
+                  <h3 className="font-semibold text-sm">Comments</h3>
+                  <button
+                    onClick={() => setShowComments(false)}
+                    className="text-muted-foreground hover:text-foreground text-sm"
+                  >
+                    ✕
+                  </button>
+                </div>
+                
+                {/* Comments list */}
+                <div className="px-4 py-2">
+                  {comments.length === 0 ? (
+                    <div className="text-muted-foreground text-sm py-4 text-center">No comments yet</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {comments.map((comment: any) => (
+                        <div key={comment.id} className="flex space-x-2">
+                          <Avatar className="size-6 flex-shrink-0">
+                            <AvatarImage src={comment.author.image ?? "/avatar.png"} />
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
+                              <span className="font-medium text-xs">{comment.author.name}</span>
+                              {isUserVerified(comment.author.username) && (
+                                <BlueCheckIcon className="inline-block w-2 h-2 ml-1 align-text-bottom" />
+                              )}
+                              <span className="text-xs text-muted-foreground">@{comment.author.username}</span>
+                              <span className="text-xs text-muted-foreground">·</span>
+                              <span className="text-xs text-muted-foreground">
+                                <span suppressHydrationWarning>{new Date(comment.createdAt).toLocaleString()}</span>
+                              </span>
+                            </div>
+                            <p className="text-xs break-words">{comment.content}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Add comment */}
+                {user && (
+                  <div className="flex items-center gap-2 p-3 border-t border-muted">
+                    <Avatar className="size-6 flex-shrink-0">
+                      <AvatarImage src={user?.imageUrl || "/avatar.png"} />
+                    </Avatar>
+                    <Textarea
+                      placeholder="Write a comment..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      className="min-h-[32px] resize-none flex-1 text-xs"
+                    />
+                    <button
+                      onClick={handleAddComment}
+                      className="px-2 py-1 bg-primary text-white rounded text-xs disabled:opacity-50"
+                      disabled={!newComment.trim() || isCommenting}
+                    >
+                      {isCommenting ? "Posting..." : "Comment"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+  
+  // Image layout - fit image size with bottom bar
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+       <DialogContent className="p-0 flex flex-col items-stretch justify-center bg-transparent shadow-none border-none max-w-2xl w-full">
+         {/* Image container - fit image size */}
+         <div className="relative bg-black flex items-center justify-center">
+           <img
+             src={post.image || "/placeholder.png"}
+             alt={post.title || "Post"}
+             className="w-full h-auto max-h-[70vh] object-contain"
+           />
+           
+           {/* Header overlay */}
+           <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent">
+             <div className="flex items-center gap-3">
+               <Avatar className="w-10 h-10">
+                 <AvatarImage src={post.author?.image ?? "/avatar.png"} />
+               </Avatar>
+               <div className="flex flex-col min-w-0">
+                 <div className="flex items-center gap-1 min-w-0">
+                   <span className="font-semibold truncate text-white">{post.author?.name ?? post.author?.username}</span>
+                   {isUserVerified(post.author?.username) && (
+                     <BlueCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom text-white" />
+                   )}
+                   <span className="text-xs text-white/70 ml-2 truncate">@{post.author?.username}</span>
+                 </div>
+                 <span className="text-xs text-white/70 truncate" suppressHydrationWarning>{formatDistanceToNow(new Date(post.createdAt))} ago</span>
+               </div>
+             </div>
+           </div>
+         </div>
+         
+         {/* Bottom bar with content and actions - attached to image */}
+         <div className="bg-white dark:bg-zinc-900">
+           {/* Post content */}
+           {post.content && (
+             <div className="px-4 py-3 text-sm text-foreground break-words whitespace-pre-line border-b border-muted">
+               {post.content}
+             </div>
+           )}
+           
+           {/* Actions */}
+           <div className="flex items-center gap-4 px-4 py-3">
+             <button
+               className={`flex items-center gap-2 text-muted-foreground ${hasLiked ? "text-red-500" : "hover:text-red-500"}`}
+               onClick={handleLike}
+               disabled={isLiking}
+             >
+               {hasLiked ? (
+                 <HeartIcon className="size-6 fill-current" />
+               ) : (
+                 <HeartIcon className="size-6" />
+               )}
+               <span>{optimisticLikes}</span>
+             </button>
+             <button
+               className="flex items-center gap-2 text-muted-foreground hover:text-blue-500"
+               onClick={() => setShowComments(true)}
+             >
+               <MessageCircleIcon className="size-6" />
+               <span>{comments.length}</span>
+             </button>
+           </div>
+           
+           {/* Comments section - slides up from bottom */}
+           {showComments && (
+             <div className="border-t border-muted max-h-[40vh] overflow-y-auto">
+               <div className="flex items-center justify-between p-4 border-b border-muted">
+                 <h3 className="font-semibold">Comments</h3>
+                 <button
+                   onClick={() => setShowComments(false)}
+                   className="text-muted-foreground hover:text-foreground"
+                 >
+                   ✕
+                 </button>
+               </div>
+               
+               {/* Comments list */}
+               <div className="flex-1 overflow-y-auto px-4 py-2 max-h-[30vh]">
+                 {comments.length === 0 ? (
+                   <div className="text-muted-foreground text-sm py-8 text-center">No comments yet</div>
+                 ) : (
+                   <div className="space-y-4">
+                     {comments.map((comment: any) => (
+                       <div key={comment.id} className="flex space-x-3">
+                         <Avatar className="size-8 flex-shrink-0">
+                           <AvatarImage src={comment.author.image ?? "/avatar.png"} />
+                         </Avatar>
+                         <div className="flex-1 min-w-0">
+                           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                             <span className="font-medium text-sm">{comment.author.name}</span>
+                             {isUserVerified(comment.author.username) && (
+                               <BlueCheckIcon className="inline-block w-3 h-3 ml-1 align-text-bottom" />
+                             )}
+                             <span className="text-sm text-muted-foreground">@{comment.author.username}</span>
+                             <span className="text-sm text-muted-foreground">·</span>
+                             <span className="text-sm text-muted-foreground">
+                               <span suppressHydrationWarning>{new Date(comment.createdAt).toLocaleString()}</span>
+                             </span>
+                           </div>
+                           <p className="text-sm break-words">{comment.content}</p>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 )}
+               </div>
+               
+               {/* Add comment */}
+               {user && (
+                 <div className="flex items-center gap-3 p-4 border-t border-muted">
+                   <Avatar className="size-8 flex-shrink-0">
+                     <AvatarImage src={user?.imageUrl || "/avatar.png"} />
+                   </Avatar>
+                   <Textarea
+                     placeholder="Write a comment..."
+                     value={newComment}
+                     onChange={(e) => setNewComment(e.target.value)}
+                     className="min-h-[40px] resize-none flex-1"
+                   />
+                   <button
+                     onClick={handleAddComment}
+                     className="px-3 py-1 bg-primary text-white rounded disabled:opacity-50"
+                     disabled={!newComment.trim() || isCommenting}
+                   >
+                     {isCommenting ? "Posting..." : "Comment"}
+                   </button>
+                 </div>
+               )}
+             </div>
+           )}
+         </div>
+       </DialogContent>
+    </Dialog>
+  );
 }
 
 export default function PetProfileClient({ pet, posts, owner }: PetProfileClientProps) {
@@ -619,72 +988,13 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
           </DialogContent>
         </Dialog>
 
-        {/* Story Modal: Show pet's photos one by one with navigation arrows */}
-        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-          <DialogContent className="max-w-md p-0 overflow-hidden flex items-center justify-center min-h-[70vh]">
-            {currentPetPost && (
-              <div className="relative bg-background rounded-lg shadow-lg w-full flex flex-col items-center justify-center min-h-[60vh]">
-                <div className="flex flex-col items-center p-6 w-full">
-                  <div className="font-bold text-lg mb-2">{pet.name}'s Story</div>
-                  {/* Post navigation for pet story */}
-                  <div className="relative w-full flex items-center justify-center min-h-[300px]">
-                    <button
-                      onClick={prevPetPost}
-                      disabled={petPostIndex === 0}
-                      className="absolute left-0 top-1/2 -translate-y-1/2 p-2 disabled:opacity-30 z-10"
-                      aria-label="Previous post"
-                    >
-                      <ChevronLeftIcon className="w-6 h-6" />
-                    </button>
-                    <div className="mx-10 w-full flex flex-col items-center justify-center">
-                      <div className="max-w-full flex flex-col items-center justify-center">
-                        <img
-                          src={currentPetPost.image || '/avatar.png'}
-                          alt={pet.name + ' photo'}
-                          className="w-72 h-72 object-cover rounded-lg shadow-lg border-2 border-orange-100"
-                        />
-                        {/* Date pill below photo */}
-                        <div className="mt-4">
-                          <div className={`px-2 py-1 rounded-full text-xs font-medium shadow-lg ${
-                            (() => {
-                              const postDate = new Date(currentPetPost.createdAt);
-                              const today = new Date();
-                              today.setHours(0, 0, 0, 0);
-                              const postDay = new Date(postDate);
-                              postDay.setHours(0, 0, 0, 0);
-                              return postDay.getTime() === today.getTime();
-                            })()
-                              ? 'bg-gradient-to-r from-orange-400 to-yellow-400 text-orange-900'
-                              : 'bg-white/90 backdrop-blur-sm text-gray-700'
-                          }`}>
-                            {(() => {
-                              const postDate = new Date(currentPetPost.createdAt);
-                              const today = new Date();
-                              today.setHours(0, 0, 0, 0);
-                              const postDay = new Date(postDate);
-                              postDay.setHours(0, 0, 0, 0);
-                              return postDay.getTime() === today.getTime()
-                                ? 'Today'
-                                : format(postDate, 'MMM d');
-                            })()}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={nextPetPost}
-                      disabled={petPostIndex === petPosts.length - 1}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 p-2 disabled:opacity-30 z-10"
-                      aria-label="Next post"
-                    >
-                      <ChevronRightIcon className="w-6 h-6" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+        {/* Post Modal with like button and comment section */}
+        <PostModal 
+          open={modalOpen} 
+          onOpenChange={setModalOpen} 
+          post={activePost} 
+          dbUserId={owner?.id} 
+        />
       </div>
     </div>
   );
