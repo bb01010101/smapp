@@ -52,6 +52,7 @@ import Link from "next/link";
 import { DeleteAlertDialog } from "@/components/DeleteAlertDialog";
 import HorizontalTimeline from "@/components/HorizontalTimeline";
 import { isUserVerified } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
 
 
 // This is the main client-side component for rendering a user's profile page
@@ -136,161 +137,181 @@ function PostMedia({ post }: { post: Post }) {
 
 // Modal for viewing a single post and its comments/likes
 function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOpenChange: (v: boolean) => void; post: Post | null; dbUserId: string | null }) {
- const { user } = useUser();
- const [newComment, setNewComment] = useState("");
- const [isCommenting, setIsCommenting] = useState(false);
- const [comments, setComments] = useState(post?.comments || []);
- const [hasLiked, setHasLiked] = useState(post ? post.likes.some(like => like.userId === dbUserId) : false);
- const [optimisticLikes, setOptimisticLikes] = useState(post ? post._count.likes : 0);
- const [isLiking, setIsLiking] = useState(false);
- const [showComments, setShowComments] = useState(false);
- useEffect(() => {
-   setComments(post?.comments || []);
-   setHasLiked(post ? post.likes.some(like => like.userId === dbUserId) : false);
-   setOptimisticLikes(post ? post._count.likes : 0);
-   setShowComments(false);
- }, [post, dbUserId]);
- const handleLike = async () => {
-   if (isLiking || !post) return;
-   try {
-     setIsLiking(true);
-     setHasLiked(prev => !prev);
-     setOptimisticLikes(prev => prev + (hasLiked ? -1 : 1));
-     await toggleLike(post.id);
-   } catch (error) {
-     setOptimisticLikes(post ? post._count.likes : 0);
-     setHasLiked(post ? post.likes.some(like => like.userId === dbUserId) : false);
-   } finally {
-     setIsLiking(false);
-   }
- };
- const handleAddComment = async () => {
-   if (!newComment.trim() || isCommenting || !post) return;
-   try {
-     setIsCommenting(true);
-     setComments([
-       ...comments,
-       {
-         id: Math.random().toString(),
-         content: newComment,
-         createdAt: new Date(),
-         authorId: user?.id || "",
-         postId: post.id,
-         author: {
-           id: user?.id || "",
-           name: user?.fullName || user?.username || "Anonymous",
-           username: user?.username || "anonymous",
-           image: user?.imageUrl || "/avatar.png",
-         },
-       },
-     ]);
-     setNewComment("");
-   } finally {
-     setIsCommenting(false);
-   }
- };
- if (!post) return null;
- return (
-   <Dialog open={open} onOpenChange={onOpenChange}>
-     <DialogContent className="p-0 flex flex-col items-center justify-center bg-transparent shadow-none border-none max-w-none w-auto">
-       <div className="relative flex items-center justify-center">
-         <PostMedia post={post} />
-         <div className="absolute bottom-0 left-0 w-full flex items-center justify-start gap-6 px-4 py-3 bg-gradient-to-t from-black/60 to-transparent z-10">
-           {user ? (
-             <button
-               className={`flex items-center gap-2 text-muted-foreground ${hasLiked ? "text-red-500 hover:text-red-600" : "hover:text-red-500"}`}
-               onClick={handleLike}
-               disabled={isLiking}
-             >
-               {hasLiked ? (
-                 <HeartIcon className="size-6 fill-current" />
-               ) : (
-                 <HeartIcon className="size-6" />
-               )}
-               <span>{optimisticLikes}</span>
-             </button>
-           ) : (
-             <span className="flex items-center gap-2 text-muted-foreground">
-               <HeartIcon className="size-6" />
-               <span>{optimisticLikes}</span>
-             </span>
-           )}
-           <button
-             className="flex items-center gap-2 text-muted-foreground hover:text-blue-500"
-             onClick={() => setShowComments(true)}
-           >
-             <MessageCircleIcon className="size-6" />
-             <span>{comments.length}</span>
-           </button>
-         </div>
-       </div>
-       <Sheet open={showComments} onOpenChange={setShowComments}>
-         <SheetContent
-           side="bottom"
-           className="max-h-[60vh] p-4 rounded-t-2xl"
-           style={{ maxWidth: 400, width: '100vw', margin: '0 auto' }}
-         >
-           <div className="flex items-center gap-3 mb-2">
-             <Avatar className="w-10 h-10">
-               <AvatarImage src={post.author?.image ?? "/avatar.png"} />
-             </Avatar>
-             <div>
-               <div className="font-semibold hover:underline">
-                 {post.author?.name ?? post.author?.username}
-               </div>
-               <div className="text-xs text-muted-foreground">@{post.author?.username}</div>
-             </div>
-           </div>
-           <div className="mb-4 text-sm break-words">{post.content}</div>
-           <div className="space-y-4 max-h-[30vh] overflow-y-auto">
-             {comments.map((comment) => (
-               <div key={comment.id} className="flex space-x-3">
-                 <Avatar className="size-8 flex-shrink-0">
-                   <AvatarImage src={comment.author.image ?? "/avatar.png"} />
-                 </Avatar>
-                 <div className="flex-1 min-w-0">
-                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                     <span className="font-medium text-sm">{comment.author.name}</span>
-                     <span className="text-sm text-muted-foreground">@{comment.author.username}</span>
-                     <span className="text-sm text-muted-foreground">·</span>
-                     <span className="text-sm text-muted-foreground">
-                       <span suppressHydrationWarning>{new Date(comment.createdAt).toLocaleString()}</span>
-                     </span>
-                   </div>
-                   <p className="text-sm break-words">{comment.content}</p>
-                 </div>
-               </div>
-             ))}
-           </div>
-           {user ? (
-             <div className="flex space-x-3 mt-4">
-               <Avatar className="size-8 flex-shrink-0">
-                 <AvatarImage src={user?.imageUrl || "/avatar.png"} />
-               </Avatar>
-               <div className="flex-1">
-                 <textarea
-                   placeholder="Write a comment..."
-                   value={newComment}
-                   onChange={(e) => setNewComment(e.target.value)}
-                   className="min-h-[60px] resize-none w-full border rounded p-2"
-                 />
-                 <div className="flex justify-end mt-2">
-                   <button
-                     onClick={handleAddComment}
-                     className="px-3 py-1 bg-primary text-white rounded disabled:opacity-50"
-                     disabled={!newComment.trim() || isCommenting}
-                   >
-                     {isCommenting ? "Posting..." : "Comment"}
-                   </button>
-                 </div>
-               </div>
-             </div>
-           ) : null}
-         </SheetContent>
-       </Sheet>
-     </DialogContent>
-   </Dialog>
- );
+  const { user } = useUser();
+  const [newComment, setNewComment] = useState("");
+  const [isCommenting, setIsCommenting] = useState(false);
+  const [comments, setComments] = useState(post?.comments || []);
+  const [hasLiked, setHasLiked] = useState(post ? post.likes.some(like => like.userId === dbUserId) : false);
+  const [optimisticLikes, setOptimisticLikes] = useState(post ? post._count.likes : 0);
+  const [isLiking, setIsLiking] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  useEffect(() => {
+    setComments(post?.comments || []);
+    setHasLiked(post ? post.likes.some(like => like.userId === dbUserId) : false);
+    setOptimisticLikes(post ? post._count.likes : 0);
+    setShowComments(false);
+  }, [post, dbUserId]);
+  const handleLike = async () => {
+    if (isLiking || !post) return;
+    try {
+      setIsLiking(true);
+      setHasLiked(prev => !prev);
+      setOptimisticLikes(prev => prev + (hasLiked ? -1 : 1));
+      await toggleLike(post.id);
+    } catch (error) {
+      setOptimisticLikes(post ? post._count.likes : 0);
+      setHasLiked(post ? post.likes.some(like => like.userId === dbUserId) : false);
+    } finally {
+      setIsLiking(false);
+    }
+  };
+  const handleAddComment = async () => {
+    if (!newComment.trim() || isCommenting || !post) return;
+    try {
+      setIsCommenting(true);
+      setComments([
+        ...comments,
+        {
+          id: Math.random().toString(),
+          content: newComment,
+          createdAt: new Date(),
+          authorId: user?.id || "",
+          postId: post.id,
+          author: {
+            id: user?.id || "",
+            name: user?.fullName || user?.username || "Anonymous",
+            username: user?.username || "anonymous",
+            image: user?.imageUrl || "/avatar.png",
+          },
+        },
+      ]);
+      setNewComment("");
+    } finally {
+      setIsCommenting(false);
+    }
+  };
+  if (!post) return null;
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="p-0 flex flex-col md:flex-row items-stretch justify-center bg-transparent shadow-none border-none max-w-4xl w-full">
+        {/* Media left (desktop), top (mobile) */}
+        <div className="flex-1 bg-black flex items-center justify-center min-h-[300px] max-h-[80vh] md:max-w-[60%]">
+          {post.mediaType?.startsWith("video") ? (
+            <video
+              src={post.image || undefined}
+              controls={true}
+              autoPlay
+              className="w-full h-full object-contain max-h-[80vh]"
+            />
+          ) : (
+            <img
+              src={post.image || "/placeholder.png"}
+              alt={post.title || "Post"}
+              className="w-full h-full object-contain max-h-[80vh]"
+            />
+          )}
+        </div>
+        {/* Right panel: info, actions, comments */}
+        <div className="flex-1 flex flex-col bg-white dark:bg-zinc-900 min-w-[320px] max-w-[500px] max-h-[80vh] overflow-y-auto">
+          {/* Header: avatar, name, badge, timestamp */}
+          <div className="flex items-center gap-3 p-4 border-b border-muted">
+            <Avatar className="w-10 h-10">
+              <AvatarImage src={post.author?.image ?? "/avatar.png"} />
+            </Avatar>
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="font-semibold truncate">{post.author?.name ?? post.author?.username}</span>
+                {isUserVerified(post.author?.username) && (
+                  <BlueCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom" />
+                )}
+                <span className="text-xs text-muted-foreground ml-2 truncate">@{post.author?.username}</span>
+              </div>
+              <span className="text-xs text-muted-foreground truncate" suppressHydrationWarning>{formatDistanceToNow(new Date(post.createdAt))} ago</span>
+            </div>
+          </div>
+          {/* Post content */}
+          {post.content && (
+            <div className="px-4 py-2 text-sm text-foreground break-words whitespace-pre-line border-b border-muted">
+              {post.content}
+            </div>
+          )}
+          {/* Actions: like, comment */}
+          <div className="flex items-center gap-4 px-4 py-3 border-b border-muted">
+            <button
+              className={`flex items-center gap-2 text-muted-foreground ${hasLiked ? "text-red-500 hover:text-red-600" : "hover:text-red-500"}`}
+              onClick={handleLike}
+              disabled={isLiking}
+            >
+              {hasLiked ? (
+                <HeartIcon className="size-6 fill-current" />
+              ) : (
+                <HeartIcon className="size-6" />
+              )}
+              <span>{optimisticLikes}</span>
+            </button>
+            <button
+              className="flex items-center gap-2 text-muted-foreground hover:text-blue-500"
+              onClick={() => setShowComments(true)}
+            >
+              <MessageCircleIcon className="size-6" />
+              <span>{comments.length}</span>
+            </button>
+          </div>
+          {/* Comments */}
+          <div className="flex-1 overflow-y-auto px-4 py-2">
+            {comments.length === 0 ? (
+              <div className="text-muted-foreground text-sm py-8 text-center">No comments yet</div>
+            ) : (
+              <div className="space-y-4">
+                {comments.map((comment) => (
+                  <div key={comment.id} className="flex space-x-3">
+                    <Avatar className="size-8 flex-shrink-0">
+                      <AvatarImage src={comment.author.image ?? "/avatar.png"} />
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="font-medium text-sm">{comment.author.name}</span>
+                        {isUserVerified(comment.author.username) && (
+                          <BlueCheckIcon className="inline-block w-3 h-3 ml-1 align-text-bottom" />
+                        )}
+                        <span className="text-sm text-muted-foreground">@{comment.author.username}</span>
+                        <span className="text-sm text-muted-foreground">·</span>
+                        <span className="text-sm text-muted-foreground">
+                          <span suppressHydrationWarning>{new Date(comment.createdAt).toLocaleString()}</span>
+                        </span>
+                      </div>
+                      <p className="text-sm break-words">{comment.content}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Add comment */}
+          {user && (
+            <div className="flex items-center gap-3 p-4 border-t border-muted">
+              <Avatar className="size-8 flex-shrink-0">
+                <AvatarImage src={user?.imageUrl || "/avatar.png"} />
+              </Avatar>
+              <Textarea
+                placeholder="Write a comment..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                className="min-h-[40px] resize-none flex-1"
+              />
+              <button
+                onClick={handleAddComment}
+                className="px-3 py-1 bg-primary text-white rounded disabled:opacity-50"
+                disabled={!newComment.trim() || isCommenting}
+              >
+                {isCommenting ? "Posting..." : "Comment"}
+              </button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 
@@ -802,351 +823,214 @@ function ProfilePageClient({
        )}
 
        {/* Sidebar card with avatar, stats, and actions */}
-       <div className="w-full max-w-lg mx-auto">
-         <Card className="bg-card">
-           <CardContent className="pt-6">
-             <div className="flex flex-col items-center text-center">
-               {/* User avatar */}
-               <div className="cursor-pointer" onClick={() => setFamilyTimelineOpen(true)}>
-                 <Avatar className="w-24 h-24 hover:scale-105 transition-transform ring-2 ring-primary">
-                   <AvatarImage src={user.image ?? "/avatar.png"} />
-                 </Avatar>
-               </div>
-               {/* User name and username */}
-               <h1 className="mt-4 text-2xl font-bold flex items-center justify-center gap-2">
+       {/* Make the profile card wider and re-add the pet story pfps bar below */}
+       {/* Profile card: even wider, main pfp larger and centered, story circles at the bottom, actions to the right */}
+       <div className="w-full max-w-4xl mx-auto px-4">
+         {/* Profile Header */}
+         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8 py-10">
+           {/* Avatar */}
+           <div className="flex-shrink-0 flex flex-col items-center w-full sm:w-auto">
+             <div className="cursor-pointer" onClick={() => setFamilyTimelineOpen(true)}>
+               <Avatar className="w-36 h-36 ring-2 ring-primary">
+                 <AvatarImage src={user.image ?? "/avatar.png"} />
+               </Avatar>
+             </div>
+           </div>
+           {/* Main Info */}
+           <div className="flex-1 flex flex-col gap-4 min-w-0 w-full">
+             {/* Username row */}
+             <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
+               <div className="flex items-center gap-2 text-2xl font-bold truncate">
                  {user.name ?? user.username}
                  {isUserVerified(user.username) && <BlueCheckIcon className="inline-block w-6 h-6 ml-1" />}
-               </h1>
-               <p className="text-muted-foreground flex items-center justify-center gap-1">@{user.username}</p>
-               {/* User bio */}
-               <p className="mt-2 text-sm">{user.bio}</p>
-
-
-               {/* CREATE PET BUTTON IF NO PETS */}
-               {currentPets.length === 0 && isOwnProfile && (
-                 <div className="w-full flex flex-col items-center justify-center mt-8 mb-8">
-                   <button
-                     className="bg-gradient-to-r from-orange-400 via-orange-500 to-yellow-400 text-white font-bold py-4 px-8 rounded-2xl shadow-lg text-xl flex items-center gap-3 hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-orange-400"
-                     onClick={() => setShowEditFamilyDialog(true)}
-                   >
-                     <PawPrintIcon className="w-7 h-7" />
-                     Create Pet
-                   </button>
-                   <p className="mt-3 text-orange-600 text-base font-medium">Start your pet's journey!</p>
-                 </div>
-               )}
-
-
-               {/* PETS HIGHLIGHTS BAR */}
-               {currentPets && currentPets.length > 0 && (
-                 <div className="w-full mt-6">
-                   <div className="flex items-center justify-between mb-2">
-                     <h2 className="text-lg font-semibold text-left">Family</h2>
-                     {isOwnProfile && (
-                       <Button
-                         variant="outline"
-                         size="sm"
-                         onClick={() => setShowEditFamilyDialog(true)}
-                       >
-                         Edit Family
-                       </Button>
-                     )}
-                   </div>
-                   <div className="flex gap-6 overflow-x-auto pb-2">
-                     {currentPets.map((pet) => {
-                       // Check if this pet has posted today
-                       const petPosts = posts.filter((post) => post.petId === pet.id && (!post.mediaType || post.mediaType.startsWith('image')));
-                       const today = new Date(); today.setHours(0,0,0,0);
-                       const hasPostedToday = petPosts.some(post => {
-                         const postDate = new Date(post.createdAt); postDate.setHours(0,0,0,0);
-                         return postDate.getTime() === today.getTime();
-                       });
-                       return (
-                           <Link
-                           key={pet.id}
-                             href={`/pet/${pet.id}`}
-                           className="flex flex-col items-center cursor-pointer group"
-                             prefetch={false}
-                         >
-                           <div className={
-                             !hasPostedToday
-                               ? "p-1 rounded-full bg-gradient-to-tr from-orange-400 via-yellow-400 to-orange-600 shadow-lg animate-pulse"
-                               : ""
-                           }>
-                             <Avatar className="w-16 h-16 border-2 border-primary group-hover:scale-105 transition">
-                               <AvatarImage src={pet.imageUrl ? pet.imageUrl : '/avatar.png'} alt={pet.name} />
-                             </Avatar>
-                           </div>
-                           <div className="font-medium text-xs mt-2 text-center w-16 truncate">{pet.name}</div>
-                           </Link>
-                       );
-                     })}
-                   </div>
-                 </div>
-               )}
-
-
-               {/* PROFILE STATS */}
-               <div className="w-full mt-6">
-                 <div className="flex justify-between mb-4">
-                   <div onClick={() => { setFollowingOpen(true); fetchFollowing(); }} className="cursor-pointer group">
-                     <div className="font-semibold group-hover:underline">{user._count.following.toLocaleString()}</div>
-                     <div className="text-sm text-muted-foreground group-hover:underline">Following</div>
-                   </div>
-                   <Separator orientation="vertical" />
-                   <div onClick={() => { setFollowersOpen(true); fetchFollowers(); }} className="cursor-pointer group">
-                     <div className="font-semibold group-hover:underline">{user._count.followers.toLocaleString()}</div>
-                     <div className="text-sm text-muted-foreground group-hover:underline">Followers</div>
-                   </div>
-                   <Separator orientation="vertical" />
-                   <div>
-                     <div className="font-semibold">{user._count.posts.toLocaleString()}</div>
-                     <div className="text-sm text-muted-foreground">Posts</div>
-                   </div>
-                 </div>
                </div>
-
-
-               {/* "FOLLOW & EDIT PROFILE" BUTTONS */}
-               {!currentUser ? (
-                 <SignInButton mode="modal">
-                   <Button className="w-full mt-4">Follow</Button>
-                 </SignInButton>
-               ) : isOwnProfile ? (
-                 <Button className="w-full mt-4" onClick={() => setShowEditDialog(true)}>
-                   <EditIcon className="size-4 mr-2" />
-                   Edit Profile
-                 </Button>
-               ) : (
-                 <>
-                   <Button
-                     className="w-full mt-4 mb-2"
-                     onClick={handleFollow}
-                     disabled={isUpdatingFollow}
-                     variant={isFollowing ? "outline" : "default"}
-                   >
-                     {isFollowing ? "Unfollow" : "Follow"}
+               <span className="text-lg text-muted-foreground truncate">@{user.username}</span>
+               <div className="flex gap-2 sm:ml-auto mt-2 sm:mt-0">
+                 {!currentUser ? (
+                   <SignInButton mode="modal">
+                     <Button size="sm">Follow</Button>
+                   </SignInButton>
+                 ) : isOwnProfile ? (
+                   <Button size="sm" onClick={() => setShowEditDialog(true)}>
+                     <EditIcon className="size-4 mr-1" />Edit Profile
                    </Button>
-                   <Button
-                     className="w-full"
-                     variant="secondary"
-                     onClick={handleMessage}
-                   >
-                     Message
-                   </Button>
-                 </>
-               )}
-
-
-               {/* LOCATION & WEBSITE */}
-               <div className="w-full mt-6 space-y-2 text-sm">
-                 {user.location && (
-                   <div className="flex items-center text-muted-foreground">
-                     <MapPinIcon className="size-4 mr-2" />
-                     {user.location}
-                   </div>
-                 )}
-                 {user.website && (
-                   <div className="flex items-center text-muted-foreground">
-                     <LinkIcon className="size-4 mr-2" />
-                     <a
-                       href={
-                         user.website.startsWith("http") ? user.website : `https://${user.website}`
-                       }
-                       className="hover:underline"
-                       target="_blank"
-                       rel="noopener noreferrer"
+                 ) : (
+                   <>
+                     <Button
+                       size="sm"
+                       onClick={handleFollow}
+                       disabled={isUpdatingFollow}
+                       variant={isFollowing ? "outline" : "default"}
                      >
-                       {user.website}
-                     </a>
-                   </div>
+                       {isFollowing ? "Unfollow" : "Follow"}
+                     </Button>
+                     <Button size="sm" variant="secondary" onClick={handleMessage}>
+                       Message
+                     </Button>
+                   </>
                  )}
-                 <div className="flex items-center text-muted-foreground">
-                   <CalendarIcon className="size-4 mr-2" />
-                   Joined {formattedDate}
-                 </div>
                </div>
              </div>
-           </CardContent>
-         </Card>
-       </div>
-
-
-       {/* Main content tabs: Posts and Likes */}
-       <Tabs defaultValue="posts" className="w-full">
-         <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
-           <TabsTrigger
-             value="posts"
-             className="flex items-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary
-              data-[state=active]:bg-transparent px-6 font-semibold"
-           >
-             <FileTextIcon className="size-4" />
-             Posts
-           </TabsTrigger>
-           <TabsTrigger
-             value="likes"
-             className="flex items-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary
-              data-[state=active]:bg-transparent px-6 font-semibold"
-           >
-             <HeartIcon className="size-4" />
-             Likes
-           </TabsTrigger>
-         </TabsList>
-
-
-         {/* User's posts grid */}
-         <TabsContent value="posts" className="mt-6">
-           <>
-             {posts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).length > 0 ? (
-               <>
-                 <style>{`
-                   .profile-grid {
-                     display: grid;
-                     grid-template-columns: repeat(3, 1fr);
-                     grid-auto-rows: 1fr;
-                     gap: 2px;
-                     width: 100%;
-                   }
-                   .profile-item {
-                     width: 100%;
-                     aspect-ratio: 1/1;
-                     object-fit: cover;
-                     cursor: pointer;
-                     background: #222;
-                     overflow: hidden;
-                     display: flex;
-                     align-items: center;
-                     justify-content: center;
-                   }
-                 `}</style>
-                 <div className="profile-grid">
+             {/* Stats row */}
+             <div className="flex gap-12 mt-2">
+               <div className="flex flex-col items-center">
+                 <span className="font-bold text-lg">{user._count.posts}</span>
+                 <span className="text-xs text-muted-foreground">Posts</span>
+               </div>
+               <div className="flex flex-col items-center">
+                 <span className="font-bold text-lg">{user._count.followers}</span>
+                 <span className="text-xs text-muted-foreground">Followers</span>
+               </div>
+               <div className="flex flex-col items-center">
+                 <span className="font-bold text-lg">{user._count.following}</span>
+                 <span className="text-xs text-muted-foreground">Following</span>
+               </div>
+             </div>
+             {/* Bio section */}
+             <div className="mt-2">
+               <span className="font-semibold text-base">{user.name}</span>
+               {user.bio && <div className="text-base text-foreground mt-1 whitespace-pre-line">{user.bio}</div>}
+               <div className="flex flex-wrap gap-6 mt-2 text-xs text-muted-foreground">
+                 {user.location && (
+                   <span className="flex items-center"><MapPinIcon className="size-4 mr-1" />{user.location}</span>
+                 )}
+                 {user.website && (
+                   <span className="flex items-center"><LinkIcon className="size-4 mr-1" /><a href={user.website.startsWith("http") ? user.website : `https://${user.website}`} className="hover:underline" target="_blank" rel="noopener noreferrer">{user.website}</a></span>
+                 )}
+                 <span className="flex items-center"><CalendarIcon className="size-4 mr-1" />Joined {formattedDate}</span>
+               </div>
+             </div>
+           </div>
+         </div>
+         {/* Story Circles */}
+         {currentPets && currentPets.length > 0 && (
+           <div className="flex gap-6 justify-center py-4 overflow-x-auto">
+             {currentPets.map((pet) => {
+               // Check if this pet has posted today
+               const petPosts = posts.filter((post) => post.petId === pet.id && (!post.mediaType || post.mediaType.startsWith('image')));
+               const today = new Date(); today.setHours(0,0,0,0);
+               const hasPostedToday = petPosts.some(post => {
+                 const postDate = new Date(post.createdAt); postDate.setHours(0,0,0,0);
+                 return postDate.getTime() === today.getTime();
+               });
+               return (
+                 <Link
+                   key={pet.id}
+                   href={`/pet/${pet.id}`}
+                   className="flex flex-col items-center cursor-pointer group"
+                   prefetch={false}
+                 >
+                   <div className={
+                     !hasPostedToday
+                       ? "p-1 rounded-full bg-gradient-to-tr from-orange-400 via-yellow-400 to-orange-600 shadow-lg animate-pulse"
+                       : ""
+                   }>
+                     <Avatar className="w-20 h-20 border-2 border-primary group-hover:scale-105 transition">
+                       <AvatarImage src={pet.imageUrl ? pet.imageUrl : '/avatar.png'} alt={pet.name} />
+                     </Avatar>
+                   </div>
+                   <div className="font-medium text-sm mt-2 text-center w-20 truncate">{pet.name}</div>
+                 </Link>
+               );
+             })}
+           </div>
+         )}
+         {/* Post Grid */}
+         <div className="mt-8">
+           <Tabs defaultValue="posts" className="w-full">
+             <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
+               <TabsTrigger
+                 value="posts"
+                 className="flex items-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 font-semibold"
+               >
+                 <FileTextIcon className="size-4" />
+                 Posts
+               </TabsTrigger>
+               <TabsTrigger
+                 value="likes"
+                 className="flex items-center gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 font-semibold"
+               >
+                 <HeartIcon className="size-4" />
+                 Likes
+               </TabsTrigger>
+             </TabsList>
+             {/* User's posts grid */}
+             <TabsContent value="posts" className="mt-6">
+               {posts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).length > 0 ? (
+                 <div className="grid grid-cols-3 gap-1">
                    {posts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).map((post, idx) => (
                      <div
                        key={post.id}
-                       className="profile-item group relative"
+                       className="relative aspect-square bg-black group cursor-pointer overflow-hidden"
                        onClick={() => {
                          setActivePost(post);
                          setModalOpen(true);
                        }}
-                       onMouseEnter={() => post.mediaType?.startsWith('video') && handleMouseEnter(idx)}
-                       onMouseLeave={() => post.mediaType?.startsWith('video') && handleMouseLeave(idx)}
                      >
                        {post.mediaType?.startsWith('video') ? (
                          <video
-                           ref={el => { videoRefs.current[idx] = el; }}
                            src={post.image || undefined}
                            muted
                            loop
                            playsInline
                            preload="metadata"
-                           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                           className="w-full h-full object-cover"
                            controls={false}
                          />
                        ) : (
                          <img
                            src={post.image || '/placeholder.png'}
                            alt={post.title || 'Post'}
-                           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                           className="w-full h-full object-cover"
                          />
-                       )}
-                       {/* Edit button (only for own posts) */}
-                       {isOwnProfile && (
-                         <div className="absolute top-2 right-2 z-10 flex gap-2 opacity-0 group-hover:opacity-100">
-                           <button
-                             className="p-1 hover:bg-transparent transition-colors"
-                             onClick={e => { e.stopPropagation(); openEditModal(post); }}
-                             title="Edit Post"
-                           >
-                             <EditIcon className="size-5 text-yellow-600 hover:text-yellow-700" />
-                           </button>
-                           <div className="p-1 hover:bg-transparent transition-colors">
-                             <DeleteAlertDialog
-                               isDeleting={isEditing && editPost?.id === post.id}
-                               onDelete={async () => { await deletePost(post.id); window.location.reload(); }}
-                               title="Delete Post"
-                               description="This action cannot be undone."
-                             />
-                           </div>
-                         </div>
                        )}
                      </div>
                    ))}
-                   {/* Modal for viewing a single post */}
-                   <PostModal open={modalOpen} onOpenChange={setModalOpen} post={activePost} dbUserId={currentUser?.id || null} />
                  </div>
-               </>
-             ) : (
-               <div className="text-center py-8 text-muted-foreground">No posts yet</div>
-             )}
-           </>
-         </TabsContent>
-
-
-         {/* User's liked posts grid */}
-         <TabsContent value="likes" className="mt-6">
-           <>
-             {likedPosts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).length > 0 ? (
-               <>
-                 <style>{`
-                   .profile-grid {
-                     display: grid;
-                     grid-template-columns: repeat(3, 1fr);
-                     grid-auto-rows: 1fr;
-                     gap: 2px;
-                     width: 100%;
-                   }
-                   .profile-item {
-                     width: 100%;
-                     aspect-ratio: 1/1;
-                     object-fit: cover;
-                     cursor: pointer;
-                     background: #222;
-                     overflow: hidden;
-                     display: flex;
-                     align-items: center;
-                     justify-content: center;
-                   }
-                 `}</style>
-                 <div className="profile-grid">
+               ) : (
+                 <div className="text-center py-8 text-muted-foreground">No posts yet</div>
+               )}
+             </TabsContent>
+             {/* User's liked posts grid */}
+             <TabsContent value="likes" className="mt-6">
+               {likedPosts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).length > 0 ? (
+                 <div className="grid grid-cols-3 gap-1">
                    {likedPosts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).map((post, idx) => (
                      <div
                        key={post.id}
-                       className="profile-item"
+                       className="relative aspect-square bg-black group cursor-pointer overflow-hidden"
                        onClick={() => {
                          setActivePost(post);
                          setModalOpen(true);
                        }}
-                       onMouseEnter={() => post.mediaType?.startsWith('video') && handleMouseEnter(idx)}
-                       onMouseLeave={() => post.mediaType?.startsWith('video') && handleMouseLeave(idx)}
                      >
                        {post.mediaType?.startsWith('video') ? (
                          <video
-                           ref={el => { videoRefs.current[idx] = el; }}
                            src={post.image || undefined}
                            muted
                            loop
                            playsInline
                            preload="metadata"
-                           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                           className="w-full h-full object-cover"
                            controls={false}
                          />
                        ) : (
                          <img
                            src={post.image || '/placeholder.png'}
                            alt={post.title || 'Post'}
-                           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                           className="w-full h-full object-cover"
                          />
                        )}
                      </div>
                    ))}
                  </div>
-               </>
-             ) : (
-               <div className="text-center py-8 text-muted-foreground">No liked posts to show</div>
-             )}
-           </>
-         </TabsContent>
-       </Tabs>
+               ) : (
+                 <div className="text-center py-8 text-muted-foreground">No liked posts to show</div>
+               )}
+             </TabsContent>
+           </Tabs>
+         </div>
+       </div>
 
 
        {/* Edit profile modal */}
