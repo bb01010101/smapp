@@ -40,6 +40,7 @@ import {
  PencilIcon,
  TrashIcon,
 } from "lucide-react";
+import BlueCheckIcon from "@/components/BlueCheckIcon";
 import { useState, useEffect, useRef, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useRouter, useParams } from "next/navigation";
@@ -50,6 +51,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import Link from "next/link";
 import { DeleteAlertDialog } from "@/components/DeleteAlertDialog";
 import HorizontalTimeline from "@/components/HorizontalTimeline";
+import { isUserVerified } from "@/lib/utils";
 
 
 // This is the main client-side component for rendering a user's profile page
@@ -751,6 +753,9 @@ function ProfilePageClient({
    }
  };
 
+ const verifiedUsers = ["bb7906", "mitchng77", "luisa.marfori"];
+ const isVerified = verifiedUsers.includes(user.username);
+
  // Main return: renders the profile page layout
  return (
    <div className="w-full h-screen bg-background flex items-center justify-center relative overflow-hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
@@ -808,8 +813,11 @@ function ProfilePageClient({
                  </Avatar>
                </div>
                {/* User name and username */}
-               <h1 className="mt-4 text-2xl font-bold">{user.name ?? user.username}</h1>
-               <p className="text-muted-foreground">@{user.username}</p>
+               <h1 className="mt-4 text-2xl font-bold flex items-center justify-center gap-2">
+                 {user.name ?? user.username}
+                 {isUserVerified(user.username) && <BlueCheckIcon className="inline-block w-6 h-6 ml-1" />}
+               </h1>
+               <p className="text-muted-foreground flex items-center justify-center gap-1">@{user.username}</p>
                {/* User bio */}
                <p className="mt-2 text-sm">{user.bio}</p>
 

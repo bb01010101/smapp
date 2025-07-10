@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, MoreVertical, X } from "lucide-react";
 import { sendMessage, deleteConversation } from "@/actions/dm.action";
 import { useUser } from "@clerk/nextjs";
+import { isUserVerified } from "@/lib/utils";
+import BlueCheckIcon from "@/components/BlueCheckIcon";
 
 export default function MessagesClient({ conversations }: { conversations: any[] }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -114,7 +116,12 @@ export default function MessagesClient({ conversations }: { conversations: any[]
                   <AvatarImage src={other?.image || "/avatar.png"} />
                 </Avatar>
                 <div className="flex-1">
-                  <div className="font-medium">{other?.name || other?.username || "Unknown User"}</div>
+                  <div className="font-medium flex items-center gap-1">
+                    {other?.name || other?.username || "Unknown User"}
+                    {isUserVerified(other?.username) && (
+                      <BlueCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom" />
+                    )}
+                  </div>
                   <div className="text-muted-foreground text-sm line-clamp-1">
                     {lastMessage?.content || "No messages yet"}
                   </div>
@@ -151,7 +158,12 @@ export default function MessagesClient({ conversations }: { conversations: any[]
                   <AvatarImage src={other?.image || "/avatar.png"} />
                 </Avatar>
                 <div className="flex-1">
-                  <div className="font-medium">{other?.name || other?.username || "Unknown User"}</div>
+                  <div className="font-medium flex items-center gap-1">
+                    {other?.name || other?.username || "Unknown User"}
+                    {isUserVerified(other?.username) && (
+                      <BlueCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom" />
+                    )}
+                  </div>
                   <div className="text-muted-foreground text-sm line-clamp-1">
                     {lastMessage?.content || "No messages yet"}
                   </div>

@@ -19,6 +19,8 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import EditServiceDialog from "@/components/marketplace/EditServiceDialog";
 import { getOrCreateConversation } from "@/actions/dm.action";
+import { isUserVerified } from "@/lib/utils";
+import BlueCheckIcon from "@/components/BlueCheckIcon";
 
 type Service = {
   id: string;
@@ -124,9 +126,12 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
           <div>
             <Link
               href={`/profile/${service.author.username}`}
-              className="font-medium hover:underline"
+              className="font-medium hover:underline flex items-center gap-1"
             >
               {service.author.name ?? service.author.username}
+              {isUserVerified(service.author.username) && (
+                <BlueCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom" />
+              )}
             </Link>
             <p className="text-sm text-muted-foreground">
               Listed {formatDistanceToNow(new Date(service.createdAt))} ago
