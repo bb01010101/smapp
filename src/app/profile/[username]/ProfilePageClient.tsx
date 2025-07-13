@@ -1438,7 +1438,7 @@ function ProfilePageClient({
                      ) : (
                        <>
                          <ImageIcon className="w-4 h-4" />
-                         <span>Upload Daily Photo</span>
+                         <span>Upload Daily Media</span>
                        </>
                      )}
                    </Button>
@@ -1553,9 +1553,9 @@ function ProfilePageClient({
        {/* UPLOAD OPTIONS MODAL: For uploading a daily pet photo */}
        <Dialog open={showUploadOptions} onOpenChange={setShowUploadOptions}>
          <DialogContent className="sm:max-w-[500px]">
-           <DialogHeader>
-             <DialogTitle>Upload Daily Photo</DialogTitle>
-           </DialogHeader>
+                    <DialogHeader>
+           <DialogTitle>Upload Daily Media</DialogTitle>
+         </DialogHeader>
            <div className="space-y-4 py-4">
              {todaysPost ? (
                <div className="space-y-4">
@@ -1590,7 +1590,7 @@ function ProfilePageClient({
                  {/* Image Upload Component */}
                  <div className="space-y-4">
                    <div className="text-sm text-muted-foreground">
-                     Upload a photo for {activePet?.name}'s timeline
+                     Upload media for {activePet?.name}'s timeline
                    </div>
                    <ImageUpload
                      endpoint="postImage"
@@ -1622,7 +1622,7 @@ function ProfilePageClient({
                            Uploading...
                          </>
                        ) : (
-                         'Upload Daily Photo'
+                         'Upload Daily Media'
                        )}
                      </Button>
                    </div>

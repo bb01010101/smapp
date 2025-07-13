@@ -5,6 +5,7 @@ import { HeartIcon, XIcon, Bone, ZapIcon, ChevronLeft, ChevronRight } from "luci
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from 'next/navigation';
 import toast from "react-hot-toast";
+import { isUserVerifiedShelter } from "@/lib/utils";
 
 // DoubleHeartIcon SVG
 function DoubleHeartIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -103,6 +104,7 @@ export default function SwipeNSavePage() {
   const { user } = useUser();
   const router = useRouter();
   const [petCards, setPetCards] = useState<any[]>([]);
+  const [allPets, setAllPets] = useState<any[]>([]); // Store all fetched pets for recycling
   const [loading, setLoading] = useState(true);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [showBoneAnimation, setShowBoneAnimation] = useState<{petIdx: number, show: boolean}>({petIdx: -1, show: false});
@@ -120,6 +122,9 @@ export default function SwipeNSavePage() {
   const [shareMessage, setShareMessage] = useState('Save this pet!');
   const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null);
   const [touchEnd, setTouchEnd] = useState<{x: number, y: number} | null>(null);
+  const [activeTab, setActiveTab] = useState<'pet-celebs' | 'pet-shelters'>('pet-celebs');
+  const [filteredPets, setFilteredPets] = useState<any[]>([]);
+  const [xedPets, setXedPets] = useState<Set<string>>(new Set()); // Track X'd pets by pet ID
 
   // Fetch pets
   async function fetchPets() {
@@ -127,34 +132,63 @@ export default function SwipeNSavePage() {
     try {
       const petRes = await fetch('/api/pets/random-posts');
       const petData = await petRes.json();
-      setPetCards(petData.posts || []);
+      const allPetsData = petData.posts || [];
+      
+      console.log('All fetched pets:', allPetsData.map((pet: any) => ({
+        petName: pet.pet?.name,
+        owner: pet.author?.username,
+        isShelter: isUserVerifiedShelter(pet.author?.username || '')
+      })));
+      
+      // Filter pets based on active tab
+      const filtered = allPetsData.filter((pet: any) => {
+        const isShelter = isUserVerifiedShelter(pet.author?.username || '');
+        return activeTab === 'pet-shelters' ? isShelter : !isShelter;
+      });
+      
+      console.log(`${activeTab} filtered pets:`, filtered.map((pet: any) => ({
+        petName: pet.pet?.name,
+        owner: pet.author?.username
+      })));
+      
+      // Remove X'd pets from the filtered list
+      const availablePets = filtered.filter((pet: any) => {
+        const petId = pet.pet?.id || pet.id;
+        return !xedPets.has(petId);
+      });
+      
+      setAllPets(filtered);
+      setPetCards(availablePets);
+      setFilteredPets(availablePets);
+      
       const petLoveCounts: {[petIdx: number]: number} = {};
-      (petData.posts || []).forEach((post: any, idx: number) => {
+      availablePets.forEach((post: any, idx: number) => {
         petLoveCounts[idx] = post.pet?.loveCount || 0;
       });
       setLoveCounts(petLoveCounts);
       setCurrentIdx(0);
     } catch (err) {
       setPetCards([]);
+      setFilteredPets([]);
+      setAllPets([]);
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => { fetchPets(); }, []);
-
-  // When swiping past last pet, fetch new batch
-  useEffect(() => {
-    if (petCards.length > 0 && currentIdx >= petCards.length && !fetchingMore) {
-      setFetchingMore(true);
-      setTimeout(async () => {
-        await fetchPets();
-        setFetchingMore(false);
-      }, 400);
-    }
-  }, [currentIdx, petCards.length, fetchingMore]);
+  useEffect(() => { 
+    setXedPets(new Set()); // Reset X'd pets when switching tabs
+    fetchPets(); 
+  }, [activeTab]);
 
   const handleSwipeLeft = (petIdx: number) => {
+    const currentPet = petCards[petIdx];
+    if (currentPet) {
+      // Add pet to X'd set
+      const petId = currentPet.pet?.id || currentPet.id;
+      setXedPets(prev => new Set([...Array.from(prev), petId]));
+    }
+    
     setShowXAnimation({petIdx, show: true});
     setPetCardSwipe({dir: 'left', idx: petIdx});
     setTimeout(() => {
@@ -307,18 +341,165 @@ export default function SwipeNSavePage() {
     }
   };
 
+  // When swiping past last pet, recycle available pets
+  useEffect(() => {
+    if (petCards.length > 0 && currentIdx >= petCards.length && !fetchingMore) {
+      setFetchingMore(true);
+      setTimeout(() => {
+        // Recycle pets that haven't been X'd
+        const availablePets = allPets.filter((pet: any) => {
+          const petId = pet.pet?.id || pet.id;
+          return !xedPets.has(petId);
+        });
+        
+        if (availablePets.length > 0) {
+          setPetCards(availablePets);
+          setFilteredPets(availablePets);
+          setCurrentIdx(0);
+          
+          const petLoveCounts: {[petIdx: number]: number} = {};
+          availablePets.forEach((post: any, idx: number) => {
+            petLoveCounts[idx] = post.pet?.loveCount || 0;
+          });
+          setLoveCounts(petLoveCounts);
+        } else {
+          // If all pets have been X'd, fetch new ones
+          fetchPets();
+        }
+        setFetchingMore(false);
+      }, 400);
+    }
+  }, [currentIdx, petCards.length, fetchingMore, allPets, xedPets]);
+
   if (loading) return (
-    <div className="flex justify-center items-center h-screen bg-gradient-to-br from-pink-200 via-fuchsia-200 to-yellow-100 text-black">
+    <div className="w-full h-screen flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-pink-200 via-fuchsia-200 to-yellow-100">
+      {/* Tabs */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30">
+        <div className="flex bg-white/90 backdrop-blur-sm rounded-full p-1 shadow-lg border border-white/20">
+          <button
+            className={`px-6 py-2 rounded-full font-semibold text-sm transition-all duration-200 ${
+              activeTab === 'pet-celebs'
+                ? 'bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+            onClick={() => setActiveTab('pet-celebs')}
+          >
+            Pet Celebs
+          </button>
+          <button
+            className={`px-6 py-2 rounded-full font-semibold text-sm transition-all duration-200 ${
+              activeTab === 'pet-shelters'
+                ? 'bg-gradient-to-r from-red-400 to-pink-500 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+            onClick={() => setActiveTab('pet-shelters')}
+          >
+            Pet Shelters
+          </button>
+        </div>
+      </div>
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
     </div>
   );
-  if (!petCards.length) return <div className="flex justify-center items-center h-screen bg-gradient-to-br from-pink-200 via-fuchsia-200 to-yellow-100 text-black">No pets to show.</div>;
-  if (currentIdx >= petCards.length) return <div className="flex justify-center items-center h-screen bg-gradient-to-br from-pink-200 via-fuchsia-200 to-yellow-100 text-black">Loading more pets...</div>;
+  
+  if (!petCards.length) return (
+    <div className="w-full h-screen flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-pink-200 via-fuchsia-200 to-yellow-100">
+      {/* Tabs */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30">
+        <div className="flex bg-white/90 backdrop-blur-sm rounded-full p-1 shadow-lg border border-white/20">
+          <button
+            className={`px-6 py-2 rounded-full font-semibold text-sm transition-all duration-200 ${
+              activeTab === 'pet-celebs'
+                ? 'bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+            onClick={() => setActiveTab('pet-celebs')}
+          >
+            Pet Celebs
+          </button>
+          <button
+            className={`px-6 py-2 rounded-full font-semibold text-sm transition-all duration-200 ${
+              activeTab === 'pet-shelters'
+                ? 'bg-gradient-to-r from-red-400 to-pink-500 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+            onClick={() => setActiveTab('pet-shelters')}
+          >
+            Pet Shelters
+          </button>
+        </div>
+      </div>
+      <div className="text-center">
+        <div className="text-2xl font-bold text-gray-700 mb-2">No pets available</div>
+        <div className="text-gray-500">Try switching tabs or refreshing the page</div>
+      </div>
+    </div>
+  );
+  
+  if (currentIdx >= petCards.length) return (
+    <div className="w-full h-screen flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-pink-200 via-fuchsia-200 to-yellow-100">
+      {/* Tabs */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30">
+        <div className="flex bg-white/90 backdrop-blur-sm rounded-full p-1 shadow-lg border border-white/20">
+          <button
+            className={`px-6 py-2 rounded-full font-semibold text-sm transition-all duration-200 ${
+              activeTab === 'pet-celebs'
+                ? 'bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+            onClick={() => setActiveTab('pet-celebs')}
+          >
+            Pet Celebs
+          </button>
+          <button
+            className={`px-6 py-2 rounded-full font-semibold text-sm transition-all duration-200 ${
+              activeTab === 'pet-shelters'
+                ? 'bg-gradient-to-r from-red-400 to-pink-500 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+            onClick={() => setActiveTab('pet-shelters')}
+          >
+            Pet Shelters
+          </button>
+        </div>
+      </div>
+      <div className="text-center">
+        <div className="text-2xl font-bold text-gray-700 mb-2">Recycling pets...</div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mt-4"></div>
+      </div>
+    </div>
+  );
 
   const pet = { ...petCards[currentIdx], _petIdx: currentIdx };
 
   return (
     <div className="w-full h-screen flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-pink-200 via-fuchsia-200 to-yellow-100">
+      {/* Tabs */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30">
+        <div className="flex bg-white/90 backdrop-blur-sm rounded-full p-1 shadow-lg border border-white/20">
+          <button
+            className={`px-6 py-2 rounded-full font-semibold text-sm transition-all duration-200 ${
+              activeTab === 'pet-celebs'
+                ? 'bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+            onClick={() => setActiveTab('pet-celebs')}
+          >
+            Pet Celebs
+          </button>
+          <button
+            className={`px-6 py-2 rounded-full font-semibold text-sm transition-all duration-200 ${
+              activeTab === 'pet-shelters'
+                ? 'bg-gradient-to-r from-red-400 to-pink-500 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+            onClick={() => setActiveTab('pet-shelters')}
+          >
+            Pet Shelters
+          </button>
+        </div>
+      </div>
+
       {/* Animations */}
       {showHeartAnimation.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">

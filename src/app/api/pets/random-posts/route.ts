@@ -3,7 +3,7 @@ import { getRandomPetPostsWithImages } from '@/actions/post.action';
 
 export async function GET() {
   try {
-    const posts = await getRandomPetPostsWithImages(3);
+    const posts = await getRandomPetPostsWithImages(10);
     return NextResponse.json({ posts });
   } catch (error) {
     console.error('Error fetching random pet posts:', error);

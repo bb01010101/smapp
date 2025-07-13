@@ -117,7 +117,7 @@ function CreatePost() {
                 ) : (
                   <ImageIcon className="size-4 mr-2" />
                 )}
-                {media && media.type?.startsWith("video") ? "Video" : "Photo"}
+                {media && media.type?.startsWith("video") ? "Video" : "Media"}
               </Button>
             </div>
             <Button

@@ -296,7 +296,7 @@ export default function HorizontalTimeline({
                   ) : (
                     <>
                       <ImageIcon className="w-4 h-4" />
-                      <span>Upload Daily</span>
+                      <span>Upload Media</span>
                     </>
                   )}
                 </Button>
