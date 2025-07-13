@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Navbar from "@/components/Navbar";
@@ -8,17 +7,6 @@ import SidebarWrapper from "@/components/SidebarWrapper";
 import { Toaster } from "react-hot-toast";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import ColorPreferenceLoader from "@/components/ColorPreferenceLoader";
-
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
 
 export const metadata: Metadata = {
   title: "Petnet",
@@ -44,7 +32,7 @@ export default function RootLayout({
           <link rel="icon" href="/otis-v2.png" type="image/png" />
           <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet" />
         </head>
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <body className="antialiased">
           <ThemeProvider
             attribute="class"
             defaultTheme="light"

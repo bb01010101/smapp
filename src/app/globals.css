@@ -135,6 +135,90 @@
     @apply bg-background text-foreground;
     background: var(--background);
     color: var(--foreground);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Instagram-style typography */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+  }
+  
+  h2 {
+    font-size: 24px;
+    font-weight: 600;
+  }
+  
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+  }
+  
+  h4 {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  h5 {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  
+  h6 {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  p, span, div, button, input, textarea, select {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  
+  /* Instagram-style button text */
+  button {
+    font-weight: 600;
+    font-size: 14px;
+  }
+  
+  /* Instagram-style input text */
+  input, textarea {
+    font-size: 14px;
+    font-weight: 400;
+  }
+  
+  /* Instagram-style caption text */
+  .caption, .text-caption {
+    font-size: 12px;
+    font-weight: 400;
+    color: #8e8e93;
+  }
+  
+  /* Instagram-style small text */
+  .text-small {
+    font-size: 12px;
+    font-weight: 400;
+  }
+  
+  /* Instagram-style medium text */
+  .text-medium {
+    font-size: 16px;
+    font-weight: 400;
+  }
+  
+  /* Instagram-style large text */
+  .text-large {
+    font-size: 18px;
+    font-weight: 400;
   }
   nav, .bg-background, [class*=nav], .dark nav, .dark .bg-background, .dark [class*=nav] {
     /* Remove forced black background here */
