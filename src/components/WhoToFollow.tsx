@@ -46,7 +46,9 @@ async function WhoToFollow() {
                   <p className="text-muted-foreground">{user._count.followers} followers</p>
                 </div>
               </div>
-              <FollowButton userId={user.id} /> 
+              <div className="flex-shrink-0 w-20 flex justify-end">
+                <FollowButton userId={user.id} />
+              </div>
             </div>
           ))}
         </div>

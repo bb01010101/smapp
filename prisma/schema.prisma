@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,143 +8,130 @@ datasource db {
 }
 
 model User {
-  id String @id @default(cuid())
-  email String @unique
-  username String @unique
-  clerkId String @unique
-  name String?
-  bio String?
-  image String?
-  location String?
-  website String?
-  createdAt DateTime @default(now())  // member since 2025
-  updatedAt DateTime @updatedAt
-  isAdmin Boolean @default(false)
-  latitude Float?
-  longitude Float?
-  locationSharingEnabled Boolean? @default(false)
-  lastLocationUpdate DateTime?
-  barks Bark[]
-  barkVotes BarkVote[]
-
-  // Relations: 
-  posts Post[] // One-to-many
-  comments Comment[] // One-to-many
-  likes Like[] // One-to-many
-
-  followers Follows[] @relation("following") // users who follow this user
-  following Follows[] @relation("follower")  // users this user follows
-
-  notifications Notification[] @relation("userNotifications") // notifications received by a user
-  notificationsCreated Notification[] @relation("notificationCreator") // notifications triggered by a user
-
+  id                       String                    @id @default(cuid())
+  email                    String                    @unique
+  username                 String                    @unique
+  clerkId                  String                    @unique
+  name                     String?
+  bio                      String?
+  image                    String?
+  location                 String?
+  website                  String?
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+  isAdmin                  Boolean                   @default(false)
+  lastLocationUpdate       DateTime?
+  latitude                 Float?
+  locationSharingEnabled   Boolean?                  @default(false)
+  longitude                Float?
+  barks                    Bark[]
+  barkComments             BarkComment[]
+  barkCommentVotes         BarkCommentVote[]
+  barkVotes                BarkVote[]
+  comments                 Comment[]
+  communitiesCreated       Community[]               @relation("CommunityCreator")
   conversationParticipants ConversationParticipant[]
-  messages                  Message[]
-
-  barkComments BarkComment[]
-  barkCommentVotes BarkCommentVote[]
-
-  communitiesCreated Community[] @relation("CommunityCreator")
+  following                Follows[]                 @relation("follower")
+  followers                Follows[]                 @relation("following")
+  likes                    Like[]
+  messages                 Message[]
+  notificationsCreated     Notification[]            @relation("notificationCreator")
+  notifications            Notification[]            @relation("userNotifications")
+  posts                    Post[]
 
   @@index([latitude, longitude])
   @@index([locationSharingEnabled, lastLocationUpdate])
 }
 
-
 model Post {
-  id          String   @id @default(cuid())
-  authorId    String
-  petId       String?
-  content     String?
-  image       String?
-  mediaType   String?
-  type        PostType @default(REGULAR)
-  // Marketplace fields
-  title       String?
-  description String?
-  price       Float?
-  priceType   String? // for services: hourly, daily, fixed
-  category    String?
-  condition   String? // for products: new, used, etc.
-  location    String?
-  isAffiliate Boolean?
-  affiliateLink String?
+  id            String         @id @default(cuid())
+  authorId      String
+  petId         String?
+  content       String?
+  image         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  mediaType     String?
   affiliateCode String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  pet         Pet?     @relation("PetPosts", fields: [petId], references: [id])
-  comments    Comment[]
-  likes       Like[]
+  affiliateLink String?
+  category      String?
+  condition     String?
+  description   String?
+  isAffiliate   Boolean?
+  location      String?
+  price         Float?
+  priceType     String?
+  title         String?
+  type          PostType       @default(REGULAR)
+  comments      Comment[]
+  likes         Like[]
   notifications Notification[]
+  author        User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  pet           Pet?           @relation("PetPosts", fields: [petId], references: [id])
 }
 
-model Comment{
-  id String @id @default(cuid())
-  content String
-  authorId String
-  postId String
-  createdAt DateTime @default(now())
-
-  // Relations
-  author User @relation(fields: [authorId],references: [id],onDelete: Cascade)
-  post Post @relation(fields: [postId],references: [id], onDelete: Cascade)
+model Comment {
+  id            String         @id @default(cuid())
+  content       String
+  authorId      String
+  postId        String
+  createdAt     DateTime       @default(now())
+  author        User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post          Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
   notifications Notification[]
 
-  @@index([authorId,postId]) // composite index for faster queries
+  @@index([authorId, postId])
 }
 
 model Like {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   postId    String
   userId    String
   createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-
-  @@index([userId,postId]) // composite index for faster queries
-  @@unique([userId,postId]) // this prevents same user from liking post twice
+  @@unique([userId, postId])
+  @@index([userId, postId])
 }
 
-model Follows{
-  followerId String
+model Follows {
+  followerId  String
   followingId String
-  createdAt DateTime @default(now())
-
-  // Relations
+  createdAt   DateTime @default(now())
   follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
   following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
 
-  @@index([followerId,followingId]) // composite index for faster queries
-  @@id([followerId,followingId]) // composite primary key prevents duplicate follows
+  @@id([followerId, followingId])
+  @@index([followerId, followingId])
 }
 
 model Notification {
-  id        String   @id @default(cuid())
-  userId    String                  
-  creatorId String                  
-  type      NotificationType        
-  read      Boolean  @default(false)
-  postId    String?                 
-  commentId String?                
-  createdAt DateTime @default(now())
-  
-  // Relations
-  user      User     @relation("userNotifications", fields: [userId], references: [id], onDelete: Cascade)
-  creator   User     @relation("notificationCreator", fields: [creatorId], references: [id], onDelete: Cascade)
-  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
-  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  id        String           @id @default(cuid())
+  userId    String
+  creatorId String
+  type      NotificationType
+  read      Boolean          @default(false)
+  postId    String?
+  commentId String?
+  createdAt DateTime         @default(now())
+  comment   Comment?         @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  creator   User             @relation("notificationCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  post      Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User             @relation("userNotifications", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
 }
 
-enum NotificationType {
-  LIKE     
-  COMMENT 
-  FOLLOW   
+enum Prestige {
+  BRONZE
+  SILVER
+  GOLD
+  LAPIS_LAZULI
+  EMERALD
+  PURPLE_AMETHYST
+  RUBY
+  DIAMOND
 }
 
 model Pet {
@@ -168,43 +149,44 @@ model Pet {
   streak    Int      @default(0)
   posts     Post[]   @relation("PetPosts")
 
+  // Gamification fields
+  xp         Int       @default(0)
+  level      Int       @default(1)
+  prestige   Prestige  @default(BRONZE)
+  loginStreak Int      @default(0)
+  lastLogin  DateTime?
+
   @@index([userId])
 }
 
-enum PostType {
-  REGULAR
-  PRODUCT
-  SERVICE
-}
-
 model Conversation {
-  id           String    @id @default(cuid())
+  id           String                    @id @default(cuid())
+  updatedAt    DateTime                  @updatedAt
+  createdAt    DateTime                  @default(now())
   participants ConversationParticipant[]
   messages     Message[]
-  updatedAt    DateTime  @updatedAt
-  createdAt    DateTime  @default(now())
 }
 
 model ConversationParticipant {
-  id             String   @id @default(cuid())
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String       @id @default(cuid())
   userId         String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   conversationId String
-  joinedAt       DateTime @default(now())
+  joinedAt       DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, conversationId])
 }
 
 model Message {
-  id             String      @id @default(cuid())
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  id             String       @id @default(cuid())
   conversationId String
-  sender         User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
   senderId       String
   content        String
-  read           Boolean     @default(false)
-  createdAt      DateTime    @default(now())
+  read           Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
 }
 
 model Community {
@@ -212,53 +194,49 @@ model Community {
   name        String   @unique
   description String?
   createdAt   DateTime @default(now())
+  creatorId   String?
   barks       Bark[]
   creator     User?    @relation("CommunityCreator", fields: [creatorId], references: [id])
-  creatorId   String?
 }
 
 model Bark {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   title       String
   content     String
-  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId    String
-  community   Community? @relation(fields: [communityId], references: [id])
   communityId String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  upvotes     Int      @default(0)
-  votes       BarkVote[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  upvotes     Int           @default(0)
+  author      User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  community   Community?    @relation(fields: [communityId], references: [id])
   comments    BarkComment[]
-
-  // Add more fields as needed (e.g., comments, etc.)
+  votes       BarkVote[]
 }
 
 model BarkVote {
   id        String   @id @default(cuid())
   userId    String
   barkId    String
-  value     Int      // +1 for upvote, -1 for downvote
+  value     Int
   createdAt DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   bark      Bark     @relation(fields: [barkId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, barkId])
 }
 
 model BarkComment {
-  id        String      @id @default(cuid())
+  id        String            @id @default(cuid())
   content   String
   authorId  String
   barkId    String
-  parentId  String?     // For nested comments
-  createdAt DateTime    @default(now())
-
-  author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  bark      Bark        @relation(fields: [barkId], references: [id], onDelete: Cascade)
-  parent    BarkComment? @relation("CommentReplies", fields: [parentId], references: [id])
-  replies   BarkComment[] @relation("CommentReplies")
+  parentId  String?
+  createdAt DateTime          @default(now())
+  author    User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  bark      Bark              @relation(fields: [barkId], references: [id], onDelete: Cascade)
+  parent    BarkComment?      @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   BarkComment[]     @relation("CommentReplies")
   votes     BarkCommentVote[]
 
   @@index([barkId])
@@ -266,14 +244,25 @@ model BarkComment {
 }
 
 model BarkCommentVote {
-  id         String   @id @default(cuid())
-  userId     String
-  commentId  String
-  value      Int      // +1 for upvote, -1 for downvote
-  createdAt  DateTime @default(now())
-
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  comment    BarkComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  id        String      @id @default(cuid())
+  userId    String
+  commentId String
+  value     Int
+  createdAt DateTime    @default(now())
+  comment   BarkComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, commentId])
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  FOLLOW
+}
+
+enum PostType {
+  REGULAR
+  PRODUCT
+  SERVICE
 }
