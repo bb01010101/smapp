@@ -7,6 +7,7 @@ import {
 } from "@/actions/profile.action";
 import { notFound } from "next/navigation";
 import ProfilePageClient from "./ProfilePageClient";
+import ProfilePageWrapper from "./ProfilePageWrapper";
 
 export async function generateMetadata({ params }: { params: { username: string } }) {
   const user = await getProfileByUsername(params.username);
@@ -31,7 +32,7 @@ async function ProfilePageServer({ params }: { params: { username: string } }) {
   ]);
 
   return (
-    <ProfilePageClient
+    <ProfilePageWrapper
       user={user}
       posts={posts}
       likedPosts={likedPosts}

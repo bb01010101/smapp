@@ -14,6 +14,7 @@ import { HeartIcon, LogInIcon, MessageCircleIcon, SendIcon } from "lucide-react"
 import { Textarea } from "./ui/textarea";
 import { isUserVerified } from "@/lib/utils";
 import BlueCheckIcon from "@/components/BlueCheckIcon";
+import ProfileLink from "@/components/ProfileLink";
 
 
 type Posts = Awaited<ReturnType<typeof getPosts>>
@@ -79,6 +80,11 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
 
   // Double-tap/double-click handler
   const handleImageClick = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!user) {
+      // If not logged in, don't allow double-tap like
+      return;
+    }
+    
     const now = Date.now();
     const lastTap = lastTapRef.current;
     if (now - lastTap < 300 && now - lastTap > 0) {
@@ -95,21 +101,21 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
       <CardContent className="p-4 sm:p-5">
         {/* Header: Avatar, Name, Username, Timestamp, Delete */}
         <div className="flex items-center w-full mb-2">
-          <Link href={post.pet ? `/pet/${post.pet.id}` : `/profile/${post.author.username}`}
+          <ProfileLink href={post.pet ? `/pet/${post.pet.id}` : `/profile/${post.author.username}`}
             className="flex-shrink-0">
             <Avatar className="w-11 h-11 border-2 border-gold-200">
               <AvatarImage src={post.pet ? post.pet.imageUrl ?? "/avatar.png" : post.author.image ?? "/avatar.png"} />
                   </Avatar>
-                </Link>
+          </ProfileLink>
           <div className="flex flex-col justify-center ml-3 min-w-0 flex-1">
             <div className="flex items-center gap-1 min-w-0">
-              <Link href={post.pet ? `/pet/${post.pet.id}` : `/profile/${post.author.username}`}
+              <ProfileLink href={post.pet ? `/pet/${post.pet.id}` : `/profile/${post.author.username}`}
                 className="font-semibold truncate hover:underline flex items-center gap-1 text-base">
                 {post.pet ? post.pet.name : post.author.name}
                 {post.pet ? null : (isUserVerified(post.author.username) && (
                   <BlueCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom" />
                 ))}
-                      </Link>
+              </ProfileLink>
               <span className="text-muted-foreground text-xs truncate ml-1">
                 {post.pet ? post.pet.species : `@${post.author.username}`}
               </span>
@@ -133,18 +139,30 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
 
         {/* Post Image/Video */}
           {post.image && (
-          <div className="relative w-full rounded-lg overflow-hidden mb-2" onClick={handleImageClick} onTouchEnd={handleImageClick} style={{ cursor: "pointer" }}>
-              {showHeartAnimation && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                  <HeartIcon className="w-32 h-32 text-red-500 fill-current heart-burst-animation" />
+            user ? (
+              <div className="relative w-full rounded-lg overflow-hidden mb-2" onClick={handleImageClick} onTouchEnd={handleImageClick} style={{ cursor: "pointer" }}>
+                {showHeartAnimation && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                    <HeartIcon className="w-32 h-32 text-red-500 fill-current heart-burst-animation" />
+                  </div>
+                )}
+                {post.mediaType?.startsWith("video") ? (
+                  <VideoWithToggleControls src={post.image} />
+                ) : (
+                <img src={post.image} alt="Post content" className="w-full h-auto object-cover max-h-[400px]" />
+                )}
+              </div>
+            ) : (
+              <SignInButton mode="modal">
+                <div className="relative w-full rounded-lg overflow-hidden mb-2" style={{ cursor: "pointer" }}>
+                  {post.mediaType?.startsWith("video") ? (
+                    <VideoWithToggleControls src={post.image} />
+                  ) : (
+                  <img src={post.image} alt="Post content" className="w-full h-auto object-cover max-h-[400px]" />
+                  )}
                 </div>
-              )}
-              {post.mediaType?.startsWith("video") ? (
-                <VideoWithToggleControls src={post.image} />
-              ) : (
-              <img src={post.image} alt="Post content" className="w-full h-auto object-cover max-h-[400px]" />
-              )}
-            </div>
+              </SignInButton>
+            )
           )}
 
         {/* Like & Comment Buttons */}
@@ -171,17 +189,30 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
                 </Button>
               </SignInButton>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 hover:bg-gold-100 hover:text-gold-700"
-              onClick={() => setShowComments((prev) => !prev)}
-            >
-              <MessageCircleIcon
-                className={`size-5 ${showComments ? "fill-gold-500 text-gold-500" : ""}`}
-              />
-              <span>{post.comments.length}</span>
-            </Button>
+            {user ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 hover:bg-gold-100 hover:text-gold-700"
+                onClick={() => setShowComments((prev) => !prev)}
+              >
+                <MessageCircleIcon
+                  className={`size-5 ${showComments ? "fill-gold-500 text-gold-500" : ""}`}
+                />
+                <span>{post.comments.length}</span>
+              </Button>
+            ) : (
+              <SignInButton mode="modal">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 hover:bg-gold-100 hover:text-gold-700"
+                >
+                  <MessageCircleIcon className="size-5" />
+                  <span>{post.comments.length}</span>
+                </Button>
+              </SignInButton>
+            )}
           </div>
           
         {/* Comments Section */}

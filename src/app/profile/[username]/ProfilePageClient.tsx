@@ -1063,11 +1063,23 @@ function ProfilePageClient({
                  <span className="font-bold text-lg sm:text-lg">{user._count.posts}</span>
                  <span className="text-sm text-muted-foreground">Posts</span>
                </div>
-               <div className="flex flex-col items-center">
+               <div 
+                 className="flex flex-col items-center cursor-pointer hover:text-primary transition-colors"
+                 onClick={() => {
+                   setFollowersOpen(true);
+                   fetchFollowers();
+                 }}
+               >
                  <span className="font-bold text-lg sm:text-lg">{user._count.followers}</span>
                  <span className="text-sm text-muted-foreground">Followers</span>
                </div>
-               <div className="flex flex-col items-center">
+               <div 
+                 className="flex flex-col items-center cursor-pointer hover:text-primary transition-colors"
+                 onClick={() => {
+                   setFollowingOpen(true);
+                   fetchFollowing();
+                 }}
+               >
                  <span className="font-bold text-lg sm:text-lg">{user._count.following}</span>
                  <span className="text-sm text-muted-foreground">Following</span>
                </div>
