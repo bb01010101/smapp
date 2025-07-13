@@ -57,21 +57,24 @@ export async function createPost(content: string, image: string, petId?: string 
                 orderBy: { createdAt: "desc" },
             });
 
-            let newStreak = 1;
+            let newStreak = 1; // Default to 1 for first post
             if (lastPost) {
                 const lastDate = new Date(lastPost.createdAt);
                 const now = new Date(post.createdAt);
-                // Set both to midnight for day comparison
-                lastDate.setHours(0,0,0,0);
-                now.setHours(0,0,0,0);
-                const diffDays = Math.round((now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
-                if (diffDays === 1) {
-                    // Increment streak
+                const diffMs = now.getTime() - lastDate.getTime();
+                const diffHours = diffMs / (1000 * 60 * 60);
+                
+                if (diffHours > 24) {
+                    // More than 24 hours passed, start new streak at 1
+                    newStreak = 1;
+                } else if (diffHours > 0) {
+                    // Within 24 hours, increment the existing streak
                     const pet = await prisma.pet.findUnique({ where: { id: petId }, select: { streak: true } });
                     newStreak = (pet?.streak || 0) + 1;
                 } else {
-                    // Reset streak
-                    newStreak = 1;
+                    // Same time (within same hour), keep streak unchanged
+                    const pet = await prisma.pet.findUnique({ where: { id: petId }, select: { streak: true } });
+                    newStreak = pet?.streak || 1;
                 }
             }
             // Update the pet's streak
@@ -273,24 +276,36 @@ export async function toggleLike(postId: string) {
   export async function deletePost(postId: string) {
     try {
       const userId = await getDbUserId();
-  
+
       const post = await prisma.post.findUnique({
         where: { id: postId },
-        select: { authorId: true },
+        select: { authorId: true, petId: true },
       });
-  
+
       if (!post) throw new Error("Post not found");
-      if (post.authorId !== userId) throw new Error("Unauthorized - no delete permission");
-  
+
+      // If post is associated with a pet, allow the pet's owner to delete
+      if (post.petId) {
+        const pet = await prisma.pet.findUnique({ where: { id: post.petId }, select: { userId: true } });
+        if (!pet) throw new Error("Pet not found");
+        if (pet.userId !== userId && post.authorId !== userId) {
+          throw new Error("Unauthorized - no delete permission");
+        }
+      } else {
+        // Only allow the post author to delete
+        if (post.authorId !== userId) throw new Error("Unauthorized - no delete permission");
+      }
+
       await prisma.post.delete({
         where: { id: postId },
       });
-  
+
       revalidatePath("/"); // purge the cache
       return { success: true };
     } catch (error) {
       console.error("Failed to delete post:", error);
-      return { success: false, error: "Failed to delete post" };
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete post";
+      return { success: false, error: errorMessage };
     }
   }
 

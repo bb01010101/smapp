@@ -263,4 +263,21 @@ export async function getProfileByUsername(username: string) {
     }
   }
 
+  // Returns true if the user is in the top 1,000 earliest registered users
+  export async function isFoundingPackUser(userId: string): Promise<boolean> {
+    // Get the createdAt of this user
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true } });
+    if (!user) return false;
+    // Find the createdAt of the 1,000th user
+    const thousandthUser = await prisma.user.findMany({
+      orderBy: { createdAt: 'asc' },
+      select: { createdAt: true },
+      take: 1000,
+      skip: 999
+    });
+    if (!thousandthUser.length) return false;
+    // If this user's createdAt is less than or equal to the 1,000th user's, they're a founding pack user
+    return user.createdAt <= thousandthUser[0].createdAt;
+  }
+
   

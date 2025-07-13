@@ -2,9 +2,32 @@ import prisma from '@/lib/prisma';
 
 export async function getPetById(petId: string) {
   try {
-    return await prisma.pet.findUnique({
+    const pet = await prisma.pet.findUnique({
       where: { id: petId },
     });
+    if (!pet) return null;
+    // Find the most recent post for this pet
+    const lastPost = await prisma.post.findFirst({
+      where: {
+        petId,
+        mediaType: { not: "video" },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    if (lastPost) {
+      const lastDate = new Date(lastPost.createdAt);
+      const now = new Date();
+      const diffMs = now.getTime() - lastDate.getTime();
+      const diffHours = diffMs / (1000 * 60 * 60);
+      if (diffHours > 24 && pet.streak !== 0) {
+        await prisma.pet.update({
+          where: { id: petId },
+          data: { streak: 0 },
+        });
+        pet.streak = 0;
+      }
+    }
+    return pet;
   } catch (error) {
     console.error('Error fetching pet by ID:', error);
     return null;

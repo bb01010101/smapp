@@ -358,11 +358,11 @@ export default function HorizontalTimeline({
             const petColor = postPet ? getPetColor(postPet.id) : 'from-orange-400 via-yellow-400 to-orange-600';
 
             return (
-                             <div
-                 key={post.id}
-                 className="flex-shrink-0 relative group/item snap-start timeline-item-hover"
-                 onClick={() => onPostClick?.(post)}
-               >
+              <div
+                key={post.id}
+                className="flex-shrink-0 relative group/item snap-start timeline-item-hover"
+                onClick={() => onPostClick?.(post)}
+              >
                 {/* Timeline item */}
                 <div className="relative">
                   {/* Date indicator */}
@@ -392,7 +392,10 @@ export default function HorizontalTimeline({
                         ? 'border-orange-400 shadow-orange-200' 
                         : 'border-gray-200 hover:border-orange-300'
                     }`}
-                    onClick={() => setActivePhotoId(post.id === activePhotoId ? null : post.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActivePhotoId(post.id === activePhotoId ? null : post.id);
+                    }}
                   >
                     <img
                       src={post.image || '/avatar.png'}
@@ -407,7 +410,7 @@ export default function HorizontalTimeline({
 
                     {/* Edit/Delete buttons */}
                     {isOwnPet && activePhotoId === post.id && (
-                      <div className="absolute top-2 right-2 flex gap-1 z-20">
+                      <div className="absolute top-2 right-2 flex gap-1 z-20 transition-opacity duration-200">
                         {onEditPost && (
                           <Button
                             variant="ghost"

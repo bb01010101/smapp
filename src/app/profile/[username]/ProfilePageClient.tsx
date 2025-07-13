@@ -1,7 +1,7 @@
 "use client";
 
 
-import { getProfileByUsername, getUserPosts, updateProfile } from "@/actions/profile.action";
+import { getProfileByUsername, getUserPosts, updateProfile, isFoundingPackUser } from "@/actions/profile.action";
 import { getPosts, createPost, toggleLike, updatePost, deletePost } from "@/actions/post.action";
 import { toggleFollow } from "@/actions/user.action";
 import PostCard from "@/components/PostCard";
@@ -54,6 +54,7 @@ import { DeleteAlertDialog } from "@/components/DeleteAlertDialog";
 import HorizontalTimeline from "@/components/HorizontalTimeline";
 import { isUserVerified, isUserVerifiedShelter } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import Image from "next/image";
 
 
 // This is the main client-side component for rendering a user's profile page
@@ -85,6 +86,7 @@ interface ProfilePageClientProps {
  likedPosts: Post[];          // Posts liked by the user
  isFollowing: boolean;        // Whether the current user is following this profile
  pets: any[];                 // Pets associated with the user
+ isFoundingPack?: boolean;    // Founding Pack badge
 }
 
 
@@ -509,6 +511,7 @@ function ProfilePageClient({
  posts,
  user,
  pets,
+ isFoundingPack = false,
 }: ProfilePageClientProps) {
  // Get the current logged-in user
  const { user: currentUser } = useUser();
@@ -1032,6 +1035,12 @@ function ProfilePageClient({
                    {user.name ?? user.username}
                    {isUserVerified(user.username) && <BlueCheckIcon className="inline-block w-6 h-6 ml-1" />}
                    {isUserVerifiedShelter(user.username) && <RedCheckIcon className="inline-block w-6 h-6 ml-1" />}
+                   {isFoundingPack && (
+                     <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-yellow-200 via-yellow-50 to-yellow-200 border border-yellow-300 shadow-sm ml-1 text-xs font-semibold text-yellow-900" title="Founding Pack">
+                       <Image src="/otis.png" alt="Founding Pack" width={18} height={18} className="rounded-full border border-yellow-300" />
+                       Founding Pack
+                     </span>
+                   )}
                  </div>
                  {/* Verified Shelter label below name, only for shelter users */}
                  {isUserVerifiedShelter(user.username) && (

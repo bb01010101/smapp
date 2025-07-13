@@ -4,6 +4,7 @@ import {
   getUserPosts,
   isFollowing,
   getUserPets,
+  isFoundingPackUser,
 } from "@/actions/profile.action";
 import { notFound } from "next/navigation";
 import ProfilePageClient from "./ProfilePageClient";
@@ -24,11 +25,12 @@ async function ProfilePageServer({ params }: { params: { username: string } }) {
 
   if (!user) notFound();
 
-  const [posts, likedPosts, isCurrentUserFollowing, pets] = await Promise.all([
+  const [posts, likedPosts, isCurrentUserFollowing, pets, isFoundingPack] = await Promise.all([
     getUserPosts(user.id),
     getUserLikedPosts(user.id),
     isFollowing(user.id),
     getUserPets(user.clerkId),
+    isFoundingPackUser(user.id),
   ]);
 
   return (
@@ -38,6 +40,7 @@ async function ProfilePageServer({ params }: { params: { username: string } }) {
       likedPosts={likedPosts}
       isFollowing={isCurrentUserFollowing}
       pets={pets}
+      isFoundingPack={isFoundingPack}
     />
   );
 }

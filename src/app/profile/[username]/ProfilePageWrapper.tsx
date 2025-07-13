@@ -14,6 +14,7 @@ interface ProfilePageWrapperProps {
   likedPosts: any[];
   isFollowing: boolean;
   pets: any[];
+  isFoundingPack: boolean;
 }
 
 export default function ProfilePageWrapper({
@@ -22,6 +23,7 @@ export default function ProfilePageWrapper({
   likedPosts,
   isFollowing,
   pets,
+  isFoundingPack,
 }: ProfilePageWrapperProps) {
   const { isSignedIn, isLoaded } = useUser();
 
@@ -96,6 +98,7 @@ export default function ProfilePageWrapper({
       likedPosts={likedPosts}
       isFollowing={isFollowing}
       pets={pets}
+      isFoundingPack={isFoundingPack}
     />
   );
 } 
