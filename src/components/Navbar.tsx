@@ -19,8 +19,15 @@ async function Navbar() {
           <div className="flex items-center h-16 justify-between">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2">
-            <span className="text-4xl font-bold text-foreground tracking-wide" style={{ fontFamily: "'Lobster', cursive", letterSpacing: "0.04em" }}>PetNet</span>
-          </Link>
+              <Image 
+                src="/otis.png" 
+                alt="Otis Logo" 
+                width={40} 
+                height={40} 
+                className="w-10 h-10"
+              />
+              <span className="text-4xl font-bold text-foreground tracking-wide" style={{ fontFamily: "'Lobster', cursive", letterSpacing: "0.04em" }}>PetNet</span>
+            </Link>
             {/* Likes and messages for mobile, hidden on desktop */}
             <div className="flex md:hidden items-center gap-4">
               <Link href="/marketplace" aria-label="Marketplace">
