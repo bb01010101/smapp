@@ -160,7 +160,7 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
                 {post.mediaType?.startsWith("video") ? (
                   <VideoWithToggleControls src={post.image} />
                 ) : (
-                <img src={post.image} alt="Post content" className="w-full h-auto object-cover max-h-[400px]" />
+                <img src={post.image} alt="Post content" className="w-full h-auto object-contain bg-black/5 rounded" style={{ maxHeight: 500 }} />
                 )}
               </div>
             ) : (
@@ -169,7 +169,7 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
                   {post.mediaType?.startsWith("video") ? (
                     <VideoWithToggleControls src={post.image} />
                   ) : (
-                  <img src={post.image} alt="Post content" className="w-full h-auto object-cover max-h-[400px]" />
+                  <img src={post.image} alt="Post content" className="w-full h-auto object-contain bg-black/5 rounded" style={{ maxHeight: 500 }} />
                   )}
                 </div>
               </SignInButton>

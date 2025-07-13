@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { getLevelFromXp, getPrestigeByLevel } from '@/lib/petLeveling';
 
 export async function getPetById(petId: string) {
   try {
@@ -83,5 +84,38 @@ export async function getPetPosts(petId: string) {
   } catch (error) {
     console.error('Error fetching pet posts:', error);
     return [];
+  }
+}
+
+/**
+ * Awards XP to a pet, recalculates level and prestige, and updates the pet if needed.
+ * Returns the updated pet object.
+ */
+export async function awardXpToPet(petId: string, amount: number) {
+  try {
+    const pet = await prisma.pet.findUnique({ where: { id: petId } });
+    if (!pet) return null;
+
+    const newXp = (pet.xp || 0) + amount;
+    const newLevel = getLevelFromXp(newXp);
+    const prestigeConfig = getPrestigeByLevel(newLevel);
+    const newPrestige = prestigeConfig.key;
+
+    // Only update if something changed
+    if (newXp !== pet.xp || newLevel !== pet.level || newPrestige !== pet.prestige) {
+      const updatedPet = await prisma.pet.update({
+        where: { id: petId },
+        data: {
+          xp: newXp,
+          level: newLevel,
+          prestige: newPrestige,
+        },
+      });
+      return updatedPet;
+    }
+    return pet;
+  } catch (error) {
+    console.error('Error awarding XP to pet:', error);
+    return null;
   }
 } 
