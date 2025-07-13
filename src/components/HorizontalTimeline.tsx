@@ -44,6 +44,7 @@ interface HorizontalTimelineProps {
   petColors?: { [petId: string]: string };
   expandable?: boolean;
   defaultExpanded?: boolean;
+  timelineTitle?: string;
 }
 
 export default function HorizontalTimeline({
@@ -62,7 +63,8 @@ export default function HorizontalTimeline({
   variant = 'pet',
   petColors = {},
   expandable = false,
-  defaultExpanded = false
+  defaultExpanded = false,
+  timelineTitle = 'Family Timeline',
 }: HorizontalTimelineProps) {
   const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -145,6 +147,7 @@ export default function HorizontalTimeline({
 
   return (
     <div className={`relative ${className}`}>
+      {/* Timeline Title */}
       {/* Compact Ribbon View */}
       {expandable && !isExpanded && (
         <div 
@@ -166,7 +169,7 @@ export default function HorizontalTimeline({
               )}
               {variant === 'merged' && (
                 <div>
-                  <div className="font-semibold text-xs">Family Timeline</div>
+                  <div className="font-semibold text-xs">{timelineTitle}</div>
                   <div className="text-xs text-muted-foreground">{posts.length} moments</div>
                 </div>
               )}
@@ -262,7 +265,7 @@ export default function HorizontalTimeline({
               )}
               {variant === 'merged' && (
                 <div>
-                  <div className="font-bold text-lg">Family Timeline</div>
+                  <div className="font-bold text-lg">{timelineTitle}</div>
                   <div className="text-sm text-muted-foreground">{posts.length} moments</div>
                 </div>
               )}

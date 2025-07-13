@@ -9,3 +9,8 @@ export function isUserVerified(username: string): boolean {
   const verifiedUsers = ["bb7906", "mitchng77", "luisa.marfori"];
   return verifiedUsers.includes(username);
 }
+
+export function isUserVerifiedShelter(username: string): boolean {
+  const verifiedShelters = ["brian.boler340"];
+  return verifiedShelters.includes(username);
+}

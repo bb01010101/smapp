@@ -4,6 +4,9 @@ import Link from "next/link";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import FollowButton from "./FollowButton";
 import ProfileLink from "./ProfileLink";
+import { isUserVerified, isUserVerifiedShelter } from "@/lib/utils";
+import BlueCheckIcon from "./BlueCheckIcon";
+import RedCheckIcon from "./RedCheckIcon";
 
 async function WhoToFollow() {
     
@@ -28,9 +31,17 @@ async function WhoToFollow() {
                   </Avatar>
                 </ProfileLink>
                 <div className="text-xs">
-                  <ProfileLink href={`/profile/${user.username}`} className="font-medium cursor-pointer">
-                    {user.name}
-                  </ProfileLink>
+                  <div className="flex items-center gap-1">
+                    <ProfileLink href={`/profile/${user.username}`} className="font-medium cursor-pointer">
+                      {user.name}
+                    </ProfileLink>
+                    {isUserVerified(user.username) && (
+                      <BlueCheckIcon className="inline-block w-3 h-3 align-text-bottom" />
+                    )}
+                    {isUserVerifiedShelter(user.username) && (
+                      <RedCheckIcon className="inline-block w-3 h-3 align-text-bottom" />
+                    )}
+                  </div>
                   <p className="text-muted-foreground">@{user.username}</p>
                   <p className="text-muted-foreground">{user._count.followers} followers</p>
                 </div>

@@ -41,6 +41,7 @@ import {
  TrashIcon,
 } from "lucide-react";
 import BlueCheckIcon from "@/components/BlueCheckIcon";
+import RedCheckIcon from "@/components/RedCheckIcon";
 import { useState, useEffect, useRef, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useRouter, useParams } from "next/navigation";
@@ -51,7 +52,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import Link from "next/link";
 import { DeleteAlertDialog } from "@/components/DeleteAlertDialog";
 import HorizontalTimeline from "@/components/HorizontalTimeline";
-import { isUserVerified } from "@/lib/utils";
+import { isUserVerified, isUserVerifiedShelter } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 
 
@@ -967,7 +968,7 @@ function ProfilePageClient({
  return (
    <div className="w-full h-screen bg-background flex items-center justify-center relative overflow-hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
      <div className="max-w-3xl mx-auto w-full h-full overflow-y-auto pt-20 scrollbar-hide">
-     {/* Main grid layout for sidebar and content */}
+       {/* Main grid layout for sidebar and content */}
        <div className="grid grid-cols-1 gap-6 p-6">
        {/* Merged Family Timeline */}
        {currentPets.length > 0 && allTimelinePosts.length > 0 && (
@@ -1026,11 +1027,20 @@ function ProfilePageClient({
            <div className="flex-1 flex flex-col gap-4 min-w-0 w-full">
              {/* Username row */}
              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
-               <div className="flex items-center gap-2 text-xl sm:text-2xl font-bold truncate">
-                 {user.name ?? user.username}
-                 {isUserVerified(user.username) && <BlueCheckIcon className="inline-block w-6 h-6 ml-1" />}
+               <div className="flex flex-col">
+                 <div className="flex items-center gap-2 text-xl sm:text-2xl font-bold truncate">
+                   {user.name ?? user.username}
+                   {isUserVerified(user.username) && <BlueCheckIcon className="inline-block w-6 h-6 ml-1" />}
+                   {isUserVerifiedShelter(user.username) && <RedCheckIcon className="inline-block w-6 h-6 ml-1" />}
+                 </div>
+                 {/* Verified Shelter label below name, only for shelter users */}
+                 {isUserVerifiedShelter(user.username) && (
+                   <div className="flex items-center gap-1 text-red-600 font-medium mt-1">
+                     <span className="text-sm">Verified Shelter</span>
+                   </div>
+                 )}
+                 <span className="text-lg sm:text-lg text-muted-foreground truncate">@{user.username}</span>
                </div>
-               <span className="text-lg sm:text-lg text-muted-foreground truncate">@{user.username}</span>
                <div className="flex gap-2 sm:ml-auto mt-2 sm:mt-0">
                  {!currentUser ? (
                    <SignInButton mode="modal">
@@ -1707,9 +1717,17 @@ function ProfilePageClient({
                    <Link href={`/profile/${f.username}`} className="flex items-center gap-3">
                      <Avatar className="w-8 h-8"><AvatarImage src={f.image || "/avatar.png"} /></Avatar>
                      <div>
-                       <div className="font-medium hover:underline">{f.name || f.username}</div>
+                       <div className="flex items-center gap-1">
+                         <div className="font-medium hover:underline">{f.name || f.username}</div>
+                         {isUserVerified(f.username) && (
+                           <BlueCheckIcon className="inline-block w-3 h-3 align-text-bottom" />
+                         )}
+                         {isUserVerifiedShelter(f.username) && (
+                           <RedCheckIcon className="inline-block w-3 h-3 align-text-bottom" />
+                         )}
+                       </div>
                        <div className="text-xs text-muted-foreground">@{f.username}</div>
-       </div>
+                     </div>
                    </Link>
                  </li>
                ))}
@@ -1735,7 +1753,15 @@ function ProfilePageClient({
                    <Link href={`/profile/${f.username}`} className="flex items-center gap-3">
                      <Avatar className="w-8 h-8"><AvatarImage src={f.image || "/avatar.png"} /></Avatar>
                      <div>
-                       <div className="font-medium hover:underline">{f.name || f.username}</div>
+                       <div className="flex items-center gap-1">
+                         <div className="font-medium hover:underline">{f.name || f.username}</div>
+                         {isUserVerified(f.username) && (
+                           <BlueCheckIcon className="inline-block w-3 h-3 align-text-bottom" />
+                         )}
+                         {isUserVerifiedShelter(f.username) && (
+                           <RedCheckIcon className="inline-block w-3 h-3 align-text-bottom" />
+                         )}
+                       </div>
                        <div className="text-xs text-muted-foreground">@{f.username}</div>
                      </div>
                    </Link>

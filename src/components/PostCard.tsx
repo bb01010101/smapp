@@ -12,8 +12,9 @@ import { DeleteAlertDialog } from "./DeleteAlertDialog";
 import { Button } from "./ui/button";
 import { HeartIcon, LogInIcon, MessageCircleIcon, SendIcon } from "lucide-react";
 import { Textarea } from "./ui/textarea";
-import { isUserVerified } from "@/lib/utils";
+import { isUserVerified, isUserVerifiedShelter } from "@/lib/utils";
 import BlueCheckIcon from "@/components/BlueCheckIcon";
+import RedCheckIcon from "@/components/RedCheckIcon";
 import ProfileLink from "@/components/ProfileLink";
 
 
@@ -112,9 +113,19 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
               <ProfileLink href={post.pet ? `/pet/${post.pet.id}` : `/profile/${post.author.username}`}
                 className="font-semibold truncate hover:underline flex items-center gap-1 text-base">
                 {post.pet ? post.pet.name : post.author.name}
-                {post.pet ? null : (isUserVerified(post.author.username) && (
-                  <BlueCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom" />
-                ))}
+                {post.pet ? null : (
+                  <>
+                    {isUserVerified(post.author.username) && (
+                      <BlueCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom" />
+                    )}
+                    {isUserVerifiedShelter(post.author.username) && (
+                      <RedCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom" />
+                    )}
+                  </>
+                )}
+                {post.pet && isUserVerifiedShelter(post.author.username) && (
+                  <RedCheckIcon className="inline-block w-4 h-4 ml-1 align-text-bottom" />
+                )}
               </ProfileLink>
               <span className="text-muted-foreground text-xs truncate ml-1">
                 {post.pet ? post.pet.species : `@${post.author.username}`}
@@ -230,6 +241,9 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
                         {comment.author.name}
                         {isUserVerified(comment.author.username) && (
                           <BlueCheckIcon className="inline-block w-3 h-3 ml-1 align-text-bottom" />
+                        )}
+                        {isUserVerifiedShelter(comment.author.username) && (
+                          <RedCheckIcon className="inline-block w-3 h-3 ml-1 align-text-bottom" />
                         )}
                       </span>
                         <span className="text-sm text-muted-foreground">

@@ -11,6 +11,9 @@ import { Separator } from "./ui/separator";
 import { LinkIcon, MapPinIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { isUserVerified, isUserVerifiedShelter } from "@/lib/utils";
+import BlueCheckIcon from "./BlueCheckIcon";
+import RedCheckIcon from "./RedCheckIcon";
 
 interface SidebarProps {
   user?: any;
@@ -71,7 +74,15 @@ function SidebarClient({ user }: SidebarProps) {
                 </Avatar>
 
                 <div className="mt-4 space-y-1">
-                  <h3 className="font-semibold">{user.name}</h3>
+                  <div className="flex items-center gap-1">
+                    <h3 className="font-semibold">{user.name}</h3>
+                    {isUserVerified(user.username) && (
+                      <BlueCheckIcon className="inline-block w-4 h-4 align-text-bottom" />
+                    )}
+                    {isUserVerifiedShelter(user.username) && (
+                      <RedCheckIcon className="inline-block w-4 h-4 align-text-bottom" />
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground">{user.username}</p>
                 </div>
               </Link>
@@ -146,7 +157,15 @@ function SidebarClient({ user }: SidebarProps) {
                       <AvatarImage src={f.image || "/avatar.png"} />
                     </Avatar>
                     <div>
-                      <div className="font-medium hover:underline">{f.name || f.username}</div>
+                      <div className="flex items-center gap-1">
+                        <div className="font-medium hover:underline">{f.name || f.username}</div>
+                        {isUserVerified(f.username) && (
+                          <BlueCheckIcon className="inline-block w-3 h-3 align-text-bottom" />
+                        )}
+                        {isUserVerifiedShelter(f.username) && (
+                          <RedCheckIcon className="inline-block w-3 h-3 align-text-bottom" />
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground">@{f.username}</div>
                     </div>
                   </Link>
@@ -176,7 +195,15 @@ function SidebarClient({ user }: SidebarProps) {
                       <AvatarImage src={f.image || "/avatar.png"} />
                     </Avatar>
                     <div>
-                      <div className="font-medium hover:underline">{f.name || f.username}</div>
+                      <div className="flex items-center gap-1">
+                        <div className="font-medium hover:underline">{f.name || f.username}</div>
+                        {isUserVerified(f.username) && (
+                          <BlueCheckIcon className="inline-block w-3 h-3 align-text-bottom" />
+                        )}
+                        {isUserVerifiedShelter(f.username) && (
+                          <RedCheckIcon className="inline-block w-3 h-3 align-text-bottom" />
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground">@{f.username}</div>
                     </div>
                   </Link>
