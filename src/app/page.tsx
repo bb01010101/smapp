@@ -5,6 +5,7 @@ import PostCard from "@/components/PostCard";
 import { getFollowingPosts, getPosts } from "@/actions/post.action";
 import { getDbUserId } from "@/actions/user.action";
 import SidebarWrapper from '@/components/SidebarWrapper';
+import ChallengeDropdown from '@/components/ChallengeDropdown';
 
 export default async function Home() {
   const user = await currentUser();
@@ -38,8 +39,10 @@ export default async function Home() {
             )}
           </div>
         </div>
-        <div className="hidden lg:block lg:col-span-4">
+        <div className="hidden lg:block lg:col-span-4 space-y-6">
           <WhoToFollow />
+          {/* ChallengeList dropdown */}
+          <ChallengeDropdown />
         </div>
       </div>
     </div>

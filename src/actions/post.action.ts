@@ -85,6 +85,24 @@ export async function createPost(content: string, image: string, petId?: string 
         }
 
         revalidatePath("/"); // Purge the cache for the home page
+        
+        // Track XP for posting a photo
+        if (image && mediaType?.startsWith('image')) {
+          try {
+            await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/xp/track`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                challengeId: 'daily_post_photo',
+                increment: 1,
+                userId: clerkId,
+              }),
+            });
+          } catch (error) {
+            console.error('Failed to track XP for posting:', error);
+          }
+        }
+        
         return { success:true, post }
     } catch (error) {
         console.error("Failed to create post:", error);
@@ -217,6 +235,25 @@ export async function toggleLike(postId: string) {
       }
   
       revalidatePath("/");
+      
+      // Track XP for liking posts (only when liking, not unliking)
+      if (!existingLike) {
+        try {
+          const { userId: clerkId } = await auth();
+          await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/xp/track`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              challengeId: 'daily_like_3_posts',
+              increment: 1,
+              userId: clerkId,
+            }),
+          });
+        } catch (error) {
+          console.error('Failed to track XP for liking:', error);
+        }
+      }
+      
       return { success: true };
     } catch (error) {
       console.error("Failed to toggle like:", error);
@@ -266,6 +303,23 @@ export async function toggleLike(postId: string) {
       });
   
       revalidatePath(`/`);
+      
+      // Track XP for commenting
+      try {
+        const { userId: clerkId } = await auth();
+        await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/xp/track`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            challengeId: 'seasonal_comment_50_posts',
+            increment: 1,
+            userId: clerkId,
+          }),
+        });
+      } catch (error) {
+        console.error('Failed to track XP for commenting:', error);
+      }
+      
       return { success: true, comment };
     } catch (error) {
       console.error("Failed to create comment:", error);

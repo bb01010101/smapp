@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { PrestigeKey, prestigeLevels } from '@/lib/petLeveling';
 
@@ -8,6 +10,7 @@ interface PetCardProps {
   level: number;
   xp: number;
   prestige: PrestigeKey;
+  evolutionImageUrl?: string | null;
 }
 
 // Map prestige to metallic/gradient backgrounds and border colors
@@ -54,7 +57,7 @@ const prestigeStyles: Record<PrestigeKey, { bg: string; border: string; badge: s
   },
 };
 
-export const PetCard: React.FC<PetCardProps> = ({ imageUrl, name, level, xp, prestige }) => {
+export const PetCard: React.FC<PetCardProps> = ({ imageUrl, name, level, xp, prestige, evolutionImageUrl }) => {
   const safeLevel = typeof level === 'number' && !isNaN(level) ? level : 0;
   const safeXp = typeof xp === 'number' && !isNaN(xp) ? xp : 0;
   const prestigeConfig = prestigeLevels.find(p => p.key === prestige);
@@ -64,15 +67,28 @@ export const PetCard: React.FC<PetCardProps> = ({ imageUrl, name, level, xp, pre
   const xpPercent = Math.min(100, (xpThisLevel / xpForLevel) * 100);
   const style = prestigeStyles[prestige] || prestigeStyles.BRONZE;
 
+  // Flip state and double-tap logic
+  const [flipped, setFlipped] = useState(false);
+  const lastTapRef = useRef<number>(0);
+
+  const handleImageDoubleTap = (e: React.MouseEvent | React.TouchEvent) => {
+    const now = Date.now();
+    const lastTap = lastTapRef.current;
+    if (now - lastTap < 300 && now - lastTap > 0) {
+      // Double tap/click detected
+      if (e) e.preventDefault();
+      setFlipped(f => !f);
+    }
+    lastTapRef.current = now;
+  };
+
   return (
     <Card
       className={`relative overflow-hidden shadow-2xl ${style.border} border-4 rounded-2xl`}
       style={{ background: `linear-gradient(135deg, var(--tw-gradient-stops))` }}
     >
       {/* Metallic/gradient background */}
-      <div
-        className={`absolute inset-0 z-0 bg-gradient-to-br ${style.bg} opacity-95`} aria-hidden="true"
-      />
+      <div className={`absolute inset-0 z-0 bg-gradient-to-br ${style.bg} opacity-95`} aria-hidden="true" />
       {/* Shine overlays */}
       <div className="absolute inset-0 z-10 pointer-events-none">
         <div className="absolute left-0 top-0 w-full h-1/3 bg-white/20 blur-lg" />
@@ -81,12 +97,34 @@ export const PetCard: React.FC<PetCardProps> = ({ imageUrl, name, level, xp, pre
       </div>
       <CardHeader className="relative z-20 flex flex-col items-center p-7 pb-2">
         <div className="relative mb-2">
-          <img
-            src={imageUrl}
-            alt={name}
-            className="w-28 h-28 rounded-full border-4 border-white shadow-xl object-cover bg-white/40"
-          />
-          {/* Prestige badge (optional, can remove if redundant) */}
+          {/* 3D flip animation container */}
+          <div
+            className={`flip-container w-28 h-28`}
+            onClick={handleImageDoubleTap}
+            onTouchEnd={handleImageDoubleTap}
+            style={{ perspective: 800, cursor: evolutionImageUrl ? 'pointer' : 'default' }}
+            title={evolutionImageUrl ? 'Double-tap to flip' : undefined}
+          >
+            <div className={`flip-inner w-full h-full transition-transform duration-500 ${flipped ? 'rotate-y-180' : ''}`}
+              style={{ transformStyle: 'preserve-3d' }}>
+              {/* Front: Real image */}
+              <img
+                src={imageUrl}
+                alt={name}
+                className="w-28 h-28 rounded-full border-4 border-white shadow-xl object-cover bg-white/40 absolute top-0 left-0 backface-hidden"
+                style={{ backfaceVisibility: 'hidden', zIndex: 2 }}
+              />
+              {/* Back: Evolution image */}
+              {evolutionImageUrl && (
+                <img
+                  src={evolutionImageUrl}
+                  alt={name + ' Evolution'}
+                  className="w-28 h-28 rounded-full border-4 border-white shadow-xl object-cover bg-white/40 absolute top-0 left-0 backface-hidden"
+                  style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', zIndex: 1 }}
+                />
+              )}
+            </div>
+          </div>
         </div>
         <CardTitle className="mt-2 text-3xl font-extrabold text-white drop-shadow-lg tracking-wide">
           {name}
@@ -113,6 +151,13 @@ export const PetCard: React.FC<PetCardProps> = ({ imageUrl, name, level, xp, pre
           {xpThisLevel} / {xpForLevel} XP
         </div>
       </CardContent>
+      {/* Flip animation styles */}
+      <style>{`
+        .flip-container { position: relative; }
+        .flip-inner { position: relative; width: 100%; height: 100%; transition: transform 0.5s cubic-bezier(.4,2,.6,1); }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .backface-hidden { backface-visibility: hidden; }
+      `}</style>
     </Card>
   );
 };

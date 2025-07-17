@@ -38,6 +38,7 @@ model User {
   notificationsCreated     Notification[]            @relation("notificationCreator")
   notifications            Notification[]            @relation("userNotifications")
   posts                    Post[]
+  userChallenges           UserChallenge[]
 
   @@index([latitude, longitude])
   @@index([locationSharingEnabled, lastLocationUpdate])
@@ -143,6 +144,7 @@ model Pet {
   age       String?
   bio       String?
   imageUrl  String?
+  evolutionImageUrl String?
   loveCount Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -265,4 +267,35 @@ enum PostType {
   REGULAR
   PRODUCT
   SERVICE
+}
+
+model UserChallenge {
+  id            String   @id @default(cuid())
+  userId        String
+  challengeName String
+  type          ChallengeType
+  progress      Int      @default(0)
+  goal          Int
+  completed     Boolean  @default(false)
+  lastUpdated   DateTime @default(now())
+  seasonId      String?
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, challengeName, type, seasonId])
+}
+
+enum ChallengeType {
+  DAILY
+  SEASONAL
+}
+
+model ChallengeConfig {
+  id            String   @id @default(cuid())
+  challengeName String
+  type          ChallengeType
+  description   String
+  xp            Int
+  goal          Int
+  seasonLength  Int? // days, only for seasonal
+  active        Boolean @default(true)
 }

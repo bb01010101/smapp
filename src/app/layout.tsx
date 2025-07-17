@@ -8,6 +8,7 @@ import { Toaster } from "react-hot-toast";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import ColorPreferenceLoader from "@/components/ColorPreferenceLoader";
 import { usePathname } from 'next/navigation';
+import DailyLoginTracker from '@/components/DailyLoginTracker';
 
 export const metadata: Metadata = {
   title: "Petnet",
@@ -41,6 +42,7 @@ export default function RootLayout({
             disableTransitionOnChange
             > 
               <ColorPreferenceLoader />
+              <DailyLoginTracker />
               <div className="min-h-screen">
                 <Navbar/>
 
