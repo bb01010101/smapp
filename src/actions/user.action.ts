@@ -80,6 +80,20 @@ export async function getCurrentUserTotalXp(): Promise<number> {
   }
 }
 
+export async function getUserTotalXpByClerkId(clerkId: string): Promise<number> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+      select: { totalXp: true },
+    });
+
+    return user?.totalXp || 0;
+  } catch (error) {
+    console.error('Error getting user total XP by clerk ID:', error);
+    return 0;
+  }
+}
+
 export async function getRandomUsers() {
   try {
     const userId = await getDbUserId();
@@ -180,7 +194,7 @@ export async function toggleFollow(targetUserId: string) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            challengeId: 'seasonal_gain_100_followers',
+            challengeId: 'weekly_gain_10_followers',
             increment: 1,
             userId: targetUserId, // Track for the user being followed
           }),

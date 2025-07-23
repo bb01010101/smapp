@@ -2,13 +2,22 @@ import { getPetById } from '@/actions/pet.action';
 import PetCard from '@/components/PetCard';
 import { getEvolutionImageUrl } from '@/lib/petEvolution';
 import { getUserEvolutionImagePreference } from '@/actions/profile.action';
-import { getCurrentUserTotalXp } from '@/actions/user.action';
+import { getCurrentUserTotalXp, getUserTotalXpByClerkId } from '@/actions/user.action';
+import { auth } from '@clerk/nextjs/server';
 import { ReactNode } from 'react';
 
 export default async function PetProfileLayout({ children, params }: { children: ReactNode; params: { petId: string } }) {
   const pet = await getPetById(params.petId);
   const useEvolutionImages = await getUserEvolutionImagePreference();
-  const userTotalXp = await getCurrentUserTotalXp();
+  const currentUserTotalXp = await getCurrentUserTotalXp();
+  
+  // Get current user's clerk ID to check ownership
+  const { userId: currentUserClerkId } = await auth();
+  
+  // Determine if current user owns this pet and get appropriate XP
+  const isOwnPet = pet && currentUserClerkId && pet.userId === currentUserClerkId;
+  const petOwnerTotalXp = pet && !isOwnPet ? await getUserTotalXpByClerkId(pet.userId) : currentUserTotalXp;
+  const displayXp = isOwnPet ? currentUserTotalXp : petOwnerTotalXp;
 
   return (
     <div className="max-w-7xl mx-auto px-4">
@@ -20,7 +29,7 @@ export default async function PetProfileLayout({ children, params }: { children:
                 imageUrl={pet.imageUrl || '/avatar.png'}
                 name={pet.name}
                 level={pet.level}
-                xp={userTotalXp}
+                xp={displayXp}
                 prestige={pet.prestige}
                 evolutionImageUrl={getEvolutionImageUrl(pet.breed, pet.level)}
                 breed={pet.breed}

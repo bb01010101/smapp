@@ -65,7 +65,7 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
         toast.success("Comment posted successfully");
         setNewComment("");
         // Track XP for commenting
-        await incrementXp('seasonal_comment_50_posts', 1);
+        await incrementXp('weekly_comment_20_posts', 1);
       }
     } catch (error) {
       toast.error("Failed to add comment");

@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { getDbUserId, syncUser } from "./user.action";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
-import { DAILY_CHALLENGES, SEASONAL_CHALLENGES } from "@/lib/xpSystem";
+import { DAILY_CHALLENGES, WEEKLY_CHALLENGES } from "@/lib/xpSystem";
 
 // Server-side XP tracking function
 async function trackChallengeProgress(challengeId: string, increment: number = 1) {
@@ -20,7 +20,7 @@ async function trackChallengeProgress(challengeId: string, increment: number = 1
     if (!dbUser) return;
 
     // Find the challenge definition
-    const allChallenges = [...DAILY_CHALLENGES, ...SEASONAL_CHALLENGES];
+    const allChallenges = [...DAILY_CHALLENGES, ...WEEKLY_CHALLENGES];
     const challengeDef = allChallenges.find(c => c.id === challengeId);
     
     if (!challengeDef) return;
@@ -30,7 +30,7 @@ async function trackChallengeProgress(challengeId: string, increment: number = 1
       where: {
         userId: dbUser.id,
         challengeName: challengeId,
-        type: challengeDef.type === 'daily' ? 'DAILY' : 'SEASONAL',
+        type: challengeDef.type === 'daily' ? 'DAILY' : 'WEEKLY',
       },
     });
 
@@ -39,7 +39,7 @@ async function trackChallengeProgress(challengeId: string, increment: number = 1
         data: {
           userId: dbUser.id,
           challengeName: challengeId,
-          type: challengeDef.type === 'daily' ? 'DAILY' : 'SEASONAL',
+          type: challengeDef.type === 'daily' ? 'DAILY' : 'WEEKLY',
           progress: increment,
           goal: challengeDef.goal,
           completed: increment >= challengeDef.goal,
@@ -176,7 +176,7 @@ export async function createPost(content: string, image: string, petId?: string 
         // Track XP for posting a photo
         if (image && mediaType?.startsWith('image')) {
           await trackChallengeProgress('daily_post_photo', 1);
-          await trackChallengeProgress('seasonal_post_20_photos', 1);
+          await trackChallengeProgress('weekly_post_7_photos', 1);
         }
         
         return { success:true, post }
@@ -387,7 +387,7 @@ export async function toggleLike(postId: string) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            challengeId: 'seasonal_comment_50_posts',
+            challengeId: 'weekly_comment_20_posts',
             increment: 1,
             userId: clerkId,
           }),

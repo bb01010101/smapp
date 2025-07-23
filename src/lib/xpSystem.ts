@@ -3,7 +3,7 @@ export interface Challenge {
   id: string;
   name: string;
   description: string;
-  type: 'daily' | 'seasonal';
+  type: 'daily' | 'weekly' | 'seasonal';
   xp: number;
   goal: number;
   progress: number;
@@ -52,36 +52,36 @@ export const DAILY_CHALLENGES: Omit<Challenge, 'progress' | 'completed'>[] = [
   },
 ];
 
-export const SEASONAL_CHALLENGES: Omit<Challenge, 'progress' | 'completed'>[] = [
+export const WEEKLY_CHALLENGES: Omit<Challenge, 'progress' | 'completed'>[] = [
   {
-    id: 'seasonal_gain_100_followers',
-    name: 'Gain 100 Followers',
-    description: 'Gain 100 followers',
-    type: 'seasonal',
+    id: 'weekly_gain_10_followers',
+    name: 'Gain 10 Followers',
+    description: 'Gain 10 followers',
+    type: 'weekly',
     xp: 500,
-    goal: 100,
+    goal: 10,
   },
   {
-    id: 'seasonal_post_20_photos',
-    name: 'Post 20 Photos',
-    description: 'Post 20 timeline photos',
-    type: 'seasonal',
+    id: 'weekly_post_7_photos',
+    name: 'Post 7 Photos',
+    description: 'Post 7 timeline photos',
+    type: 'weekly',
     xp: 300,
+    goal: 7,
+  },
+  {
+    id: 'weekly_comment_20_posts',
+    name: 'Comment on 20 Posts',
+    description: 'Comment on 20 posts',
+    type: 'weekly',
+    xp: 200,
     goal: 20,
   },
   {
-    id: 'seasonal_comment_50_posts',
-    name: 'Comment on 50 Posts',
-    description: 'Comment on 50 posts',
-    type: 'seasonal',
-    xp: 200,
-    goal: 50,
-  },
-  {
-    id: 'seasonal_post_5_barks',
+    id: 'weekly_post_5_barks',
     name: 'Post 5 Barks',
     description: 'Post 5 Bark forum posts',
-    type: 'seasonal',
+    type: 'weekly',
     xp: 100,
     goal: 5,
   },

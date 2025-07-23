@@ -13,10 +13,11 @@ The XP system has been completely rewritten to be simpler, more intuitive, and a
 - **Like 3 Posts** - Like 3 posts today (15 XP)
 - **Post a Photo** - Post a timeline photo (25 XP)
 
-**Seasonal Challenges (reset every ~90 days):**
-- **Gain 100 Followers** - Gain 100 followers (500 XP)
-- **Post 20 Photos** - Post 20 timeline photos (300 XP)
-- **Comment on 50 Posts** - Comment on 50 posts (200 XP)
+**Weekly Challenges (reset every ~7 days):**
+- **Gain 10 Followers** - Gain 10 followers (500 XP)
+- **Post 7 Photos** - Post 7 timeline photos (300 XP)
+- **Comment on 20 Posts** - Comment on 20 posts (200 XP)
+- **Post 5 Barks** - Post 5 Bark forum posts (100 XP)
 
 ### 2. XP Integration
 
@@ -81,7 +82,7 @@ Track progress for a specific challenge.
 **Request:**
 ```json
 {
-  "challengeId": "daily_like_3_posts",
+  "challengeId": "weekly_comment_20_posts",
   "increment": 1,
   "userId": "user_id"
 }
@@ -91,14 +92,14 @@ Track progress for a specific challenge.
 ```json
 {
   "success": true,
-  "xpGained": 15,
+  "xpGained": 200,
   "challenge": {
-    "id": "daily_like_3_posts",
-    "name": "Like 3 Posts",
+    "id": "weekly_comment_20_posts",
+    "name": "Comment on 20 Posts",
     "completed": true,
-    "xp": 15
+    "xp": 200
   },
-  "message": "🎉 Challenge completed! +15 XP",
+  "message": "🎉 Weekly challenge completed! +200 XP",
   "showToast": true
 }
 ```
@@ -111,8 +112,8 @@ The system automatically tracks XP for common actions:
 
 1. **Posting Photos** - Tracks `daily_post_photo` challenge
 2. **Liking Posts** - Tracks `daily_like_3_posts` challenge  
-3. **Commenting** - Tracks `seasonal_comment_50_posts` challenge
-4. **Gaining Followers** - Tracks `seasonal_gain_100_followers` challenge
+3. **Commenting** - Tracks `weekly_comment_20_posts` challenge
+4. **Gaining Followers** - Tracks `weekly_gain_10_followers` challenge
 5. **Daily Login** - Tracks `daily_login` challenge
 
 ### Manual XP Tracking
