@@ -1,9 +1,14 @@
 import { getPetById } from '@/actions/pet.action';
 import PetCard from '@/components/PetCard';
+import { getEvolutionImageUrl } from '@/lib/petEvolution';
+import { getUserEvolutionImagePreference } from '@/actions/profile.action';
+import { getCurrentUserTotalXp } from '@/actions/user.action';
 import { ReactNode } from 'react';
 
 export default async function PetProfileLayout({ children, params }: { children: ReactNode; params: { petId: string } }) {
   const pet = await getPetById(params.petId);
+  const useEvolutionImages = await getUserEvolutionImagePreference();
+  const userTotalXp = await getCurrentUserTotalXp();
 
   return (
     <div className="max-w-7xl mx-auto px-4">
@@ -15,8 +20,11 @@ export default async function PetProfileLayout({ children, params }: { children:
                 imageUrl={pet.imageUrl || '/avatar.png'}
                 name={pet.name}
                 level={pet.level}
-                xp={pet.xp}
+                xp={userTotalXp}
                 prestige={pet.prestige}
+                evolutionImageUrl={getEvolutionImageUrl(pet.breed, pet.level)}
+                breed={pet.breed}
+                useEvolutionImages={useEvolutionImages}
               />
             </div>
           ) : null}

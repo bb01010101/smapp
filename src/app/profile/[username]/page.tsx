@@ -5,6 +5,7 @@ import {
   isFollowing,
   getUserPets,
   isFoundingPackUser,
+  getUserEvolutionImagePreference,
 } from "@/actions/profile.action";
 import { notFound } from "next/navigation";
 import ProfilePageClient from "./ProfilePageClient";
@@ -25,12 +26,13 @@ async function ProfilePageServer({ params }: { params: { username: string } }) {
 
   if (!user) notFound();
 
-  const [posts, likedPosts, isCurrentUserFollowing, pets, isFoundingPack] = await Promise.all([
+  const [posts, likedPosts, isCurrentUserFollowing, pets, isFoundingPack, useEvolutionImages] = await Promise.all([
     getUserPosts(user.id),
     getUserLikedPosts(user.id),
     isFollowing(user.id),
     getUserPets(user.clerkId),
     isFoundingPackUser(user.id),
+    getUserEvolutionImagePreference(),
   ]);
 
   return (
@@ -41,6 +43,7 @@ async function ProfilePageServer({ params }: { params: { username: string } }) {
       isFollowing={isCurrentUserFollowing}
       pets={pets}
       isFoundingPack={isFoundingPack}
+      useEvolutionImages={useEvolutionImages}
     />
   );
 }

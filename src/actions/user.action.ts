@@ -63,6 +63,23 @@ export async function getDbUserId() {
   return user.id;
 }
 
+export async function getCurrentUserTotalXp(): Promise<number> {
+  try {
+    const { userId: clerkId } = await auth();
+    if (!clerkId) return 0;
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+      select: { totalXp: true },
+    });
+
+    return user?.totalXp || 0;
+  } catch (error) {
+    console.error('Error getting user total XP:', error);
+    return 0;
+  }
+}
+
 export async function getRandomUsers() {
   try {
     const userId = await getDbUserId();
@@ -154,6 +171,25 @@ export async function toggleFollow(targetUserId: string) {
     }
 
     revalidatePath("/");
+    
+    // Track XP for gaining followers (only when being followed, not when following)
+    if (!existingFollow) {
+      try {
+        const { userId: clerkId } = await auth();
+        await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/xp/track`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            challengeId: 'seasonal_gain_100_followers',
+            increment: 1,
+            userId: targetUserId, // Track for the user being followed
+          }),
+        });
+      } catch (error) {
+        console.error('Failed to track XP for gaining followers:', error);
+      }
+    }
+    
     return { success: true };
   } catch (error) {
     console.log("Error in toggleFollow", error);

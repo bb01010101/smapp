@@ -467,6 +467,17 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
     if (!timelineImageUpload?.url) return;
     try {
       setIsUploading(true);
+      
+      // Optimistic update for timeline photo challenge
+      if (timelineImageUpload?.type?.startsWith('image')) {
+        // Trigger optimistic update immediately
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('challenge-progress', {
+            detail: { challengeId: 'daily_post_photo', increment: 1 }
+          }));
+        }
+      }
+      
       // Create a post for the timeline using the same logic as regular posts
       const result = await createPost(
         "", // Empty content for timeline photos

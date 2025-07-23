@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useOptimisticXp } from '@/lib/useOptimisticXp';
 
 function BarkSubmitPageInner() {
   const [title, setTitle] = useState("");
@@ -14,6 +15,7 @@ function BarkSubmitPageInner() {
   const [error, setError] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { incrementXp } = useOptimisticXp();
 
   useEffect(() => {
     if (searchParams) {
@@ -47,6 +49,8 @@ function BarkSubmitPageInner() {
     const data = await res.json();
     setIsSubmitting(false);
     if (data.success) {
+      // Track XP for posting a Bark
+      await incrementXp('seasonal_post_5_barks', 1);
       router.push("/barks");
     } else {
       setError(data.error || "Failed to create bark");

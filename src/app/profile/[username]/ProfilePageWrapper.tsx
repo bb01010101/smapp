@@ -15,6 +15,7 @@ interface ProfilePageWrapperProps {
   isFollowing: boolean;
   pets: any[];
   isFoundingPack: boolean;
+  useEvolutionImages: boolean;
 }
 
 export default function ProfilePageWrapper({
@@ -24,6 +25,7 @@ export default function ProfilePageWrapper({
   isFollowing,
   pets,
   isFoundingPack,
+  useEvolutionImages,
 }: ProfilePageWrapperProps) {
   const { isSignedIn, isLoaded } = useUser();
 
@@ -99,6 +101,7 @@ export default function ProfilePageWrapper({
       isFollowing={isFollowing}
       pets={pets}
       isFoundingPack={isFoundingPack}
+      useEvolutionImages={useEvolutionImages}
     />
   );
 } 

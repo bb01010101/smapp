@@ -33,7 +33,7 @@ export default function ProfileDropdown({ showLabel = false }: { showLabel?: boo
       <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuLabel asChild>
           <Link
-            href={`/profile/${user?.username ?? user?.emailAddresses[0].emailAddress.split("@")[0]}`}
+            href={`/profile/${user?.username ?? user?.emailAddresses?.[0]?.emailAddress?.split("@")[0] ?? 'profile'}`}
             className="flex items-center gap-2 font-bold cursor-pointer px-2 py-1.5 rounded-md transition-colors hover:bg-accent focus:bg-accent"
           >
             <UserIcon className="h-4 w-4 text-gold-500" />

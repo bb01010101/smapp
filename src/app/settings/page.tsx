@@ -3,15 +3,57 @@ import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { usePersistentToggle } from "@/components/ui/usePersistentToggle";
 import { Button } from "@/components/ui/button";
-import { ExternalLinkIcon, BuildingIcon } from "lucide-react";
+import { ExternalLinkIcon, BuildingIcon, ImageIcon } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function SettingsPage() {
   const [mounted, setMounted] = useState(false);
   const [saveNSwipe, setSaveNSwipe] = usePersistentToggle('save-n-swipe', true);
+  const [useEvolutionImages, setUseEvolutionImages] = useState(false);
+  const [isUpdatingEvolution, setIsUpdatingEvolution] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    
+    // Load evolution image preference from API
+    fetch('/api/users/evolution-preference')
+      .then(res => res.json())
+      .then(data => {
+        if (data.useEvolutionImages !== undefined) {
+          setUseEvolutionImages(data.useEvolutionImages);
+        }
+      })
+      .catch(error => {
+        console.error('Failed to load evolution preference:', error);
+      });
   }, []);
+
+  const handleEvolutionToggle = async (checked: boolean) => {
+    setIsUpdatingEvolution(true);
+    try {
+      const response = await fetch('/api/users/evolution-preference', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ useEvolutionImages: checked }),
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        setUseEvolutionImages(checked);
+        toast.success(checked ? "Evolution images enabled" : "Real pet photos enabled");
+      } else {
+        toast.error(`Failed to update setting: ${result.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Network error updating evolution preference:', error);
+      toast.error("Network error - please try again");
+    } finally {
+      setIsUpdatingEvolution(false);
+    }
+  };
 
   if (!mounted) return null;
 
@@ -26,6 +68,24 @@ export default function SettingsPage() {
           <div className="text-gray-500 text-sm">Show Save n' Swipes with Plays</div>
         </div>
         <Switch checked={saveNSwipe} onCheckedChange={setSaveNSwipe} />
+      </div>
+
+      {/* Evolution Images Setting */}
+      <div className="flex items-center justify-between bg-white rounded-lg shadow p-6 mb-6">
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0">
+            <ImageIcon className="w-6 h-6 text-purple-600" />
+          </div>
+          <div>
+            <div className="font-medium text-lg">Use Evolution Images</div>
+            <div className="text-gray-500 text-sm">Show character images instead of real pet photos as default</div>
+          </div>
+        </div>
+        <Switch 
+          checked={useEvolutionImages} 
+          onCheckedChange={handleEvolutionToggle}
+          disabled={isUpdatingEvolution}
+        />
       </div>
 
       {/* Verification Form for Registered Pet Shelters */}

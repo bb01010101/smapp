@@ -1,15 +1,13 @@
 import CreatePost from "@/components/CreatePost";
-import { currentUser } from "@clerk/nextjs/server";
 import WhoToFollow from "@/components/WhoToFollow";
 import PostCard from "@/components/PostCard";
-import { getFollowingPosts, getPosts } from "@/actions/post.action";
-import { getDbUserId } from "@/actions/user.action";
+import { getPosts } from "@/actions/post.action";
 import SidebarWrapper from '@/components/SidebarWrapper';
+import ChallengeDropdown from '@/components/ChallengeDropdown';
 
 export default async function Home() {
-  const user = await currentUser();
-  const posts = user ? await getFollowingPosts() : await getPosts();
-  const dbUserId = user ? await getDbUserId() : null;
+  const posts = await getPosts();
+  const dbUserId = null;
 
   return (
     <div className="max-w-7xl mx-auto px-4">
@@ -18,11 +16,11 @@ export default async function Home() {
           <SidebarWrapper />
         </div>
         <div className="lg:col-span-5">
-          {user ? <CreatePost /> : null}
+          <CreatePost />
 
           <div className="space-y-6">
-            {posts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).length > 0 ? (
-              posts.filter(post => !(post.petId && (!post.mediaType || post.mediaType.startsWith('image')))).map((post) => (
+            {posts.length > 0 ? (
+              posts.map((post) => (
                 <PostCard key={post.id} post={post} dbUserId={dbUserId} />
               ))
             ) : (
@@ -38,8 +36,10 @@ export default async function Home() {
             )}
           </div>
         </div>
-        <div className="hidden lg:block lg:col-span-4">
+        <div className="hidden lg:block lg:col-span-4 space-y-6">
           <WhoToFollow />
+          {/* ChallengeList dropdown */}
+          <ChallengeDropdown />
         </div>
       </div>
     </div>

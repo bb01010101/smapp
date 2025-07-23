@@ -53,6 +53,8 @@ import Link from "next/link";
 import { DeleteAlertDialog } from "@/components/DeleteAlertDialog";
 import HorizontalTimeline from "@/components/HorizontalTimeline";
 import { isUserVerified, isUserVerifiedShelter } from "@/lib/utils";
+import { getPetAvatarImage } from "@/lib/petImageUtils";
+import { getUserEvolutionImagePreference } from "@/actions/profile.action";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 
@@ -87,6 +89,7 @@ interface ProfilePageClientProps {
  isFollowing: boolean;        // Whether the current user is following this profile
  pets: any[];                 // Pets associated with the user
  isFoundingPack?: boolean;    // Founding Pack badge
+ useEvolutionImages: boolean; // Whether to use evolution images as default
 }
 
 
@@ -512,6 +515,7 @@ function ProfilePageClient({
  user,
  pets,
  isFoundingPack = false,
+ useEvolutionImages,
 }: ProfilePageClientProps) {
  // Get the current logged-in user
  const { user: currentUser } = useUser();
@@ -732,6 +736,17 @@ function ProfilePageClient({
    if (!timelineImageUpload?.url || !activePet) return;
    try {
      setIsUploading(true);
+     
+     // Optimistic update for timeline photo challenge
+     if (timelineImageUpload?.type?.startsWith('image')) {
+       // Trigger optimistic update immediately
+       if (typeof window !== 'undefined') {
+         window.dispatchEvent(new CustomEvent('challenge-progress', {
+           detail: { challengeId: 'daily_post_photo', increment: 1 }
+         }));
+       }
+     }
+     
      // Create a post for the timeline using the same logic as regular posts
      const result = await createPost(
        "", // Empty content for timeline photos
@@ -967,10 +982,39 @@ function ProfilePageClient({
  const verifiedUsers = ["bb7906", "mitchng77", "luisa.marfori"];
  const isVerified = verifiedUsers.includes(user.username);
 
+ // --- Create Pet Button Logic ---
+ const hasPets = currentPets && currentPets.length > 0;
+
  // Main return: renders the profile page layout
  return (
    <div className="w-full h-screen bg-background flex items-center justify-center relative overflow-hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
      <div className="max-w-3xl mx-auto w-full h-full overflow-y-auto pt-20 scrollbar-hide">
+       {/* Create Pet Button */}
+       <div className="w-full flex justify-center items-center my-8">
+         {!hasPets ? (
+           <Button
+             onClick={() => setShowEditFamilyDialog(true)}
+             className="px-10 py-6 text-2xl font-bold bg-gradient-to-r from-pink-500 via-yellow-400 to-orange-400 text-white shadow-xl rounded-full"
+             style={{
+               boxShadow: '0 0 32px 8px #fbbf24, 0 0 64px 16px #f472b6, 0 0 0 12px rgba(251,191,36,0.15)',
+               transition: 'box-shadow 0.6s cubic-bezier(0.4,0,0.2,1)',
+             }}
+             onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 48px 16px #fbbf24, 0 0 96px 32px #f472b6, 0 0 0 20px rgba(251,191,36,0.18)'}
+             onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 32px 8px #fbbf24, 0 0 64px 16px #f472b6, 0 0 0 12px rgba(251,191,36,0.15)'}
+           >
+             <span className="drop-shadow-lg">+ Create Your First Pet</span>
+           </Button>
+         ) : (
+           <div className="fixed top-28 right-8 z-30">
+             <Button
+               onClick={() => setShowEditFamilyDialog(true)}
+               className="px-4 py-2 text-base font-semibold bg-gradient-to-r from-pink-400 via-yellow-300 to-orange-300 text-white shadow-md rounded-full hover:scale-105 transition-all duration-300 opacity-90"
+             >
+               + Add Pet
+             </Button>
+           </div>
+         )}
+       </div>
        {/* Main grid layout for sidebar and content */}
        <div className="grid grid-cols-1 gap-6 p-6">
        {/* Merged Family Timeline */}
@@ -1142,7 +1186,7 @@ function ProfilePageClient({
                                : ""
                            }>
                       <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-primary group-hover:scale-105 transition">
-                               <AvatarImage src={pet.imageUrl ? pet.imageUrl : '/avatar.png'} alt={pet.name} />
+                               <AvatarImage src={getPetAvatarImage(pet, useEvolutionImages)} alt={pet.name} />
                              </Avatar>
                            </div>
                     <div className="font-medium text-xs sm:text-sm mt-2 text-center w-16 sm:w-20 truncate">{pet.name}</div>
@@ -1359,7 +1403,7 @@ function ProfilePageClient({
                    onClick={openTimeline}
                  >
                    <Avatar className="w-20 h-20 mb-2">
-                     <AvatarImage src={activePet.imageUrl ? activePet.imageUrl : '/avatar.png'} alt={activePet.name} />
+                     <AvatarImage src={getPetAvatarImage(activePet, useEvolutionImages)} alt={activePet.name} />
                    </Avatar>
                  </div>
                  <div className="font-bold text-lg">{activePet.name}</div>
@@ -1411,7 +1455,7 @@ function ProfilePageClient({
                  <div className="flex items-center justify-between w-full mb-6">
                    <div className="flex items-center space-x-4">
                      <Avatar className="w-16 h-16">
-                       <AvatarImage src={activePet.imageUrl ? activePet.imageUrl : '/avatar.png'} alt={activePet.name} />
+                       <AvatarImage src={getPetAvatarImage(activePet, useEvolutionImages)} alt={activePet.name} />
                      </Avatar>
                      <div>
                        <div className="font-bold text-xl">{activePet.name}'s Timeline</div>
@@ -1480,12 +1524,11 @@ function ProfilePageClient({
                              <div className={`flex flex-col items-center w-1/2 ${isLeft ? 'items-end pr-4' : 'items-start pl-4'}`}>
                                {/* Photo container */}
                                <div 
-                                 className="relative aspect-square w-48 rounded-lg overflow-hidden shadow-lg border-2 transition-all duration-300 cursor-pointer group-hover:scale-105 ${
+                                 className="relative aspect-square w-48 rounded-lg overflow-hidden shadow-lg border-2 transition-all duration-300 cursor-pointer group ${
                                    isToday 
                                      ? 'border-orange-400 shadow-orange-200' 
                                      : 'border-gray-200 hover:border-orange-300'
                                  } bg-white"
-                                 onClick={() => setActivePhotoId(post.id === activePhotoId ? null : post.id)}
                                >
                                  <img src={post.image || '/avatar.png'} alt={activePet.name + ' photo'} className="w-full h-full object-cover" />
                                  
@@ -1494,14 +1537,20 @@ function ProfilePageClient({
                                    <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-yellow-400/20 pointer-events-none" />
                                  )}
                                  
-                                 {/* Edit/Delete buttons for owner, only show if this photo is active */}
-                                 {isOwnProfile && activePhotoId === post.id && (
-                                   <div className="absolute top-2 right-2 flex gap-1 z-20">
+                                 {/* Edit/Delete buttons for owner, show on hover */}
+                                 {isOwnProfile && (
+                                   <div className="absolute top-2 right-2 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition">
                                      <Button
                                        variant="ghost"
                                        size="sm"
                                        className="h-7 w-7 p-0 bg-white/90 backdrop-blur-sm hover:bg-white"
-                                       onClick={e => { e.stopPropagation(); openEditModal(post); }}
+                                       onClick={e => { 
+                                         e.stopPropagation(); 
+                                         const originalPost = posts.find(p => p.id === post.id);
+                                         if (originalPost) {
+                                           openEditModal(originalPost);
+                                         }
+                                       }}
                                        title="Edit Photo"
                                      >
                                        <PencilIcon className="w-3 h-3 text-gray-700" />
@@ -1843,8 +1892,10 @@ function ProfilePageClient({
                                {/* Edit/Delete buttons for owner */}
                                {isOwnProfile && (
                                  <div className="absolute top-2 right-2 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition">
-                                   <button
-                                     className="h-7 w-7 p-0 bg-white/90 backdrop-blur-sm hover:bg-white rounded"
+                                   <Button
+                                     variant="ghost"
+                                     size="sm"
+                                     className="h-7 w-7 p-0 bg-white/90 backdrop-blur-sm hover:bg-white"
                                      onClick={e => { 
                                        e.stopPropagation(); 
                                        const originalPost = posts.find(p => p.id === post.id);
@@ -1855,24 +1906,22 @@ function ProfilePageClient({
                                      title="Edit Photo"
                                    >
                                      <PencilIcon className="w-3 h-3 text-gray-700" />
-                                   </button>
-                                   <button
-                                     className="h-7 w-7 p-0 bg-white/90 backdrop-blur-sm hover:bg-red-100 rounded"
-                                     onClick={e => { 
-                                       e.stopPropagation(); 
-                                       deletePost(post.id).then(res => {
-                                         if (res.success) {
-                                           window.location.reload();
-                                         } else {
-                                           toast.error(res.error || "Failed to delete post");
-                                         }
-                                       });
+                                   </Button>
+                                   <DeleteAlertDialog
+                                     isDeleting={isEditing && editPost?.id === post.id}
+                                     onDelete={async () => { 
+                                       const res = await deletePost(post.id);
+                                       if (res.success) {
+                                         window.location.reload();
+                                       } else {
+                                         toast.error(res.error || "Failed to delete post");
+                                       }
                                      }}
-                                     title="Delete Photo"
-                                   >
-                                     <TrashIcon className="w-3 h-3 text-red-600" />
-                                   </button>
-                             </div>
+                                     title="Delete Timeline Photo"
+                                     description="This action cannot be undone."
+                                     triggerClassName="h-7 w-7 p-0 bg-white/90 backdrop-blur-sm hover:bg-red-100 text-gray-700 hover:text-red-500"
+                                   />
+                                 </div>
                                )}
                            </div>
                              

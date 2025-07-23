@@ -9,24 +9,45 @@ import Link from "next/link";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import { Separator } from "./ui/separator";
 import { LinkIcon, MapPinIcon } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { isUserVerified, isUserVerifiedShelter } from "@/lib/utils";
 import BlueCheckIcon from "./BlueCheckIcon";
 import RedCheckIcon from "./RedCheckIcon";
 
+
+
 interface SidebarProps {
   user?: any;
 }
 
-function SidebarClient({ user }: SidebarProps) {
+export default function SidebarClient({ user }: { user?: any }) {
   const { user: authUser } = useUser();
+  const loginChallengeDone = useRef(false);
   const [followersOpen, setFollowersOpen] = useState(false);
   const [followingOpen, setFollowingOpen] = useState(false);
   const [followers, setFollowers] = useState<any[]>([]);
   const [following, setFollowing] = useState<any[]>([]);
   const [followersLoading, setFollowersLoading] = useState(false);
   const [followingLoading, setFollowingLoading] = useState(false);
+
+  useEffect(() => {
+    if (authUser && !loginChallengeDone.current) {
+      // Only call once per session
+      loginChallengeDone.current = true;
+      
+      // Track daily login XP
+      fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/xp/track`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          challengeId: 'daily_login',
+          increment: 1,
+          userId: authUser.id,
+        }),
+      }).catch(() => {});
+    }
+  }, [authUser]);
 
   const fetchFollowers = async () => {
     if (!user?.username) return;
@@ -61,7 +82,7 @@ function SidebarClient({ user }: SidebarProps) {
 
   return (
     <>
-      <div className="sticky top-20">
+      <div className="sticky top-20 space-y-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center">
@@ -136,6 +157,8 @@ function SidebarClient({ user }: SidebarProps) {
             </div>
           </CardContent>
         </Card>
+        
+
       </div>
 
       {/* Followers Modal */}
@@ -216,9 +239,6 @@ function SidebarClient({ user }: SidebarProps) {
     </>
   );
 }
-
-export default SidebarClient;
-
 const UnAuthenticatedSidebar = () => (
   <div className="sticky top-20">
     <Card>
