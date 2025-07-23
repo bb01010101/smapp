@@ -4,6 +4,93 @@ import prisma from "@/lib/prisma";
 import { getDbUserId, syncUser } from "./user.action";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
+import { DAILY_CHALLENGES, SEASONAL_CHALLENGES } from "@/lib/xpSystem";
+
+// Server-side XP tracking function
+async function trackChallengeProgress(challengeId: string, increment: number = 1) {
+  try {
+    const { userId } = await auth();
+    if (!userId) return;
+
+    // Get user from database
+    const dbUser = await prisma.user.findUnique({
+      where: { clerkId: userId },
+    });
+
+    if (!dbUser) return;
+
+    // Find the challenge definition
+    const allChallenges = [...DAILY_CHALLENGES, ...SEASONAL_CHALLENGES];
+    const challengeDef = allChallenges.find(c => c.id === challengeId);
+    
+    if (!challengeDef) return;
+
+    // Get or create user challenge progress
+    let userChallenge = await prisma.userChallenge.findFirst({
+      where: {
+        userId: dbUser.id,
+        challengeName: challengeId,
+        type: challengeDef.type === 'daily' ? 'DAILY' : 'SEASONAL',
+      },
+    });
+
+    if (!userChallenge) {
+      userChallenge = await prisma.userChallenge.create({
+        data: {
+          userId: dbUser.id,
+          challengeName: challengeId,
+          type: challengeDef.type === 'daily' ? 'DAILY' : 'SEASONAL',
+          progress: increment,
+          goal: challengeDef.goal,
+          completed: increment >= challengeDef.goal,
+        },
+      });
+    } else {
+      const newProgress = Math.min(userChallenge.progress + increment, challengeDef.goal);
+      const wasCompleted = userChallenge.completed;
+      const isNowCompleted = newProgress >= challengeDef.goal;
+      
+      userChallenge = await prisma.userChallenge.update({
+        where: { id: userChallenge.id },
+        data: {
+          progress: newProgress,
+          completed: isNowCompleted,
+          lastUpdated: new Date(),
+        },
+      });
+
+      // Award XP if challenge was just completed
+      if (isNowCompleted && !wasCompleted) {
+        // Get user's pets
+        const pets = await prisma.pet.findMany({ where: { userId: dbUser.id } });
+        
+        // Award XP to all pets
+        for (const pet of pets) {
+          await prisma.pet.update({
+            where: { id: pet.id },
+            data: {
+              xp: {
+                increment: challengeDef.xp
+              }
+            }
+          });
+        }
+
+        // Update user's total XP
+        await prisma.user.update({
+          where: { id: dbUser.id },
+          data: {
+            totalXp: {
+              increment: challengeDef.xp
+            }
+          }
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error tracking challenge progress:', error);
+  }
+}
 
 export async function createPost(content: string, image: string, petId?: string | null, mediaType?: string) {
     try {
@@ -88,19 +175,8 @@ export async function createPost(content: string, image: string, petId?: string 
         
         // Track XP for posting a photo
         if (image && mediaType?.startsWith('image')) {
-          try {
-            await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/xp/track`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                challengeId: 'daily_post_photo',
-                increment: 1,
-                userId: clerkId,
-              }),
-            });
-          } catch (error) {
-            console.error('Failed to track XP for posting:', error);
-          }
+          await trackChallengeProgress('daily_post_photo', 1);
+          await trackChallengeProgress('seasonal_post_20_photos', 1);
         }
         
         return { success:true, post }

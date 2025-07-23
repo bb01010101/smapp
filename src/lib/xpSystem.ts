@@ -8,7 +8,6 @@ export interface Challenge {
   goal: number;
   progress: number;
   completed: boolean;
-  resetDate?: Date;
 }
 
 export interface UserProgress {
@@ -43,6 +42,14 @@ export const DAILY_CHALLENGES: Omit<Challenge, 'progress' | 'completed'>[] = [
     xp: 25,
     goal: 1,
   },
+  {
+    id: 'daily_expand_petnet',
+    name: 'Expand your PetNet',
+    description: 'Share with a friend',
+    type: 'daily',
+    xp: 20,
+    goal: 1,
+  },
 ];
 
 export const SEASONAL_CHALLENGES: Omit<Challenge, 'progress' | 'completed'>[] = [
@@ -70,57 +77,50 @@ export const SEASONAL_CHALLENGES: Omit<Challenge, 'progress' | 'completed'>[] = 
     xp: 200,
     goal: 50,
   },
+  {
+    id: 'seasonal_post_5_barks',
+    name: 'Post 5 Barks',
+    description: 'Post 5 Bark forum posts',
+    type: 'seasonal',
+    xp: 100,
+    goal: 5,
+  },
 ];
 
-// XP Level System
+// Utility functions
 export function getLevelFromXp(xp: number): number {
   return Math.floor(xp / 100) + 1;
 }
 
-export function getXpForNextLevel(level: number): number {
-  return level * 100;
-}
-
-export function getXpProgressInLevel(xp: number): { current: number; required: number; percentage: number } {
-  const level = getLevelFromXp(xp);
-  const xpForLevel = getXpForNextLevel(level - 1);
-  const xpInLevel = xp - xpForLevel;
-  const xpRequired = getXpForNextLevel(level) - xpForLevel;
+// Check if daily challenges should be reset (6:00 AM EST)
+export function shouldResetDailyChallenges(lastUpdated: Date | null): boolean {
+  if (!lastUpdated) return true;
   
-  return {
-    current: xpInLevel,
-    required: xpRequired,
-    percentage: Math.min(100, (xpInLevel / xpRequired) * 100)
-  };
+  const now = new Date();
+  const lastUpdate = new Date(lastUpdated);
+  
+  // Convert to EST (UTC-5)
+  const nowEST = new Date(now.getTime() - (5 * 60 * 60 * 1000));
+  const lastUpdateEST = new Date(lastUpdate.getTime() - (5 * 60 * 60 * 1000));
+  
+  // Check if it's a new day and past 6:00 AM EST
+  const today6AM = new Date(nowEST);
+  today6AM.setHours(6, 0, 0, 0);
+  
+  return nowEST > today6AM && lastUpdateEST < today6AM;
 }
 
-// Challenge tracking
-export function trackChallengeProgress(
-  challengeId: string,
-  increment: number = 1,
-  userId: string
-): Promise<{ success: boolean; xpGained?: number }> {
-  return fetch('/api/xp/track', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      challengeId,
-      increment,
-      userId,
-    }),
-  }).then(res => res.json());
-}
-
-// Get user's current XP and level
-export async function getUserXp(userId: string): Promise<UserProgress | null> {
+// Simple challenge tracking function
+export async function trackChallenge(challengeId: string, increment: number = 1): Promise<any> {
   try {
-    const response = await fetch(`/api/xp/user/${userId}`);
-    if (!response.ok) return null;
-    return response.json();
+    const response = await fetch('/api/xp/track', {
+    method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ challengeId, increment }),
+    });
+    return await response.json();
   } catch (error) {
-    console.error('Failed to fetch user XP:', error);
+    console.error('Failed to track challenge:', error);
     return null;
   }
 } 

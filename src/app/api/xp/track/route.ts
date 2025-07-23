@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import prisma from '@/lib/prisma';
-import { DAILY_CHALLENGES, SEASONAL_CHALLENGES } from '@/lib/xpSystem';
+import { DAILY_CHALLENGES, SEASONAL_CHALLENGES, shouldResetDailyChallenges } from '@/lib/xpSystem';
 import { awardXpToPet } from '@/actions/pet.action';
 
 export async function POST(request: NextRequest) {
@@ -11,24 +11,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { challengeId, increment = 1 } = await request.json();
+    const { challengeId, increment = 1, recipient } = await request.json();
 
     // Get user from database
     const dbUser = await prisma.user.findUnique({
       where: { clerkId: user.id },
     });
-
     if (!dbUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Fetch pets for this user
-    const pets = await prisma.pet.findMany({ where: { userId: dbUser.id } });
-
-    // Find the challenge definition
+    // Find the challenge definition (universal: just add to challenge lists)
     const allChallenges = [...DAILY_CHALLENGES, ...SEASONAL_CHALLENGES];
     const challengeDef = allChallenges.find(c => c.id === challengeId);
-    
     if (!challengeDef) {
       return NextResponse.json({ error: 'Challenge not found' }, { status: 404 });
     }
@@ -42,22 +37,44 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    let wasCompleted = false;
+    let isNowCompleted = false;
+    let newProgress = increment;
+    let xpGained = 0;
+    let showToast = false;
+    let message = null;
+    let updatedUser = dbUser;
+
     if (!userChallenge) {
+      isNowCompleted = increment >= challengeDef.goal;
       userChallenge = await prisma.userChallenge.create({
         data: {
           userId: dbUser.id,
           challengeName: challengeId,
           type: challengeDef.type === 'daily' ? 'DAILY' : 'SEASONAL',
-          progress: increment,
+          progress: newProgress,
           goal: challengeDef.goal,
-          completed: increment >= challengeDef.goal,
+          completed: isNowCompleted,
         },
       });
     } else {
-      const newProgress = Math.min(userChallenge.progress + increment, challengeDef.goal);
-      const wasCompleted = userChallenge.completed;
-      const isNowCompleted = newProgress >= challengeDef.goal;
-      
+      // Check if daily challenges should be reset
+      if (challengeDef.type === 'daily' && shouldResetDailyChallenges(userChallenge.lastUpdated)) {
+        isNowCompleted = increment >= challengeDef.goal;
+        userChallenge = await prisma.userChallenge.update({
+          where: { id: userChallenge.id },
+          data: {
+            progress: increment,
+            completed: isNowCompleted,
+            lastUpdated: new Date(),
+          },
+        });
+        newProgress = increment;
+        wasCompleted = false;
+      } else {
+        newProgress = Math.min(userChallenge.progress + increment, challengeDef.goal);
+        wasCompleted = userChallenge.completed;
+        isNowCompleted = newProgress >= challengeDef.goal;
       userChallenge = await prisma.userChallenge.update({
         where: { id: userChallenge.id },
         data: {
@@ -66,39 +83,71 @@ export async function POST(request: NextRequest) {
           lastUpdated: new Date(),
         },
       });
+      }
+    }
 
-      // Award XP if challenge was just completed
-      if (isNowCompleted && !wasCompleted) {
-        let xpGained = 0;
-        
-        // Award XP to the user's first pet (or create one if none exists)
-        if (pets.length > 0) {
-          const pet = pets[0];
-          const updatedPet = await awardXpToPet(pet.id, challengeDef.xp);
-          if (updatedPet) {
-            xpGained = challengeDef.xp;
-          }
-        }
-
+    // Special logic for daily_expand_petnet: only award XP if recipient is unique for the user for the day
+    if (challengeId === 'daily_expand_petnet' && recipient) {
+      // Check if this recipient has already been sent a link today
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const alreadyShared = await prisma.petNetShare.findFirst({
+        where: {
+          senderId: dbUser.id,
+          recipient,
+          sentAt: { gte: startOfDay },
+        },
+      });
+      if (alreadyShared) {
         return NextResponse.json({
-          success: true,
-          xpGained,
-          challenge: {
-            id: challengeId,
-            name: challengeDef.name,
-            completed: true,
-            xp: challengeDef.xp,
-          },
-          message: `🎉 Challenge completed! +${challengeDef.xp} XP`,
-          showToast: true,
+          success: false,
+          error: 'You have already sent a link to this recipient today.',
         });
       }
+      // Record the share
+      await prisma.petNetShare.create({
+        data: {
+          senderId: dbUser.id,
+          recipient,
+        },
+      });
+    }
+
+    // Award XP if challenge was just completed
+    if (isNowCompleted && !wasCompleted) {
+      // Award XP to all pets (optional, can be removed for pure user XP)
+      const pets = await prisma.pet.findMany({ where: { userId: dbUser.id } });
+      for (const pet of pets) {
+        await awardXpToPet(pet.id, challengeDef.xp);
+      }
+      // Update user's total XP
+      updatedUser = await prisma.user.update({
+        where: { id: dbUser.id },
+        data: {
+          totalXp: {
+            increment: challengeDef.xp
+          }
+        }
+      });
+      xpGained = challengeDef.xp;
+      showToast = true;
+      message = `🎉 ${challengeDef.type === 'daily' ? 'Daily' : 'Seasonal'} challenge complete! +${challengeDef.xp} XP`;
     }
 
     return NextResponse.json({
       success: true,
       progress: userChallenge.progress,
       completed: userChallenge.completed,
+      xpGained,
+      userTotalXp: updatedUser.totalXp,
+      challenge: {
+        id: challengeId,
+        name: challengeDef.name,
+        completed: userChallenge.completed,
+        xp: challengeDef.xp,
+      },
+      message,
+      showToast,
     });
   } catch (error) {
     console.error('Error tracking challenge progress:', error);

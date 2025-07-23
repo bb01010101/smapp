@@ -109,7 +109,7 @@ export default function XpTestPage() {
               <li>Click any test action above</li>
               <li>Check the sidebar for XP progress updates</li>
               <li>Complete challenges to earn XP</li>
-              <li>XP is awarded to your first pet</li>
+              <li>XP is awarded to all your pets</li>
               <li>Watch for toast notifications when challenges are completed</li>
             </ol>
           </div>

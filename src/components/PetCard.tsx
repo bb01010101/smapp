@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { PrestigeKey, prestigeLevels } from '@/lib/petLeveling';
+import { getPetDisplayImage } from '@/lib/petImageUtils';
 
 interface PetCardProps {
   imageUrl: string;
@@ -11,6 +12,8 @@ interface PetCardProps {
   xp: number;
   prestige: PrestigeKey;
   evolutionImageUrl?: string | null;
+  breed?: string | null;
+  useEvolutionImages?: boolean;
 }
 
 // Map prestige to metallic/gradient backgrounds and border colors
@@ -57,15 +60,26 @@ const prestigeStyles: Record<PrestigeKey, { bg: string; border: string; badge: s
   },
 };
 
-export const PetCard: React.FC<PetCardProps> = ({ imageUrl, name, level, xp, prestige, evolutionImageUrl }) => {
+export const PetCard: React.FC<PetCardProps> = ({ imageUrl, name, level, xp, prestige, evolutionImageUrl, breed, useEvolutionImages = false }) => {
   const safeLevel = typeof level === 'number' && !isNaN(level) ? level : 0;
   const safeXp = typeof xp === 'number' && !isNaN(xp) ? xp : 0;
+  
   const prestigeConfig = prestigeLevels.find(p => p.key === prestige);
   const prestigeLabel = prestigeConfig ? prestigeConfig.label : prestige;
   const xpForLevel = 100;
   const xpThisLevel = safeXp % xpForLevel;
   const xpPercent = Math.min(100, (xpThisLevel / xpForLevel) * 100);
   const style = prestigeStyles[prestige] || prestigeStyles.BRONZE;
+
+  // Determine which images to display based on user preference
+  const petData = { id: '', imageUrl, breed, level, name, species: 'dog' };
+  const frontImage = useEvolutionImages 
+    ? getPetDisplayImage(petData, true)  // Evolution image
+    : getPetDisplayImage(petData, false); // Real photo (with evolution fallback)
+  
+  const backImage = useEvolutionImages
+    ? (imageUrl || evolutionImageUrl) // Real photo as back when evolution is front
+    : (evolutionImageUrl || getPetDisplayImage(petData, true)); // Evolution as back when real is front
 
   // Flip state and double-tap logic
   const [flipped, setFlipped] = useState(false);
@@ -102,23 +116,23 @@ export const PetCard: React.FC<PetCardProps> = ({ imageUrl, name, level, xp, pre
             className={`flip-container w-28 h-28`}
             onClick={handleImageDoubleTap}
             onTouchEnd={handleImageDoubleTap}
-            style={{ perspective: 800, cursor: evolutionImageUrl ? 'pointer' : 'default' }}
-            title={evolutionImageUrl ? 'Double-tap to flip' : undefined}
+            style={{ perspective: 800, cursor: backImage ? 'pointer' : 'default' }}
+            title={backImage ? 'Double-tap to flip' : undefined}
           >
             <div className={`flip-inner w-full h-full transition-transform duration-500 ${flipped ? 'rotate-y-180' : ''}`}
               style={{ transformStyle: 'preserve-3d' }}>
-              {/* Front: Real image */}
+              {/* Front image */}
               <img
-                src={imageUrl}
+                src={frontImage}
                 alt={name}
                 className="w-28 h-28 rounded-full border-4 border-white shadow-xl object-cover bg-white/40 absolute top-0 left-0 backface-hidden"
                 style={{ backfaceVisibility: 'hidden', zIndex: 2 }}
               />
-              {/* Back: Evolution image */}
-              {evolutionImageUrl && (
+              {/* Back image */}
+              {backImage && (
                 <img
-                  src={evolutionImageUrl}
-                  alt={name + ' Evolution'}
+                  src={backImage}
+                  alt={name + ' Alternate'}
                   className="w-28 h-28 rounded-full border-4 border-white shadow-xl object-cover bg-white/40 absolute top-0 left-0 backface-hidden"
                   style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', zIndex: 1 }}
                 />
@@ -140,15 +154,27 @@ export const PetCard: React.FC<PetCardProps> = ({ imageUrl, name, level, xp, pre
           <span className="text-lg font-bold text-white/80 drop-shadow">Lvl</span>
           <span className="text-5xl font-black text-white drop-shadow-lg tracking-tight" style={{ WebkitTextStroke: '1px #fff8', letterSpacing: 2 }}>{safeLevel}</span>
         </div>
-        {/* XP Bar */}
-        <div className="w-48 h-4 bg-white/30 rounded-full overflow-hidden shadow-inner border border-white/40 mb-1">
+        {/* Total XP Display */}
+        <div className="mb-2 text-center">
+          <div className="text-xs text-white/70 font-medium tracking-wide mb-1">
+            TOTAL XP
+          </div>
+          <div className="text-xl font-bold text-white drop-shadow">
+            {safeXp.toLocaleString()}
+          </div>
+        </div>
+
+        {/* Single XP Progress Bar */}
+        <div className="w-48 h-4 bg-white/30 rounded-full overflow-hidden shadow-inner border border-white/40 mb-2">
           <div
             className="h-full rounded-full bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 transition-all"
             style={{ width: `${xpPercent}%` }}
           />
         </div>
-        <div className="mt-1 text-xs text-white/90 font-semibold tracking-wide">
-          {xpThisLevel} / {xpForLevel} XP
+        
+        {/* XP Progress Text */}
+        <div className="text-xs text-white/90 font-semibold tracking-wide text-center">
+          {xpThisLevel} / {xpForLevel} XP to next level
         </div>
       </CardContent>
       {/* Flip animation styles */}

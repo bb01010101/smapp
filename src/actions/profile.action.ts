@@ -280,4 +280,40 @@ export async function getProfileByUsername(username: string) {
     return user.createdAt <= thousandthUser[0].createdAt;
   }
 
+  export async function getUserEvolutionImagePreference(): Promise<boolean> {
+    try {
+      const { userId: clerkId } = await auth();
+      if (!clerkId) return false;
+
+      const user = await prisma.user.findUnique({
+        where: { clerkId },
+        select: { useEvolutionImages: true },
+      });
+
+      return user?.useEvolutionImages || false;
+    } catch (error) {
+      console.error('Error getting evolution image preference:', error);
+      return false;
+    }
+  }
+
+  export async function updateEvolutionImagePreference(useEvolutionImages: boolean) {
+    try {
+      const { userId: clerkId } = await auth();
+      if (!clerkId) throw new Error("Unauthorized");
+
+      await prisma.user.update({
+        where: { clerkId },
+        data: { useEvolutionImages },
+      });
+
+      revalidatePath("/settings");
+      revalidatePath("/");
+      return { success: true };
+    } catch (error) {
+      console.error("Error updating evolution image preference:", error);
+      return { success: false, error: "Failed to update preference" };
+    }
+  }
+
   

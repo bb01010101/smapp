@@ -239,7 +239,6 @@ export default function SidebarClient({ user }: { user?: any }) {
     </>
   );
 }
-
 const UnAuthenticatedSidebar = () => (
   <div className="sticky top-20">
     <Card>

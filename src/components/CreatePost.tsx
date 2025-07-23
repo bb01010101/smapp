@@ -10,6 +10,7 @@ import { Button } from "./ui/button";
 import { createPost } from "@/actions/post.action";
 import toast from "react-hot-toast";
 import ImageUpload from "./ImageUpload";
+import { useOptimisticXp } from '@/lib/useOptimisticXp';
 
 function CreatePost() {
   const { user } = useUser();
@@ -19,6 +20,7 @@ function CreatePost() {
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [pets, setPets] = useState<any[]>([]);
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
+  const { incrementXp } = useOptimisticXp();
 
   useEffect(() => {
     // Fetch pets for the current user
@@ -39,6 +41,12 @@ function CreatePost() {
     try {
       const result = await createPost(content, media?.url || "", selectedPetId, media?.type || "");
       if (result?.success) {
+        // Track XP for posting a photo if media was uploaded
+        if (media?.url && media?.type?.startsWith('image')) {
+          await incrementXp('daily_post_photo', 1);
+          await incrementXp('seasonal_post_20_photos', 1);
+        }
+        
         // reset the form
         setContent("");
         setMedia(null);

@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { trackChallengeProgress } from '@/lib/xpSystem';
+import { trackChallenge } from '@/lib/xpSystem';
 
 export default function DailyLoginTracker() {
   const { user, isLoaded } = useUser();
@@ -19,15 +19,20 @@ export default function DailyLoginTracker() {
 
         if (!hasLoggedInToday) {
           // Track the daily login challenge
-          const result = await trackChallengeProgress('daily_login', 1, user.id);
+          const result = await trackChallenge('daily_login', 1);
           
           if (result.success) {
             // Mark as logged in today
             localStorage.setItem(lastLoginKey, 'true');
             
-            // Dispatch XP update event if XP was gained
-            if (result.xpGained) {
-              window.dispatchEvent(new CustomEvent('xp-updated'));
+            // Trigger UI update if XP was gained
+            if (result.xpGained && typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('xp-updated', {
+                detail: { 
+                  challengeId: 'daily_login',
+                  xpGained: result.xpGained
+                }
+              }));
             }
           }
         }
@@ -41,6 +46,6 @@ export default function DailyLoginTracker() {
     return () => clearTimeout(timer);
   }, [user, isLoaded]);
 
-  // This component doesnt render anything
+  // This component doesn't render anything
   return null;
 } 

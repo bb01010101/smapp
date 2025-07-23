@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { trackChallengeProgress } from './xpSystem';
+import { trackChallenge } from './xpSystem';
 import { XpToast } from '@/components/XpToast';
 import toast from 'react-hot-toast';
 
@@ -14,7 +14,7 @@ export function useXpTracking() {
     if (!user) return;
 
     try {
-      const result = await trackChallengeProgress(challengeId, increment, user.id);
+      const result = await trackChallenge(challengeId, increment);
       
       if (result.success && result.xpGained) {
         // Show custom XP toast

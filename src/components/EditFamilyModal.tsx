@@ -41,6 +41,8 @@ const breedOptions = {
     "Rottweiler",
     "Dachshund",
     "Chihuahua",
+    "Collie",
+    "French Bulldog",
     "Other",
   ],
   cat: [

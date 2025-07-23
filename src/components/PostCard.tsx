@@ -4,6 +4,7 @@ import { createComment, deletePost, getPosts, toggleLike } from "@/actions/post.
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { useState, useRef } from "react";
 import toast from "react-hot-toast";
+import { useOptimisticXp } from '@/lib/useOptimisticXp';
 import { Card, CardContent } from "./ui/card";
 import Link from "next/link";
 import { Avatar, AvatarImage } from "./ui/avatar";
@@ -24,6 +25,7 @@ type Post = Posts[number]
 
 function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
   const { user } = useUser();
+  const { incrementXp } = useOptimisticXp();
   const [newComment, setNewComment] = useState("");
   const [isCommenting, setIsCommenting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
@@ -41,6 +43,11 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
       setHasLiked(prev => !prev)
       setOptimisticLikes(prev => prev + (hasLiked ? -1 : 1))
       await toggleLike(post.id)
+      
+      // Track XP for liking (only when liking, not unliking)
+      if (!hasLiked) {
+        await incrementXp('daily_like_3_posts', 1);
+      }
     } catch (error) {
       setOptimisticLikes(post._count.likes)
       setHasLiked(post.likes.some(like => like.userId === dbUserId))
@@ -57,6 +64,8 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
       if (result?.success) {
         toast.success("Comment posted successfully");
         setNewComment("");
+        // Track XP for commenting
+        await incrementXp('seasonal_comment_50_posts', 1);
       }
     } catch (error) {
       toast.error("Failed to add comment");

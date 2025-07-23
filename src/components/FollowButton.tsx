@@ -5,9 +5,11 @@ import { Button } from "./ui/button";
 import { Loader2Icon } from "lucide-react";
 import toast from "react-hot-toast";
 import { toggleFollow } from "@/actions/user.action";
+import { useOptimisticXp } from '@/lib/useOptimisticXp';
 
 function FollowButton({userId}: {userId: string}) {
   const [isLoading, setIsLoading] = useState(false);
+  const { incrementXp } = useOptimisticXp();
 
   const handleFollow = async () => {
     setIsLoading(true);
@@ -15,6 +17,8 @@ function FollowButton({userId}: {userId: string}) {
     try {
         await toggleFollow(userId);
         toast.success("User followed successfully");
+        // Track XP for following
+        await incrementXp('seasonal_gain_100_followers', 1);
     } catch (error) {
         toast.error("Error following user");
     } finally {

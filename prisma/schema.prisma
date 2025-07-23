@@ -24,6 +24,8 @@ model User {
   latitude                 Float?
   locationSharingEnabled   Boolean?                  @default(false)
   longitude                Float?
+  totalXp                  Int                       @default(0)
+  useEvolutionImages       Boolean                   @default(false)
   barks                    Bark[]
   barkComments             BarkComment[]
   barkCommentVotes         BarkCommentVote[]
@@ -37,6 +39,7 @@ model User {
   messages                 Message[]
   notificationsCreated     Notification[]            @relation("notificationCreator")
   notifications            Notification[]            @relation("userNotifications")
+  petNetShares             PetNetShare[]
   posts                    Post[]
   userChallenges           UserChallenge[]
 
@@ -124,39 +127,26 @@ model Notification {
   @@index([userId, createdAt])
 }
 
-enum Prestige {
-  BRONZE
-  SILVER
-  GOLD
-  LAPIS_LAZULI
-  EMERALD
-  PURPLE_AMETHYST
-  RUBY
-  DIAMOND
-}
-
 model Pet {
-  id        String   @id @default(uuid())
-  userId    String
-  name      String
-  species   String
-  breed     String?
-  age       String?
-  bio       String?
-  imageUrl  String?
+  id                String    @id @default(uuid())
+  userId            String
+  name              String
+  species           String
+  breed             String?
+  age               String?
+  bio               String?
+  imageUrl          String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  loveCount         Int       @default(0)
+  streak            Int       @default(0)
+  lastLogin         DateTime?
+  level             Int       @default(1)
+  loginStreak       Int       @default(0)
+  prestige          Prestige  @default(BRONZE)
+  xp                Int       @default(0)
   evolutionImageUrl String?
-  loveCount Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  streak    Int      @default(0)
-  posts     Post[]   @relation("PetPosts")
-
-  // Gamification fields
-  xp         Int       @default(0)
-  level      Int       @default(1)
-  prestige   Prestige  @default(BRONZE)
-  loginStreak Int      @default(0)
-  lastLogin  DateTime?
+  posts             Post[]    @relation("PetPosts")
 
   @@index([userId])
 }
@@ -257,6 +247,54 @@ model BarkCommentVote {
   @@unique([userId, commentId])
 }
 
+model UserChallenge {
+  id            String        @id @default(cuid())
+  userId        String
+  challengeName String
+  type          ChallengeType
+  progress      Int           @default(0)
+  goal          Int
+  completed     Boolean       @default(false)
+  lastUpdated   DateTime      @default(now())
+  seasonId      String?
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, challengeName, type, seasonId])
+}
+
+model ChallengeConfig {
+  id            String        @id @default(cuid())
+  challengeName String
+  type          ChallengeType
+  description   String
+  xp            Int
+  goal          Int
+  seasonLength  Int?
+  active        Boolean       @default(true)
+}
+
+model PetNetShare {
+  id        String   @id @default(cuid())
+  senderId  String
+  recipient String
+  sentAt    DateTime @default(now())
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, recipient, sentAt])
+  @@index([senderId, recipient, sentAt])
+}
+
+enum Prestige {
+  BRONZE
+  SILVER
+  GOLD
+  LAPIS_LAZULI
+  EMERALD
+  PURPLE_AMETHYST
+  RUBY
+  DIAMOND
+}
+
 enum NotificationType {
   LIKE
   COMMENT
@@ -269,33 +307,7 @@ enum PostType {
   SERVICE
 }
 
-model UserChallenge {
-  id            String   @id @default(cuid())
-  userId        String
-  challengeName String
-  type          ChallengeType
-  progress      Int      @default(0)
-  goal          Int
-  completed     Boolean  @default(false)
-  lastUpdated   DateTime @default(now())
-  seasonId      String?
-
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  @@index([userId, challengeName, type, seasonId])
-}
-
 enum ChallengeType {
   DAILY
   SEASONAL
-}
-
-model ChallengeConfig {
-  id            String   @id @default(cuid())
-  challengeName String
-  type          ChallengeType
-  description   String
-  xp            Int
-  goal          Int
-  seasonLength  Int? // days, only for seasonal
-  active        Boolean @default(true)
 }

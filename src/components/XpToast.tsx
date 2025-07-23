@@ -7,9 +7,12 @@ import toast from 'react-hot-toast';
 interface XpToastProps {
   xpGained: number;
   challengeName?: string;
+  totalXpGained?: number;
 }
 
-export function XpToast({ xpGained, challengeName }: XpToastProps) {
+export function XpToast({ xpGained, challengeName, totalXpGained }: XpToastProps) {
+  const displayXp = totalXpGained || xpGained;
+  
   return (
     <div className="flex items-center gap-3 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-4 shadow-lg">
       <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full">
@@ -25,7 +28,7 @@ export function XpToast({ xpGained, challengeName }: XpToastProps) {
       </div>
       <div className="flex items-center gap-1 text-lg font-bold text-yellow-600">
         <StarIcon className="w-4 h-4" />
-        +{xpGained} XP
+        +{displayXp} XP
       </div>
     </div>
   );

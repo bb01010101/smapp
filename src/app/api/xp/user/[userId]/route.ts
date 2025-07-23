@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import prisma from '@/lib/prisma';
-import { DAILY_CHALLENGES, SEASONAL_CHALLENGES, getLevelFromXp } from '@/lib/xpSystem';
+import { DAILY_CHALLENGES, SEASONAL_CHALLENGES, getLevelFromXp, shouldResetDailyChallenges } from '@/lib/xpSystem';
 
 export async function GET(
   request: NextRequest,
@@ -19,11 +19,8 @@ export async function GET(
       return NextResponse.json({ error: 'User not found for clerkId: ' + params.userId }, { status: 404 });
     }
 
-    // Fetch pets for this user
-    const pets = await prisma.pet.findMany({ where: { userId: dbUser.id } });
-
-    // Calculate total XP from all pets
-    const totalXp = pets.reduce((sum, pet) => sum + (pet.xp || 0), 0);
+    // Use the user's totalXp field
+    const totalXp = dbUser.totalXp || 0;
     const level = getLevelFromXp(totalXp);
 
     // Get user's challenge progress
@@ -41,6 +38,15 @@ export async function GET(
         uc => uc.challengeName === challenge.id
       );
       
+      // Check if daily challenges should be reset
+      let progress = userChallenge?.progress || 0;
+      let completed = userChallenge?.completed || false;
+      
+      if (challenge.type === 'daily' && userChallenge && shouldResetDailyChallenges(userChallenge.lastUpdated)) {
+        progress = 0;
+        completed = false;
+      }
+      
       return {
         id: challenge.id,
         name: challenge.name,
@@ -48,8 +54,8 @@ export async function GET(
         type: challenge.type,
         xp: challenge.xp,
         goal: challenge.goal,
-        progress: userChallenge?.progress || 0,
-        completed: userChallenge?.completed || false,
+        progress: progress,
+        completed: completed,
       };
     });
 

@@ -63,6 +63,23 @@ export async function getDbUserId() {
   return user.id;
 }
 
+export async function getCurrentUserTotalXp(): Promise<number> {
+  try {
+    const { userId: clerkId } = await auth();
+    if (!clerkId) return 0;
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+      select: { totalXp: true },
+    });
+
+    return user?.totalXp || 0;
+  } catch (error) {
+    console.error('Error getting user total XP:', error);
+    return 0;
+  }
+}
+
 export async function getRandomUsers() {
   try {
     const userId = await getDbUserId();
