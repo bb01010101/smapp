@@ -310,4 +310,5 @@ enum PostType {
 enum ChallengeType {
   DAILY
   SEASONAL
+  WEEKLY
 }

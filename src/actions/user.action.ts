@@ -194,7 +194,7 @@ export async function toggleFollow(targetUserId: string) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            challengeId: 'seasonal_gain_100_followers',
+            challengeId: 'weekly_gain_10_followers',
             increment: 1,
             userId: targetUserId, // Track for the user being followed
           }),

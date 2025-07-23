@@ -57,11 +57,11 @@ export function useXpActions() {
   }, [trackProgress]);
 
   const trackFollow = useCallback(() => {
-    return trackProgress('seasonal_gain_100_followers');
+    return trackProgress('weekly_gain_10_followers');
   }, [trackProgress]);
 
   const trackComment = useCallback(() => {
-    return trackProgress('seasonal_comment_50_posts');
+    return trackProgress('weekly_comment_20_posts');
   }, [trackProgress]);
 
   return {

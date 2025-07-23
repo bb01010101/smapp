@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import prisma from '@/lib/prisma';
-import { DAILY_CHALLENGES, SEASONAL_CHALLENGES, getLevelFromXp } from '@/lib/xpSystem';
+import { DAILY_CHALLENGES, WEEKLY_CHALLENGES, getLevelFromXp } from '@/lib/xpSystem';
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     // Map challenges with progress
     const challenges = [
       ...DAILY_CHALLENGES,
-      ...SEASONAL_CHALLENGES,
+      ...WEEKLY_CHALLENGES,
     ].map(challenge => {
       const userChallenge = userChallenges.find(
         uc => uc.challengeName === challenge.id

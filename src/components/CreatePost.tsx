@@ -44,7 +44,7 @@ function CreatePost() {
         // Track XP for posting a photo if media was uploaded
         if (media?.url && media?.type?.startsWith('image')) {
           await incrementXp('daily_post_photo', 1);
-          await incrementXp('seasonal_post_20_photos', 1);
+          await incrementXp('weekly_post_7_photos', 1);
         }
         
         // reset the form

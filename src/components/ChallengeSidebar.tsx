@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { TrophyIcon, StarIcon, ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
-import { DAILY_CHALLENGES, SEASONAL_CHALLENGES, Challenge, UserProgress } from '@/lib/xpSystem';
+import { DAILY_CHALLENGES, WEEKLY_CHALLENGES, Challenge, UserProgress } from '@/lib/xpSystem';
 import toast from 'react-hot-toast';
 import { Dialog, DialogTrigger, DialogContent } from './ui/dialog';
 import { Input } from './ui/input';
@@ -64,6 +64,7 @@ export default function ChallengeSidebar({ className = '' }: ChallengeSidebarPro
   const hasLoadedRef = useRef(false);
   const [expandedSections, setExpandedSections] = useState({
     daily: true,
+    weekly: true,
     seasonal: true,
   });
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -153,7 +154,7 @@ export default function ChallengeSidebar({ className = '' }: ChallengeSidebarPro
     }
   };
 
-  const toggleSection = (section: 'daily' | 'seasonal') => {
+  const toggleSection = (section: 'daily' | 'weekly' | 'seasonal') => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section],
@@ -177,7 +178,7 @@ export default function ChallengeSidebar({ className = '' }: ChallengeSidebarPro
         const isNowCompleted = newProgress >= challenge.goal;
         // If challenge was just completed, update total XP optimistically
         if (isNowCompleted && !wasCompleted) {
-          const challengeDef = [...DAILY_CHALLENGES, ...SEASONAL_CHALLENGES].find(c => c.id === challengeId);
+          const challengeDef = [...DAILY_CHALLENGES, ...WEEKLY_CHALLENGES].find(c => c.id === challengeId);
           if (challengeDef) {
             xpToAdd = challengeDef.xp;
           }
@@ -220,7 +221,7 @@ export default function ChallengeSidebar({ className = '' }: ChallengeSidebarPro
     } : null);
   };
 
-  const renderChallenge = (challenge: Omit<Challenge, 'progress' | 'completed'>, type: 'daily' | 'seasonal') => {
+  const renderChallenge = (challenge: Omit<Challenge, 'progress' | 'completed'>, type: 'daily' | 'weekly' | 'seasonal') => {
     const userChallenge = getChallengeProgress(challenge.id);
     const progress = userChallenge?.progress || 0;
     const completed = userChallenge?.completed || false;
@@ -337,23 +338,23 @@ export default function ChallengeSidebar({ className = '' }: ChallengeSidebarPro
               </div>
             )}
           </div>
-          {/* Seasonal Challenges */}
+          {/* Weekly Challenges */}
           <div>
             <Button
               variant="ghost"
               className="w-full justify-between p-2 h-auto"
-              onClick={() => toggleSection('seasonal')}
+              onClick={() => toggleSection('weekly')}
             >
-              <span className="font-medium text-gray-800">Seasonal Challenges</span>
-              {expandedSections.seasonal ? (
+                              <span className="font-medium text-gray-800">Weekly Challenges</span>
+                              {expandedSections.weekly ? (
                 <ChevronDownIcon className="w-4 h-4" />
               ) : (
                 <ChevronRightIcon className="w-4 h-4" />
               )}
             </Button>
-            {expandedSections.seasonal && (
+            {expandedSections.weekly && (
               <div className="mt-2 space-y-2">
-                {SEASONAL_CHALLENGES.map(challenge => renderChallenge(challenge, 'seasonal'))}
+                                  {WEEKLY_CHALLENGES.map(challenge => renderChallenge(challenge, 'weekly'))}
               </div>
             )}
           </div>

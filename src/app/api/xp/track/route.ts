@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import prisma from '@/lib/prisma';
-import { DAILY_CHALLENGES, SEASONAL_CHALLENGES, shouldResetDailyChallenges } from '@/lib/xpSystem';
+import { DAILY_CHALLENGES, WEEKLY_CHALLENGES, shouldResetDailyChallenges } from '@/lib/xpSystem';
 import { awardXpToPet } from '@/actions/pet.action';
 
 export async function POST(request: NextRequest) {
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find the challenge definition (universal: just add to challenge lists)
-    const allChallenges = [...DAILY_CHALLENGES, ...SEASONAL_CHALLENGES];
+    const allChallenges = [...DAILY_CHALLENGES, ...WEEKLY_CHALLENGES];
     const challengeDef = allChallenges.find(c => c.id === challengeId);
     if (!challengeDef) {
       return NextResponse.json({ error: 'Challenge not found' }, { status: 404 });
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       where: {
         userId: dbUser.id,
         challengeName: challengeId,
-        type: challengeDef.type === 'daily' ? 'DAILY' : 'SEASONAL',
+        type: challengeDef.type === 'daily' ? 'DAILY' : 'WEEKLY',
       },
     });
 
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId: dbUser.id,
           challengeName: challengeId,
-          type: challengeDef.type === 'daily' ? 'DAILY' : 'SEASONAL',
+          type: challengeDef.type === 'daily' ? 'DAILY' : 'WEEKLY',
           progress: newProgress,
           goal: challengeDef.goal,
           completed: isNowCompleted,
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       });
       xpGained = challengeDef.xp;
       showToast = true;
-      message = `🎉 ${challengeDef.type === 'daily' ? 'Daily' : 'Seasonal'} challenge complete! +${challengeDef.xp} XP`;
+              message = `🎉 ${challengeDef.type === 'daily' ? 'Daily' : 'Weekly'} challenge complete! +${challengeDef.xp} XP`;
     }
 
     return NextResponse.json({
