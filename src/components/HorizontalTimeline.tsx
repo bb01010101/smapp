@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { SecureAvatar } from "@/components/SecureAvatar";
 import { ChevronLeftIcon, ChevronRightIcon, FlameIcon, ImageIcon, Loader2Icon, PencilIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { format } from "date-fns";
 import { DeleteAlertDialog } from "@/components/DeleteAlertDialog";
@@ -158,9 +159,11 @@ export default function HorizontalTimeline({
             <div className="flex items-center space-x-2">
               {variant === 'pet' && pet && (
                 <>
-                  <Avatar className="w-6 h-6 border border-orange-200">
-                    <AvatarImage src={pet.imageUrl || '/avatar.png'} alt={pet.name} />
-                  </Avatar>
+                  <SecureAvatar 
+                    src={pet.imageUrl}
+                    alt={pet.name}
+                    className="w-6 h-6 border border-orange-200"
+                  />
                   <div>
                     <div className="font-semibold text-xs">{pet.name}'s Timeline</div>
                     <div className="text-xs text-muted-foreground">{posts.length} photos</div>
@@ -254,9 +257,11 @@ export default function HorizontalTimeline({
             <div className="flex items-center space-x-3">
               {variant === 'pet' && pet && (
                 <>
-                  <Avatar className="w-12 h-12 border-2 border-orange-200">
-                    <AvatarImage src={pet.imageUrl || '/avatar.png'} alt={pet.name} />
-                  </Avatar>
+                  <SecureAvatar 
+                    src={pet.imageUrl}
+                    alt={pet.name}
+                    className="w-12 h-12 border-2 border-orange-200"
+                  />
                   <div>
                     <div className="font-bold text-lg">{pet.name}'s Timeline</div>
                     <div className="text-sm text-muted-foreground">{posts.length} photos</div>
@@ -398,7 +403,7 @@ export default function HorizontalTimeline({
                     }}
                   >
                     <img
-                      src={post.image || '/avatar.png'}
+                      src={post.image || '/default-pet.png'}
                       alt={`${postPet?.name || 'Pet'} photo`}
                       className="w-full h-full object-cover"
                     />

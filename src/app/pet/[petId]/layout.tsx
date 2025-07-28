@@ -34,6 +34,11 @@ export default async function PetProfileLayout({ children, params }: { children:
                 evolutionImageUrl={getEvolutionImageUrl(pet.breed, pet.level)}
                 breed={pet.breed}
                 useEvolutionImages={useEvolutionImages}
+                petId={pet.id}
+                // Note: previousLevel and previousXp are optional
+                // They would need to be tracked separately to enable animations
+                // For now, animations will only trigger for pets that level up
+                // after this update is deployed
               />
             </div>
           ) : null}

@@ -22,6 +22,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { format } from "date-fns";
+import { SecureImage } from "@/lib/useSecureImage";
+import { SecureAvatar } from "@/components/SecureAvatar";
+import { SecureVideo } from "@/components/SecureVideo";
 import {
  CalendarIcon,
  EditIcon,
@@ -63,8 +66,8 @@ import Image from "next/image";
 // It handles all UI, state, and user interactions for the profile, pets, posts, and modals
 
 
-// Dynamically import ImageUpload to avoid SSR issues
-const ImageUpload = dynamic(() => import("@/components/ImageUpload"), {
+// Dynamically import S3ImageUpload to avoid SSR issues
+const S3ImageUpload = dynamic(() => import("@/components/S3ImageUpload"), {
  ssr: false,
  loading: () => <div className="flex items-center justify-center size-40 border-2 border-dashed rounded-md">Loading...</div>
 });
@@ -124,8 +127,8 @@ function PostMedia({ post }: { post: Post }) {
          }}
        />
      ) : (
-       <img
-         src={post.image || "/placeholder.png"}
+       <SecureImage
+         src={post.image}
          alt={post.title || "Post"}
          style={{ 
            width: "100%", 
@@ -247,9 +250,11 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
            {/* Header overlay */}
            <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent rounded-t-xl">
              <div className="flex items-center gap-3">
-               <Avatar className="w-8 h-8">
-                 <AvatarImage src={post.author?.image ?? "/avatar.png"} />
-               </Avatar>
+               <SecureAvatar 
+                 src={post.author?.image}
+                 alt={post.author?.name || "User"}
+                 className="w-8 h-8"
+               />
                <div className="flex flex-col min-w-0">
                  <div className="flex items-center gap-1 min-w-0">
                    <span className="font-semibold truncate text-white text-sm">{post.author?.name ?? post.author?.username}</span>
@@ -317,9 +322,11 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
                    <div className="space-y-3">
                      {comments.map((comment) => (
                        <div key={comment.id} className="flex space-x-2">
-                         <Avatar className="size-6 flex-shrink-0">
-                           <AvatarImage src={comment.author.image ?? "/avatar.png"} />
-                         </Avatar>
+                         <SecureAvatar 
+                           src={comment.author.image}
+                           alt={comment.author.name || "User"}
+                           className="size-6 flex-shrink-0"
+                         />
                          <div className="flex-1 min-w-0">
                            <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
                              <span className="font-medium text-xs">{comment.author.name}</span>
@@ -343,9 +350,11 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
                {/* Add comment */}
                {user && (
                  <div className="flex items-center gap-2 p-3 border-t border-muted">
-                   <Avatar className="size-6 flex-shrink-0">
-                     <AvatarImage src={user?.imageUrl || "/avatar.png"} />
-                   </Avatar>
+                   <SecureAvatar 
+                     src={user?.imageUrl}
+                     alt={user?.fullName || "User"}
+                     className="size-6 flex-shrink-0"
+                   />
                    <Textarea
                      placeholder="Write a comment..."
                      value={newComment}
@@ -375,8 +384,8 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
       <DialogContent className="p-0 flex flex-col items-stretch justify-center bg-transparent shadow-none border-none max-w-2xl w-full">
         {/* Image container - fit image size */}
         <div className="relative bg-black flex items-center justify-center">
-          <img
-            src={post.image || "/placeholder.png"}
+          <SecureImage
+            src={post.image}
             alt={post.title || "Post"}
             className="w-full h-auto max-h-[70vh] object-contain"
           />
@@ -384,9 +393,11 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
           {/* Header overlay */}
           <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent">
             <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={post.author?.image ?? "/avatar.png"} />
-              </Avatar>
+                             <SecureAvatar 
+                 src={post.author?.image}
+                 alt={post.author?.name || "User"}
+                 className="w-10 h-10"
+               />
               <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-1 min-w-0">
                   <span className="font-semibold truncate text-white">{post.author?.name ?? post.author?.username}</span>
@@ -454,9 +465,11 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
                   <div className="space-y-4">
                     {comments.map((comment) => (
                       <div key={comment.id} className="flex space-x-3">
-                        <Avatar className="size-8 flex-shrink-0">
-                          <AvatarImage src={comment.author.image ?? "/avatar.png"} />
-                        </Avatar>
+                        <SecureAvatar 
+                          src={comment.author.image}
+                          alt={comment.author.name || "User"}
+                          className="size-8 flex-shrink-0"
+                        />
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                             <span className="font-medium text-sm">{comment.author.name}</span>
@@ -480,9 +493,11 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
               {/* Add comment */}
               {user && (
                 <div className="flex items-center gap-3 p-4 border-t border-muted">
-                  <Avatar className="size-8 flex-shrink-0">
-                    <AvatarImage src={user?.imageUrl || "/avatar.png"} />
-                  </Avatar>
+                  <SecureAvatar 
+                    src={user?.imageUrl}
+                    alt={user?.fullName || "User"}
+                    className="size-8 flex-shrink-0"
+                  />
                   <Textarea
                     placeholder="Write a comment..."
                     value={newComment}
@@ -1065,9 +1080,11 @@ function ProfilePageClient({
            {/* Avatar */}
            <div className="flex-shrink-0 flex flex-col items-center w-auto">
                <div className="cursor-pointer" onClick={() => setFamilyTimelineOpen(true)}>
-               <Avatar className="w-28 h-28 sm:w-36 sm:h-36 ring-2 ring-primary">
-                   <AvatarImage src={user.image ?? "/avatar.png"} />
-                 </Avatar>
+               <SecureAvatar 
+                   src={user.image}
+                   alt={user.name || "User"}
+                   className="w-28 h-28 sm:w-36 sm:h-36 ring-2 ring-primary"
+                 />
                </div>
                  </div>
            {/* Main Info */}
@@ -1185,9 +1202,11 @@ function ProfilePageClient({
                        ? "p-1 sm:p-1.5 rounded-full bg-gradient-to-tr from-orange-400 via-yellow-400 to-orange-600 shadow-lg animate-pulse"
                                : ""
                            }>
-                      <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-primary group-hover:scale-105 transition">
-                               <AvatarImage src={getPetAvatarImage(pet, useEvolutionImages)} alt={pet.name} />
-                             </Avatar>
+                                             <SecureAvatar 
+                                src={getPetAvatarImage(pet, useEvolutionImages)}
+                                alt={pet.name}
+                                className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-primary group-hover:scale-105 transition"
+                              />
                            </div>
                     <div className="font-medium text-xs sm:text-sm mt-2 text-center w-16 sm:w-20 truncate">{pet.name}</div>
                            </Link>
@@ -1230,9 +1249,9 @@ function ProfilePageClient({
           onMouseLeave={() => handleMouseLeave(idx)}
         >
           {post.mediaType?.startsWith('video') ? (
-            <video
+            <SecureVideo
               ref={el => { videoRefs.current[idx] = el; }}
-              src={post.image || undefined}
+              src={post.image}
               muted
               loop
               playsInline
@@ -1241,8 +1260,8 @@ function ProfilePageClient({
               controls={false}
             />
           ) : (
-            <img
-              src={post.image || '/placeholder.png'}
+            <SecureImage
+              src={post.image}
               alt={post.title || 'Post'}
               className="w-full h-full object-cover"
             />
@@ -1308,8 +1327,8 @@ function ProfilePageClient({
                            controls={false}
                          />
                        ) : (
-                         <img
-                           src={post.image || '/placeholder.png'}
+                         <SecureImage
+                           src={post.image}
                            alt={post.title || 'Post'}
                            className="w-full h-full object-cover"
                          />
@@ -1335,8 +1354,8 @@ function ProfilePageClient({
            <div className="space-y-4 py-4">
              <div className="space-y-2">
                <Label>Profile Picture</Label>
-               <ImageUpload
-                 endpoint="postImage"
+               <S3ImageUpload
+                 folder="users"
                  value={imageUpload}
                  onChange={(img) => {
                    setImageUpload(img);
@@ -1402,9 +1421,11 @@ function ProfilePageClient({
                    className="cursor-pointer transform hover:scale-105 transition-transform"
                    onClick={openTimeline}
                  >
-                   <Avatar className="w-20 h-20 mb-2">
-                     <AvatarImage src={getPetAvatarImage(activePet, useEvolutionImages)} alt={activePet.name} />
-                   </Avatar>
+                   <SecureAvatar 
+                     src={getPetAvatarImage(activePet, useEvolutionImages)}
+                     alt={activePet.name}
+                     className="w-20 h-20 mb-2"
+                   />
                  </div>
                  <div className="font-bold text-lg">{activePet.name}</div>
                  <div className="text-sm text-muted-foreground mb-1">{activePet.breed} • {activePet.age}</div>
@@ -1454,9 +1475,11 @@ function ProfilePageClient({
                <div className="flex flex-col items-center p-6 w-full">
                  <div className="flex items-center justify-between w-full mb-6">
                    <div className="flex items-center space-x-4">
-                     <Avatar className="w-16 h-16">
-                       <AvatarImage src={getPetAvatarImage(activePet, useEvolutionImages)} alt={activePet.name} />
-                     </Avatar>
+                     <SecureAvatar 
+                       src={getPetAvatarImage(activePet, useEvolutionImages)}
+                       alt={activePet.name}
+                       className="w-16 h-16"
+                     />
                      <div>
                        <div className="font-bold text-xl">{activePet.name}'s Timeline</div>
                        <div className="text-sm text-muted-foreground">{activePetPosts.length} photos</div>
@@ -1530,7 +1553,7 @@ function ProfilePageClient({
                                      : 'border-gray-200 hover:border-orange-300'
                                  } bg-white"
                                >
-                                 <img src={post.image || '/avatar.png'} alt={activePet.name + ' photo'} className="w-full h-full object-cover" />
+                                 <SecureImage src={post.image || '/avatar.png'} alt={activePet.name + ' photo'} className="w-full h-full object-cover" />
                                  
                                  {/* Golden overlay for today's post */}
                                  {isToday && (
@@ -1641,8 +1664,8 @@ function ProfilePageClient({
                    <div className="text-sm text-muted-foreground">
                      Upload media for {activePet?.name}'s timeline
                    </div>
-                   <ImageUpload
-                     endpoint="postImage"
+                   <S3ImageUpload
+                     folder="posts"
                      value={timelineImageUpload}
                      onChange={(mediaObj) => {
                        setTimelineImageUpload(mediaObj);
@@ -1696,8 +1719,8 @@ function ProfilePageClient({
                  className="relative aspect-square rounded-lg overflow-hidden cursor-pointer transform hover:scale-105 transition-transform"
                  onClick={() => handleSelectExistingPost(post)}
                >
-                 <img
-                   src={post.image || '/avatar.png'}
+                 <SecureImage
+                   src={post.image}
                    alt={`${activePet.name}'s photo`}
                    className="w-full h-full object-cover"
                  />
@@ -1731,8 +1754,8 @@ function ProfilePageClient({
            <div className="space-y-4 py-4">
              <div className="space-y-2">
                <Label>Image</Label>
-               <ImageUpload
-                 endpoint="postImage"
+               <S3ImageUpload
+                 folder="posts"
                  value={editImage}
                  onChange={img => setEditImage(img)}
                />
@@ -1773,7 +1796,7 @@ function ProfilePageClient({
                {followers.map(f => (
                  <li key={f.id} className="flex items-center gap-3 py-3">
                    <Link href={`/profile/${f.username}`} className="flex items-center gap-3">
-                     <Avatar className="w-8 h-8"><AvatarImage src={f.image || "/avatar.png"} /></Avatar>
+                     <SecureAvatar src={f.image} alt={f.name || "User"} className="w-8 h-8" />
                      <div>
                        <div className="flex items-center gap-1">
                          <div className="font-medium hover:underline">{f.name || f.username}</div>
@@ -1809,7 +1832,7 @@ function ProfilePageClient({
                {following.map(f => (
                  <li key={f.id} className="flex items-center gap-3 py-3">
                    <Link href={`/profile/${f.username}`} className="flex items-center gap-3">
-                     <Avatar className="w-8 h-8"><AvatarImage src={f.image || "/avatar.png"} /></Avatar>
+                     <SecureAvatar src={f.image} alt={f.name || "User"} className="w-8 h-8" />
                      <div>
                        <div className="flex items-center gap-1">
                          <div className="font-medium hover:underline">{f.name || f.username}</div>
@@ -1882,7 +1905,7 @@ function ProfilePageClient({
                                  }
                                }}
                              >
-                               <img src={post.image || '/avatar.png'} alt={post.pet?.name || 'Pet'} className="w-full h-full object-cover" />
+                               <SecureImage src={post.image || '/avatar.png'} alt={post.pet?.name || 'Pet'} className="w-full h-full object-cover" />
                                
                                {/* Golden overlay for today's post */}
                                {isToday && (

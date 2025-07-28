@@ -1,5 +1,6 @@
 "use client";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { SecureAvatar } from "@/components/SecureAvatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 import { useUser } from "@clerk/nextjs";
@@ -50,9 +51,10 @@ export default function ChatWindow({ messages, other, handleSend }: any) {
   return (
     <div className="max-w-2xl mx-auto py-8 flex flex-col h-[80vh]">
       <div className="mb-4 flex items-center gap-3 justify-center">
-        <Avatar>
-          <AvatarImage src={other?.image || "/avatar.png"} />
-        </Avatar>
+        <SecureAvatar 
+          src={other?.image}
+          alt={other?.name || "User"}
+        />
         <div className="font-bold text-xl flex items-center gap-1">
           {other?.name || other?.username || "User"}
           {isUserVerified(other?.username) && (
@@ -79,9 +81,11 @@ export default function ChatWindow({ messages, other, handleSend }: any) {
                     </div>
                   </div>
                   <div className="rounded-full bg-blue-100 p-0.5">
-                    <Avatar className="w-7 h-7">
-                      <AvatarImage src={user?.imageUrl || "/avatar.png"} />
-                    </Avatar>
+                    <SecureAvatar 
+                      src={user?.imageUrl}
+                      alt={user?.fullName || "User"}
+                      className="w-7 h-7"
+                    />
                   </div>
                 </div>
               );
@@ -89,9 +93,11 @@ export default function ChatWindow({ messages, other, handleSend }: any) {
               return (
                 <div key={msg.id} className="flex items-end gap-2 mb-1">
                   <div className="rounded-full bg-muted p-0.5">
-                    <Avatar className="w-7 h-7">
-                      <AvatarImage src={other?.image || "/avatar.png"} />
-                    </Avatar>
+                                        <SecureAvatar 
+                      src={other?.image}
+                      alt={other?.name || "User"}
+                      className="w-7 h-7"
+                    />
                   </div>
                   <div className="flex flex-col items-start max-w-xs">
                     <div className="rounded-2xl px-4 py-2 inline-block mt-1 mb-1 bg-gray-200 dark:bg-gray-700 text-black dark:text-white shadow text-base">

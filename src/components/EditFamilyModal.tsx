@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import ImageUpload from "@/components/ImageUpload";
+import S3ImageUpload from "@/components/S3ImageUpload";
 import { useAuth } from "@clerk/nextjs";
 import {
   Dialog,
@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PawPrintIcon } from "lucide-react";
+import { SecureImage } from "@/lib/useSecureImage";
 
 const speciesOptions = [
   { value: "dog", label: "Dog" },
@@ -220,8 +221,8 @@ export default function EditFamilyModal({
                   {/* Image Upload */}
                   <div className="space-y-2">
                     <Label>Profile Picture</Label>
-                    <ImageUpload
-                      endpoint="petImage"
+                    <S3ImageUpload
+                      folder="pets"
                       value={newPet.imageUrl || null}
                       onChange={(mediaObj) => setNewPet({ ...newPet, imageUrl: mediaObj })}
                     />
@@ -343,7 +344,7 @@ export default function EditFamilyModal({
                 <div className="flex items-center gap-4">
                   <div className="relative w-16 h-16 rounded-full overflow-hidden">
                     {pet.imageUrl && typeof pet.imageUrl === 'string' && !pet.imageUrl.includes('placehold.co') ? (
-                      <img
+                      <SecureImage
                         src={pet.imageUrl}
                         alt={pet.name}
                         className="w-full h-full object-cover"

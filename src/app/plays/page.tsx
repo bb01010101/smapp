@@ -8,6 +8,7 @@ import { toggleLike, createComment } from "@/actions/post.action";
 import { useUser, SignInButton } from "@clerk/nextjs";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { SecureAvatar } from "@/components/SecureAvatar";
 import toast from "react-hot-toast";
 import { isUserVerified } from "@/lib/utils";
 import BlueCheckIcon from "@/components/BlueCheckIcon";
@@ -525,9 +526,11 @@ export default function PlaysPage() {
                       {/* Overlay: Bottom-left blurb */}
                       <div className="absolute left-4 bottom-6 z-10 flex items-end gap-3">
                 <Link href={`/profile/${currentVideo.author.username}`} onClick={(e) => e.stopPropagation()}>
-                          <Avatar className="w-10 h-10 border-2 border-white">
-                    <AvatarImage src={currentVideo.author.image ?? "/avatar.png"} />
-                          </Avatar>
+                          <SecureAvatar 
+                    src={currentVideo.author.image}
+                    alt={currentVideo.author.name || "User"}
+                    className="w-10 h-10 border-2 border-white"
+                          />
                         </Link>
                         <div className="flex flex-col">
                   <Link href={`/profile/${currentVideo.author.username}`} className="text-white font-semibold text-base hover:underline flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -571,9 +574,11 @@ export default function PlaysPage() {
                               ) : (
                         currentVideo.comments.map((comment: any) => (
                                   <div key={comment.id} className="flex space-x-3">
-                                    <Avatar className="size-8 flex-shrink-0">
-                                      <AvatarImage src={comment.author?.image ?? "/avatar.png"} />
-                                    </Avatar>
+                                    <SecureAvatar 
+                                      src={comment.author?.image}
+                                      alt={comment.author?.name || "User"}
+                                      className="size-8 flex-shrink-0"
+                                    />
                                     <div className="flex-1 min-w-0">
                                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                                         <span className="font-medium text-sm">{comment.author?.name || "User"}</span>
@@ -592,9 +597,11 @@ export default function PlaysPage() {
                     {user && dbUserId ? (
                       <div className="p-4 border-t bg-gray-50">
                         <div className="flex space-x-3">
-                                <Avatar className="size-8 flex-shrink-0">
-                                  <AvatarImage src={user.imageUrl || "/avatar.png"} />
-                                </Avatar>
+                                <SecureAvatar 
+                                  src={user.imageUrl}
+                                  alt={user.fullName || "User"}
+                                  className="size-8 flex-shrink-0"
+                                />
                                 <div className="flex-1">
                                   <Textarea
                                     placeholder="Write a comment..."

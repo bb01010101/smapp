@@ -9,8 +9,9 @@ import { ImageIcon, Loader2Icon, SendIcon, VideoIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { createPost } from "@/actions/post.action";
 import toast from "react-hot-toast";
-import ImageUpload from "./ImageUpload";
+import S3ImageUpload from "./S3ImageUpload";
 import { useOptimisticXp } from '@/lib/useOptimisticXp';
+import { SecureAvatar } from "./SecureAvatar";
 
 function CreatePost() {
   const { user } = useUser();
@@ -67,9 +68,11 @@ function CreatePost() {
       <CardContent className="pt-6">
         <div className="space-y-4">
           <div className="flex space-x-4">
-            <Avatar className="w-10 h-10">
-              <AvatarImage src={user?.imageUrl || "/avatar.png"} />
-            </Avatar>
+            <SecureAvatar 
+              src={user?.imageUrl}
+              alt={user?.fullName || "User"}
+              className="w-10 h-10"
+            />
             <Textarea
               placeholder="What's on your mind?"
               className="min-h-[100px] resize-none border-none focus-visible:ring-0 p-0 text-base"
@@ -99,8 +102,8 @@ function CreatePost() {
 
           {(showImageUpload || media) && (
             <div className="border rounded-lg p-4">
-              <ImageUpload
-                endpoint="postImage"
+              <S3ImageUpload
+                folder="posts"
                 value={media}
                 onChange={(mediaObj) => {
                   setMedia(mediaObj);
