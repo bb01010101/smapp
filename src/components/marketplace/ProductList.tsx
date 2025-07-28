@@ -6,6 +6,8 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import { useUser } from "@clerk/nextjs";
+import { SecureImage } from "@/lib/useSecureImage";
+import { SecureAvatar } from "@/components/SecureAvatar";
 import { MoreVertical, Pencil, Trash } from "lucide-react";
 import {
   DropdownMenu,
@@ -83,11 +85,10 @@ export default function ProductList({ products }: ProductListProps) {
             <CardContent className="p-0">
               {product.image && (
                 <div className="relative aspect-square">
-                  <Image
+                  <SecureImage
                     src={product.image}
                     alt={product.title?.toString() || ""}
-                    fill
-                    className="object-cover"
+                    className="w-full h-full object-cover"
                   />
                 </div>
               )}
@@ -95,9 +96,11 @@ export default function ProductList({ products }: ProductListProps) {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-3">
                     <Link href={`/profile/${product.author.username}`}>
-                      <Avatar className="size-8">
-                        <AvatarImage src={product.author.image ?? "/avatar.png"} />
-                      </Avatar>
+                      <SecureAvatar 
+                        src={product.author.image}
+                        alt={product.author.name || "User"}
+                        className="size-8"
+                      />
                     </Link>
                     <div>
                       <Link

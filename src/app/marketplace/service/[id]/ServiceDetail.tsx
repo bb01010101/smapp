@@ -5,6 +5,7 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { SecureAvatar } from "@/components/SecureAvatar";
 import { MapPinIcon, TagIcon, ClockIcon, MoreVertical, Pencil, Trash } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import {
@@ -119,9 +120,11 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
 
         <div className="flex items-center space-x-3">
           <Link href={`/profile/${service.author.username}`}>
-            <Avatar className="size-10">
-              <AvatarImage src={service.author.image ?? "/avatar.png"} />
-            </Avatar>
+            <SecureAvatar 
+              src={service.author.image}
+              alt={service.author.name || "User"}
+              className="size-10"
+            />
           </Link>
           <div>
             <Link

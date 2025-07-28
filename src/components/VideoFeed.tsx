@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { SecureVideo } from "./SecureVideo";
 
 export default function VideoFeed({ src, poster }: { src: string; poster?: string }) {
   const [showControls, setShowControls] = useState(false);
@@ -20,7 +21,7 @@ export default function VideoFeed({ src, poster }: { src: string; poster?: strin
       className="w-full h-full flex items-center justify-center bg-black relative"
       style={{ cursor: "pointer" }}
     >
-      <video
+      <SecureVideo
         ref={videoRef}
         src={src}
         poster={poster}

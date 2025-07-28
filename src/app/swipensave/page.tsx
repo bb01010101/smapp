@@ -6,6 +6,7 @@ import { useUser } from "@clerk/nextjs";
 import { useRouter } from 'next/navigation';
 import toast from "react-hot-toast";
 import { isUserVerifiedShelter } from "@/lib/utils";
+import { SecureImage } from "@/lib/useSecureImage";
 
 // DoubleHeartIcon SVG
 function DoubleHeartIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -67,7 +68,7 @@ function PetCard({ pet, loveCount, onImageError }: any) {
             <ChevronLeft className="w-7 h-7 text-white" />
           </button>
         )}
-        <img
+        <SecureImage
           src={images[activeIdx]}
           alt={pet?.pet?.name || 'Dog'}
           className="object-cover w-full h-full bg-black"
@@ -637,7 +638,7 @@ export default function SwipeNSavePage() {
                         className={`flex items-center gap-3 p-2 rounded-lg border ${selectedFriend === friend.id ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'} hover:bg-yellow-100`}
                         onClick={() => setSelectedFriend(friend.id)}
                       >
-                        <img src={friend.image} alt={friend.name} className="w-8 h-8 rounded-full" />
+                        <SecureImage src={friend.image} alt={friend.name} className="w-8 h-8 rounded-full" />
                         <span className="font-semibold">{friend.name ? (friend.name.trim().split(' ').length === 1 ? friend.name : friend.name.split(' ')[0]) : friend.username}</span>
                       </button>
                     ))}

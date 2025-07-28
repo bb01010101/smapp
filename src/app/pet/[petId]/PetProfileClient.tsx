@@ -18,12 +18,14 @@ import dynamic from "next/dynamic";
 import { DeleteAlertDialog } from "@/components/DeleteAlertDialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { SecureImage } from "@/lib/useSecureImage";
+import { SecureAvatar } from "@/components/SecureAvatar";
 import HorizontalTimeline from "@/components/HorizontalTimeline";
 import BlueCheckIcon from "@/components/BlueCheckIcon";
 import { isUserVerified } from "@/lib/utils";
 
-// Dynamically import ImageUpload to avoid SSR issues
-const ImageUpload = dynamic(() => import("@/components/ImageUpload"), {
+// Dynamically import S3ImageUpload to avoid SSR issues
+const S3ImageUpload = dynamic(() => import("@/components/S3ImageUpload"), {
   ssr: false,
   loading: () => <div className="flex items-center justify-center size-40 border-2 border-dashed rounded-md">Loading...</div>
 });
@@ -142,9 +144,11 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
             {/* Header overlay */}
             <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent rounded-t-xl">
               <div className="flex items-center gap-3">
-                <Avatar className="w-8 h-8">
-                  <AvatarImage src={post.author?.image ?? "/avatar.png"} />
-                </Avatar>
+                <SecureAvatar 
+                  src={post.author?.image}
+                  alt={post.author?.name || "User"}
+                  className="w-8 h-8"
+                />
                 <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-1 min-w-0">
                     <span className="font-semibold truncate text-white text-sm">{post.author?.name ?? post.author?.username}</span>
@@ -212,9 +216,11 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
                     <div className="space-y-3">
                       {comments.map((comment: any) => (
                         <div key={comment.id} className="flex space-x-2">
-                          <Avatar className="size-6 flex-shrink-0">
-                            <AvatarImage src={comment.author.image ?? "/avatar.png"} />
-                          </Avatar>
+                          <SecureAvatar 
+                            src={comment.author.image}
+                            alt={comment.author.name || "User"}
+                            className="size-6 flex-shrink-0"
+                          />
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
                               <span className="font-medium text-xs">{comment.author.name}</span>
@@ -238,9 +244,11 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
                 {/* Add comment */}
                 {user && (
                   <div className="flex items-center gap-2 p-3 border-t border-muted">
-                    <Avatar className="size-6 flex-shrink-0">
-                      <AvatarImage src={user?.imageUrl || "/avatar.png"} />
-                    </Avatar>
+                    <SecureAvatar 
+                      src={user?.imageUrl}
+                      alt={user?.fullName || "User"}
+                      className="size-6 flex-shrink-0"
+                    />
                     <Textarea
                       placeholder="Write a comment..."
                       value={newComment}
@@ -270,8 +278,8 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
        <DialogContent className="p-0 flex flex-col items-stretch justify-center bg-transparent shadow-none border-none max-w-2xl w-full">
          {/* Image container - fit image size */}
          <div className="relative bg-black flex items-center justify-center">
-           <img
-             src={post.image || "/placeholder.png"}
+           <SecureImage
+             src={post.image}
              alt={post.title || "Post"}
              className="w-full h-auto max-h-[70vh] object-contain"
            />
@@ -279,9 +287,11 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
            {/* Header overlay */}
            <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent">
              <div className="flex items-center gap-3">
-               <Avatar className="w-10 h-10">
-                 <AvatarImage src={post.author?.image ?? "/avatar.png"} />
-               </Avatar>
+                               <SecureAvatar 
+                  src={post.author?.image}
+                  alt={post.author?.name || "User"}
+                  className="w-10 h-10"
+                />
                <div className="flex flex-col min-w-0">
                  <div className="flex items-center gap-1 min-w-0">
                    <span className="font-semibold truncate text-white">{post.author?.name ?? post.author?.username}</span>
@@ -349,9 +359,11 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
                    <div className="space-y-4">
                      {comments.map((comment: any) => (
                        <div key={comment.id} className="flex space-x-3">
-                         <Avatar className="size-8 flex-shrink-0">
-                           <AvatarImage src={comment.author.image ?? "/avatar.png"} />
-                         </Avatar>
+                         <SecureAvatar 
+                           src={comment.author.image}
+                           alt={comment.author.name || "User"}
+                           className="size-8 flex-shrink-0"
+                         />
                          <div className="flex-1 min-w-0">
                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                              <span className="font-medium text-sm">{comment.author.name}</span>
@@ -375,9 +387,11 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
                {/* Add comment */}
                {user && (
                  <div className="flex items-center gap-3 p-4 border-t border-muted">
-                   <Avatar className="size-8 flex-shrink-0">
-                     <AvatarImage src={user?.imageUrl || "/avatar.png"} />
-                   </Avatar>
+                   <SecureAvatar 
+                     src={user?.imageUrl}
+                     alt={user?.fullName || "User"}
+                     className="size-8 flex-shrink-0"
+                   />
                    <Textarea
                      placeholder="Write a comment..."
                      value={newComment}
@@ -591,9 +605,11 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
                   onClick={handleTimelineOpen}
                   title="View Timeline"
                 >
-                  <Avatar className="w-24 h-24 border-2 border-primary group-hover:scale-105 transition">
-                    <AvatarImage src={pet.imageUrl ?? "/avatar.png"} />
-                  </Avatar>
+                  <SecureAvatar 
+                    src={pet.imageUrl}
+                    alt={pet.name}
+                    className="w-24 h-24 border-2 border-primary group-hover:scale-105 transition"
+                  />
                 </div>
                 <h1 className="mt-4 text-2xl font-bold">{pet.name}</h1>
                 <p className="text-muted-foreground">{pet.breed} {pet.breed && pet.age && "•"} {pet.age}</p>
@@ -687,8 +703,8 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
                           controls={false}
                         />
                       ) : (
-                        <img
-                          src={post.image || '/placeholder.png'}
+                        <SecureImage
+                          src={post.image}
                           alt={post.title || 'Post'}
                           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                         />
@@ -729,9 +745,11 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
               <div className="flex flex-col items-center p-6 w-full">
                 <div className="flex items-center justify-between w-full mb-6">
                   <div className="flex items-center space-x-4">
-                    <Avatar className="w-16 h-16">
-                      <AvatarImage src={pet.imageUrl ? pet.imageUrl : '/avatar.png'} alt={pet.name} />
-                    </Avatar>
+                    <SecureAvatar 
+                      src={pet.imageUrl}
+                      alt={pet.name}
+                      className="w-16 h-16"
+                    />
                     <div>
                       <div className="font-bold text-xl">{pet.name}'s Timeline</div>
                       <div className="text-sm text-muted-foreground">{petPosts.length} photos</div>
@@ -791,7 +809,7 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
                                 } bg-white"
                                 onClick={() => setActivePhotoId(post.id === activePhotoId ? null : post.id)}
                               >
-                                <img src={post.image || '/avatar.png'} alt={pet.name + ' photo'} className="w-full h-full object-cover" />
+                                <SecureImage src={post.image || '/avatar.png'} alt={pet.name + ' photo'} className="w-full h-full object-cover" />
                                 {/* Golden overlay for today's post */}
                                 {isToday && (
                                   <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-yellow-400/20 pointer-events-none" />
@@ -880,8 +898,8 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
                       )}
                       {timelineImageUpload && (
                         <div className="space-y-2">
-                          <ImageUpload
-                            endpoint="postImage"
+                          <S3ImageUpload
+                            folder="posts"
                             value={timelineImageUpload.url ? timelineImageUpload : null}
                             onChange={mediaObj => setTimelineImageUpload(mediaObj)}
                           />
@@ -924,8 +942,8 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
                     <div className="text-sm text-muted-foreground">
                       Upload media for {pet?.name}'s timeline
                     </div>
-                    <ImageUpload
-                      endpoint="postImage"
+                    <S3ImageUpload
+                      folder="posts"
                       value={timelineImageUpload}
                       onChange={(mediaObj) => {
                         setTimelineImageUpload(mediaObj);
@@ -972,8 +990,8 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>Image</Label>
-                <ImageUpload
-                  endpoint="postImage"
+                <S3ImageUpload
+                  folder="posts"
                   value={editImage}
                   onChange={img => setEditImage(img)}
                 />

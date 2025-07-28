@@ -3,6 +3,7 @@
 import { XIcon, Loader2Icon, UploadIcon } from "lucide-react";
 import { useState, useRef } from "react";
 import toast from "react-hot-toast";
+import { SecureImage } from "@/lib/useSecureImage";
 
 interface S3ImageUploadProps {
   onChange: (media: { url: string; type: string } | null) => void;
@@ -87,7 +88,12 @@ function S3ImageUpload({
             className="rounded-md size-40 object-cover"
           />
         ) : (
-          <img src={value.url} alt="Upload" className="rounded-md size-40 object-cover" />
+          <SecureImage 
+            src={value.url} 
+            alt="Upload" 
+            className="rounded-md size-40 object-cover"
+            fallbackSrc="/default-pet.png"
+          />
         )}
         <button
           onClick={handleRemove}

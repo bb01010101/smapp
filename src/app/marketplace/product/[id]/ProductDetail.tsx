@@ -6,6 +6,8 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { SecureImage } from "@/lib/useSecureImage";
+import { SecureAvatar } from "@/components/SecureAvatar";
 import { MapPinIcon, TagIcon, PackageIcon, MoreVertical, Pencil, Trash } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import {
@@ -90,11 +92,10 @@ export default function ProductDetail({ product }: ProductDetailProps) {
         {/* Product Image */}
         <div className="relative aspect-square rounded-lg overflow-hidden">
           {product.image ? (
-            <Image
+            <SecureImage
               src={product.image}
               alt={product.title?.toString() || ""}
-              fill
-              className="object-cover"
+              className="w-full h-full object-cover"
             />
           ) : (
             <div className="w-full h-full bg-muted flex items-center justify-center">
@@ -142,9 +143,11 @@ export default function ProductDetail({ product }: ProductDetailProps) {
 
           <div className="flex items-center space-x-3">
             <Link href={`/profile/${product.author.username}`}>
-              <Avatar className="size-10">
-                <AvatarImage src={product.author.image ?? "/avatar.png"} />
-              </Avatar>
+              <SecureAvatar 
+                src={product.author.image}
+                alt={product.author.name || "User"}
+                className="size-10"
+              />
             </Link>
             <div>
               <Link

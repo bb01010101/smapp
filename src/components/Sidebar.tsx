@@ -8,6 +8,7 @@ import { getUserByClerkId } from "@/actions/user.action";
 import Link from "next/link";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import { Separator } from "./ui/separator";
+import { SecureAvatar } from "./SecureAvatar";
 import { LinkIcon, MapPinIcon } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -90,9 +91,11 @@ export default function SidebarClient({ user }: { user?: any }) {
                 href={`/profile/${user.username}`}
                 className="flex flex-col items-center justify-center"
               >
-                <Avatar className="w-20 h-20 border-2 ">
-                  <AvatarImage src={user.image || "/avatar.png"} />
-                </Avatar>
+                <SecureAvatar 
+                  src={user.image}
+                  alt={user.name || "User"}
+                  className="w-20 h-20 border-2"
+                />
 
                 <div className="mt-4 space-y-1">
                   <div className="flex items-center gap-1">
@@ -176,9 +179,11 @@ export default function SidebarClient({ user }: { user?: any }) {
               {followers.map(f => (
                 <li key={f.id} className="flex items-center gap-3 py-3">
                   <Link href={`/profile/${f.username}`} className="flex items-center gap-3">
-                    <Avatar className="w-8 h-8">
-                      <AvatarImage src={f.image || "/avatar.png"} />
-                    </Avatar>
+                    <SecureAvatar 
+                      src={f.image}
+                      alt={f.name || "User"}
+                      className="w-8 h-8"
+                    />
                     <div>
                       <div className="flex items-center gap-1">
                         <div className="font-medium hover:underline">{f.name || f.username}</div>
@@ -214,9 +219,11 @@ export default function SidebarClient({ user }: { user?: any }) {
               {following.map(f => (
                 <li key={f.id} className="flex items-center gap-3 py-3">
                   <Link href={`/profile/${f.username}`} className="flex items-center gap-3">
-                    <Avatar className="w-8 h-8">
-                      <AvatarImage src={f.image || "/avatar.png"} />
-                    </Avatar>
+                    <SecureAvatar 
+                      src={f.image}
+                      alt={f.name || "User"}
+                      className="w-8 h-8"
+                    />
                     <div>
                       <div className="flex items-center gap-1">
                         <div className="font-medium hover:underline">{f.name || f.username}</div>

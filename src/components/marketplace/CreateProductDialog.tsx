@@ -10,7 +10,7 @@ import { useState } from "react";
 import { createProduct } from "@/actions/marketplace.action";
 import { useUser } from "@clerk/nextjs";
 import toast from "react-hot-toast";
-import ImageUpload from "../ImageUpload";
+import S3ImageUpload from "../S3ImageUpload";
 
 interface CreateProductDialogProps {
   open: boolean;
@@ -143,8 +143,8 @@ export default function CreateProductDialog({ open, onOpenChange }: CreateProduc
 
           <div className="space-y-2">
             <Label>Product Image</Label>
-            <ImageUpload
-              endpoint="postImage"
+            <S3ImageUpload
+              folder="marketplace/products"
               value={image}
               onChange={setImage}
             />

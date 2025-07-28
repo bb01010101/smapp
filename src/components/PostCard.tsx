@@ -17,6 +17,10 @@ import { isUserVerified, isUserVerifiedShelter } from "@/lib/utils";
 import BlueCheckIcon from "@/components/BlueCheckIcon";
 import RedCheckIcon from "@/components/RedCheckIcon";
 import ProfileLink from "@/components/ProfileLink";
+import { SecureImage } from "@/lib/useSecureImage";
+import { SecureAvatar } from "@/components/SecureAvatar";
+import { SecureVideo } from "@/components/SecureVideo";
+
 
 
 type Posts = Awaited<ReturnType<typeof getPosts>>
@@ -113,9 +117,11 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
         <div className="flex items-center w-full mb-2">
           <ProfileLink href={post.pet ? `/pet/${post.pet.id}` : `/profile/${post.author.username}`}
             className="flex-shrink-0">
-            <Avatar className="w-11 h-11 border-2 border-gold-200">
-              <AvatarImage src={post.pet ? post.pet.imageUrl ?? "/avatar.png" : post.author.image ?? "/avatar.png"} />
-                  </Avatar>
+            <SecureAvatar 
+              src={post.pet ? post.pet.imageUrl : post.author.image}
+              alt={post.pet ? post.pet.name : post.author.name || "User"}
+              className="w-11 h-11 border-2 border-gold-200"
+            />
           </ProfileLink>
           <div className="flex flex-col justify-center ml-3 min-w-0 flex-1">
             <div className="flex items-center gap-1 min-w-0">
@@ -169,7 +175,7 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
                 {post.mediaType?.startsWith("video") ? (
                   <VideoWithToggleControls src={post.image} />
                 ) : (
-                <img src={post.image} alt="Post content" className="w-full h-auto object-contain bg-black/5 rounded" style={{ maxHeight: 500 }} />
+                <SecureImage src={post.image} alt="Post content" className="w-full h-auto object-contain bg-black/5 rounded" style={{ maxHeight: 500 }} />
                 )}
               </div>
             ) : (
@@ -178,7 +184,7 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
                   {post.mediaType?.startsWith("video") ? (
                     <VideoWithToggleControls src={post.image} />
                   ) : (
-                  <img src={post.image} alt="Post content" className="w-full h-auto object-contain bg-black/5 rounded" style={{ maxHeight: 500 }} />
+                  <SecureImage src={post.image} alt="Post content" className="w-full h-auto object-contain bg-black/5 rounded" style={{ maxHeight: 500 }} />
                   )}
                 </div>
               </SignInButton>
@@ -241,9 +247,11 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
               <div className="space-y-4">
                 {post.comments.map((comment) => (
                   <div key={comment.id} className="flex space-x-3">
-                    <Avatar className="size-8 flex-shrink-0">
-                      <AvatarImage src={comment.author.image ?? "/avatar.png"} />
-                    </Avatar>
+                    <SecureAvatar 
+                      src={comment.author.image}
+                      alt={comment.author.name || "User"}
+                      className="size-8 flex-shrink-0"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <span className="font-medium text-sm">
@@ -271,9 +279,11 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
 
               {user ? (
                 <div className="flex space-x-3">
-                  <Avatar className="size-8 flex-shrink-0">
-                    <AvatarImage src={user?.imageUrl || "/avatar.png"} />
-                  </Avatar>
+                  <SecureAvatar 
+                    src={user?.imageUrl}
+                    alt={user?.fullName || "User"}
+                    className="size-8 flex-shrink-0"
+                  />
                   <div className="flex-1">
                     <Textarea
                       placeholder="Write a comment..."
@@ -321,7 +331,7 @@ function VideoWithToggleControls({ src }: { src: string }) {
   const [showControls, setShowControls] = useState(false);
   return (
     <div className="relative w-full h-auto" onClick={() => setShowControls((v) => !v)} style={{ cursor: "pointer" }}>
-      <video
+      <SecureVideo
         src={src}
         controls={showControls}
         autoPlay

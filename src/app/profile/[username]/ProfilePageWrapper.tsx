@@ -5,6 +5,7 @@ import { SignInButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { SecureAvatar } from "@/components/SecureAvatar";
 import { LogInIcon, UserIcon } from "lucide-react";
 import ProfilePageClient from "./ProfilePageClient";
 
@@ -45,9 +46,11 @@ export default function ProfilePageWrapper({
         <Card className="max-w-md w-full mx-4">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <Avatar className="w-20 h-20 border-2 border-primary">
-                <AvatarImage src={user.image || "/avatar.png"} />
-              </Avatar>
+              <SecureAvatar 
+                src={user.image}
+                alt={user.name || "User"}
+                className="w-20 h-20 border-2 border-primary"
+              />
             </div>
             <CardTitle className="text-xl">
               {user.name || user.username}'s Profile

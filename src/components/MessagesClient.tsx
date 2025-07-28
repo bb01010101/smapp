@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { SecureAvatar } from "@/components/SecureAvatar";
 import { formatDistanceToNow } from "date-fns";
 import ChatWindow from "@/components/ChatWindow";
 import { Button } from "@/components/ui/button";
@@ -112,9 +113,10 @@ export default function MessagesClient({ conversations }: { conversations: any[]
               }}
             >
               <CardContent className="flex items-center gap-4 p-4">
-                <Avatar>
-                  <AvatarImage src={other?.image || "/avatar.png"} />
-                </Avatar>
+                <SecureAvatar 
+                  src={other?.image}
+                  alt={other?.name || "User"}
+                />
                 <div className="flex-1">
                   <div className="font-medium flex items-center gap-1">
                     {other?.name || other?.username || "Unknown User"}
@@ -154,9 +156,10 @@ export default function MessagesClient({ conversations }: { conversations: any[]
               onClick={() => setSelectedId(conv.id)}
             >
               <CardContent className="flex items-center gap-4 p-4">
-                <Avatar>
-                  <AvatarImage src={other?.image || "/avatar.png"} />
-                </Avatar>
+                <SecureAvatar 
+                  src={other?.image}
+                  alt={other?.name || "User"}
+                />
                 <div className="flex-1">
                   <div className="font-medium flex items-center gap-1">
                     {other?.name || other?.username || "Unknown User"}

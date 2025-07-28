@@ -5,6 +5,7 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { useUser } from "@clerk/nextjs";
+import { SecureAvatar } from "@/components/SecureAvatar";
 import { MoreVertical, Pencil, Trash } from "lucide-react";
 import {
   DropdownMenu,
@@ -73,9 +74,11 @@ export default function ServiceList({ services }: ServiceListProps) {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-3">
                 <Link href={`/profile/${service.author.username}`}>
-                  <Avatar className="size-8">
-                    <AvatarImage src={service.author.image ?? "/avatar.png"} />
-                  </Avatar>
+                  <SecureAvatar 
+                    src={service.author.image}
+                    alt={service.author.name || "User"}
+                    className="size-8"
+                  />
                 </Link>
                 <div>
                   <Link

@@ -7,8 +7,12 @@ import { getDbUserId } from "@/actions/user.action";
 import { useUser } from "@clerk/nextjs";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { SecureImage } from "@/lib/useSecureImage";
+import { SecureAvatar } from "@/components/SecureAvatar";
+import { SecureVideo } from "@/components/SecureVideo";
 import Link from "next/link";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+
 
 type PostType = "REGULAR" | "PRODUCT" | "SERVICE";
 
@@ -100,15 +104,15 @@ function PostMedia({ post }: { post: Post }) {
       className="mx-auto"
     >
       {isVideo ? (
-        <video
-          src={post.image || undefined}
+        <SecureVideo
+          src={post.image}
           controls={false}
           autoPlay
           style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 0 }}
         />
       ) : (
-        <img
-          src={post.image || "/placeholder.png"}
+        <SecureImage
+          src={post.image}
           alt={post.title || "Post"}
           style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 0 }}
         />
@@ -221,9 +225,11 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
           >
             <div className="flex items-center gap-3 mb-2">
               <Link href={`/profile/${post.author.username}`}>
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src={post.author.image ?? "/avatar.png"} />
-                </Avatar>
+                <SecureAvatar 
+                  src={post.author.image}
+                  alt={post.author.name || "User"}
+                  className="w-10 h-10"
+                />
               </Link>
               <div>
                 <Link href={`/profile/${post.author.username}`} className="font-semibold hover:underline">
@@ -236,9 +242,11 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
             <div className="space-y-4 max-h-[30vh] overflow-y-auto">
               {comments.map((comment) => (
                 <div key={comment.id} className="flex space-x-3">
-                  <Avatar className="size-8 flex-shrink-0">
-                    <AvatarImage src={comment.author.image ?? "/avatar.png"} />
-                  </Avatar>
+                  <SecureAvatar 
+                    src={comment.author.image}
+                    alt={comment.author.name || "User"}
+                    className="size-8 flex-shrink-0"
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <span className="font-medium text-sm">{comment.author.name}</span>
@@ -255,9 +263,11 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
             </div>
             {user ? (
               <div className="flex space-x-3 mt-4">
-                <Avatar className="size-8 flex-shrink-0">
-                  <AvatarImage src={user?.imageUrl || "/avatar.png"} />
-                </Avatar>
+                                <SecureAvatar 
+                  src={user?.imageUrl}
+                  alt={user?.fullName || "User"}
+                  className="size-8 flex-shrink-0"
+                />
                 <div className="flex-1">
                   <textarea
                     placeholder="Write a comment..."
@@ -438,7 +448,7 @@ export default function PawPad() {
                     <div className="px-4 py-2 text-xs text-gray-500">Users</div>
                     {searchResults.filter(r => r.type === 'user').map(user => (
                       <div key={user.id} className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2" onClick={() => handleResultClick(user)}>
-                        <Avatar className="w-6 h-6"><AvatarImage src={user.image || '/avatar.png'} /></Avatar>
+                        <SecureAvatar src={user.image} alt={user.name || "User"} className="w-6 h-6" />
                         <span className="font-medium">{user.name || user.username}</span>
                         <span className="text-xs text-gray-400">@{user.username}</span>
                       </div>
@@ -450,7 +460,7 @@ export default function PawPad() {
                     <div className="px-4 py-2 text-xs text-gray-500">Pets</div>
                     {searchResults.filter(r => r.type === 'pet').map(pet => (
                       <div key={pet.id} className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2" onClick={() => handleResultClick(pet)}>
-                        <Avatar className="w-6 h-6"><AvatarImage src={pet.imageUrl || '/avatar.png'} /></Avatar>
+                        <SecureAvatar src={pet.imageUrl} alt={pet.name} className="w-6 h-6" />
                         <span className="font-medium">{pet.name}</span>
                         <span className="text-xs text-gray-400">{pet.species}</span>
                       </div>
@@ -462,7 +472,7 @@ export default function PawPad() {
                     <div className="px-4 py-2 text-xs text-gray-500">Posts</div>
                     {searchResults.filter(r => r.type === 'post').map(post => (
                       <div key={post.id} className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2" onClick={() => handleResultClick(post)}>
-                        <img src={post.image || '/placeholder.png'} alt="Post" className="w-6 h-6 rounded object-cover" />
+                        <SecureImage src={post.image} alt="Post" className="w-6 h-6 rounded object-cover" />
                         <span className="font-medium truncate max-w-xs">{post.content || post.title || 'Post'}</span>
                       </div>
                     ))}
@@ -499,9 +509,9 @@ export default function PawPad() {
                 onMouseLeave={() => post.mediaType?.startsWith('video') && handleMouseLeave(idx)}
               >
                 {post.mediaType?.startsWith('video') ? (
-                  <video
+                  <SecureVideo
                     ref={el => { videoRefs.current[idx] = el; }}
-                    src={post.image || undefined}
+                    src={post.image}
                     muted
                     loop
                     playsInline
@@ -510,8 +520,8 @@ export default function PawPad() {
                     controls={false}
                     />
                   ) : (
-                  <img
-                    src={post.image || '/placeholder.png'}
+                  <SecureImage
+                    src={post.image}
                     alt={post.title || 'Post'}
                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                   />

@@ -2,6 +2,7 @@ import { getRandomUsers } from "@/actions/user.action";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import Link from "next/link";
 import { Avatar, AvatarImage } from "./ui/avatar";
+import { SecureAvatar } from "./SecureAvatar";
 import FollowButton from "./FollowButton";
 import ProfileLink from "./ProfileLink";
 import { isUserVerified, isUserVerifiedShelter } from "@/lib/utils";
@@ -26,9 +27,10 @@ async function WhoToFollow() {
             <div key={user.id} className="flex gap-2 items-center justify-between ">
               <div className="flex items-center gap-1">
                 <ProfileLink href={`/profile/${user.username}`}>
-                  <Avatar>
-                    <AvatarImage src={user.image ?? "/avatar.png"} />
-                  </Avatar>
+                  <SecureAvatar 
+                    src={user.image}
+                    alt={user.name || "User"}
+                  />
                 </ProfileLink>
                 <div className="text-xs">
                   <div className="flex items-center gap-1">

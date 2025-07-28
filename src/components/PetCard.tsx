@@ -6,6 +6,7 @@ import { PrestigeKey, prestigeLevels } from '@/lib/petLeveling';
 import { getPetDisplayImage } from '@/lib/petImageUtils';
 import { getEvolutionStageName } from '@/lib/petEvolution';
 import { getPrestigeByLevel } from '@/lib/petLeveling';
+import { SecureImage } from '@/lib/useSecureImage';
 
 interface PetCardProps {
   imageUrl: string;
@@ -279,7 +280,7 @@ export const PetCard: React.FC<PetCardProps> = ({
                       showEvolutionAnimation ? 'animate-expand-shake' : ''
                     }`} />
                   ) : (
-                    <img
+                    <SecureImage
                       src={displayImage}
                       alt={name}
                       className={`w-28 h-28 rounded-full border-4 border-white shadow-xl object-cover bg-white/40 ${
@@ -290,7 +291,7 @@ export const PetCard: React.FC<PetCardProps> = ({
                 </div>
                 {/* Back image */}
                 {backImage && (
-                  <img
+                  <SecureImage
                     src={backImage}
                     alt={name + ' Alternate'}
                     className="w-28 h-28 rounded-full border-4 border-white shadow-xl object-cover bg-white/40 absolute top-0 left-0 backface-hidden"
