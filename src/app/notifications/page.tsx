@@ -105,7 +105,7 @@ function NotificationsPage() {
                             {notification.post.image && (
                               <SecureImage
                                 src={notification.post.image}
-                                alt="Post content"
+                                alt=""
                                 className="mt-2 rounded-md w-full max-w-[200px] h-auto object-cover"
                               />
                             )}
