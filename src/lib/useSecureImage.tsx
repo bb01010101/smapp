@@ -126,11 +126,7 @@ export function SecureImage({
 
   if (loading) {
     return (
-      <div className={`bg-gray-200 animate-pulse ${className}`} style={style}>
-        <div className="flex items-center justify-center h-full">
-          <span className="text-gray-400 text-sm">Loading...</span>
-        </div>
-      </div>
+      <div className={`bg-gray-200 animate-pulse ${className}`} style={style} />
     );
   }
 

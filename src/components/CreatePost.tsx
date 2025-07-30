@@ -5,13 +5,15 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "./ui/card";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import { Textarea } from "./ui/textarea";
-import { ImageIcon, Loader2Icon, SendIcon, VideoIcon } from "lucide-react";
+import { ImageIcon, Loader2Icon, SendIcon, VideoIcon, TrophyIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { createPost } from "@/actions/post.action";
 import toast from "react-hot-toast";
 import S3ImageUpload from "./S3ImageUpload";
 import { useOptimisticXp } from '@/lib/useOptimisticXp';
 import { SecureAvatar } from "./SecureAvatar";
+import { Switch } from "./ui/switch";
+import { Label } from "./ui/label";
 
 function CreatePost() {
   const { user } = useUser();
@@ -21,18 +23,28 @@ function CreatePost() {
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [pets, setPets] = useState<any[]>([]);
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
+  const [currentChallenge, setCurrentChallenge] = useState<any>(null);
+  const [joinChallenge, setJoinChallenge] = useState(false);
   const { incrementXp } = useOptimisticXp();
 
   useEffect(() => {
-    // Fetch pets for the current user
-    const fetchPets = async () => {
-      const res = await fetch("/api/pets");
-      if (res.ok) {
-        const data = await res.json();
-        setPets(data);
+    // Fetch pets for the current user and current challenge
+    const fetchData = async () => {
+      // Fetch pets
+      const petsRes = await fetch("/api/pets");
+      if (petsRes.ok) {
+        const petsData = await petsRes.json();
+        setPets(petsData);
+      }
+
+      // Fetch current weekly challenge
+      const challengeRes = await fetch("/api/weekly-challenges/current");
+      if (challengeRes.ok) {
+        const challengeData = await challengeRes.json();
+        setCurrentChallenge(challengeData.challenge);
       }
     };
-    fetchPets();
+    fetchData();
   }, []);
 
   const handleSubmit = async () => {
@@ -42,6 +54,23 @@ function CreatePost() {
     try {
       const result = await createPost(content, media?.url || "", selectedPetId, media?.type || "");
       if (result?.success) {
+        // If joining challenge, tag the post
+        if (joinChallenge && currentChallenge && result.postId) {
+          try {
+            await fetch("/api/weekly-challenges/posts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ postId: result.postId })
+            });
+            toast.success("Post created and tagged with challenge!");
+          } catch (challengeError) {
+            console.error("Failed to tag post with challenge:", challengeError);
+            toast.success("Post created, but couldn't tag with challenge");
+          }
+        } else {
+          toast.success("Post created successfully");
+        }
+
         // Track XP for posting a photo if media was uploaded
         if (media?.url && media?.type?.startsWith('image')) {
           await incrementXp('daily_post_photo', 1);
@@ -53,7 +82,7 @@ function CreatePost() {
         setMedia(null);
         setShowImageUpload(false);
         setSelectedPetId(null);
-        toast.success("Post created successfully");
+        setJoinChallenge(false);
       }
     } catch (error) {
       console.error("Failed to create post:", error);
@@ -99,6 +128,31 @@ function CreatePost() {
               ))}
             </select>
           </div>
+
+          {/* Weekly Challenge Opt-in */}
+          {currentChallenge && (
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4">
+              <div className="flex items-center space-x-3">
+                <TrophyIcon className="w-5 h-5 text-purple-600" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-purple-900">{currentChallenge.title}</h3>
+                  <p className="text-sm text-purple-700">{currentChallenge.description}</p>
+                  <p className="text-xs text-purple-600 mt-1">#{currentChallenge.hashtag}</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="join-challenge"
+                    checked={joinChallenge}
+                    onCheckedChange={setJoinChallenge}
+                    disabled={isPosting}
+                  />
+                  <Label htmlFor="join-challenge" className="text-sm font-medium text-purple-800">
+                    Join Challenge
+                  </Label>
+                </div>
+              </div>
+            </div>
+          )}
 
           {(showImageUpload || media) && (
             <div className="border rounded-lg p-4">

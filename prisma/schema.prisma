@@ -42,6 +42,9 @@ model User {
   petNetShares             PetNetShare[]
   posts                    Post[]
   userChallenges           UserChallenge[]
+  challengesCreated        WeeklyChallenge[]         @relation("ChallengeCreator")
+  challengeVotes           ChallengeVote[]
+  challengePostVotes       ChallengePostVote[]
 
   @@index([latitude, longitude])
   @@index([locationSharingEnabled, lastLocationUpdate])
@@ -67,11 +70,15 @@ model Post {
   priceType     String?
   title         String?
   type          PostType       @default(REGULAR)
+  challengeHashtag String?      // For tagging posts with weekly challenge
   comments      Comment[]
   likes         Like[]
   notifications Notification[]
+  challengePosts ChallengePost[]
   author        User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   pet           Pet?           @relation("PetPosts", fields: [petId], references: [id])
+
+  @@index([challengeHashtag, createdAt])
 }
 
 model Comment {
@@ -282,6 +289,82 @@ model PetNetShare {
 
   @@unique([senderId, recipient, sentAt])
   @@index([senderId, recipient, sentAt])
+}
+
+// Weekly Special Challenge System
+model WeeklyChallenge {
+  id                String               @id @default(cuid())
+  title             String               // e.g. "Best Halloween Costume"
+  description       String               // Description of the challenge
+  hashtag           String               @unique // e.g. "halloween2025"
+  startDate         DateTime
+  endDate           DateTime
+  isActive          Boolean              @default(false)
+  createdBy         String               // Admin user ID
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  weekNumber        Int                  // Week of the year
+  year              Int                  // Year
+  creator           User                 @relation("ChallengeCreator", fields: [createdBy], references: [id])
+  challengeOptions  ChallengeOption[]
+  challengeVotes    ChallengeVote[]
+  challengePosts    ChallengePost[]
+
+  @@unique([weekNumber, year])
+  @@index([isActive, startDate, endDate])
+}
+
+model ChallengeOption {
+  id                String              @id @default(cuid())
+  weeklyChallenge   WeeklyChallenge     @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  challengeId       String
+  title             String              // e.g. "Best Pool Video"
+  description       String?
+  orderIndex        Int                 // For displaying in order (1, 2, 3)
+  createdAt         DateTime            @default(now())
+  challengeVotes    ChallengeVote[]
+
+  @@index([challengeId, orderIndex])
+}
+
+model ChallengeVote {
+  id                String              @id @default(cuid())
+  userId            String
+  weeklyChallenge   WeeklyChallenge     @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  challengeId       String
+  challengeOption   ChallengeOption     @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  optionId          String
+  createdAt         DateTime            @default(now())
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId]) // One vote per user per challenge
+  @@index([challengeId, optionId])
+}
+
+model ChallengePost {
+  id                String                 @id @default(cuid())
+  postId            String
+  weeklyChallenge   WeeklyChallenge        @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  challengeId       String
+  createdAt         DateTime               @default(now())
+  post              Post                   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  challengePostVotes ChallengePostVote[]
+
+  @@unique([postId, challengeId])
+  @@index([challengeId, createdAt])
+}
+
+model ChallengePostVote {
+  id                String              @id @default(cuid())
+  userId            String
+  challengePost     ChallengePost       @relation(fields: [challengePostId], references: [id], onDelete: Cascade)
+  challengePostId   String
+  value             Int                 // 1 for upvote, -1 for downvote
+  createdAt         DateTime            @default(now())
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengePostId]) // One vote per user per post
+  @@index([challengePostId, value])
 }
 
 enum Prestige {

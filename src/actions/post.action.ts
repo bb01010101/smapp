@@ -179,7 +179,7 @@ export async function createPost(content: string, image: string, petId?: string 
           await trackChallengeProgress('weekly_post_7_photos', 1);
         }
         
-        return { success:true, post }
+        return { success:true, post, postId: post.id }
     } catch (error) {
         console.error("Failed to create post:", error);
         return { success: false, error: "Failed to create post" };
