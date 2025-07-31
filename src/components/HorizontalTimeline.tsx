@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { SecureAvatar } from "@/components/SecureAvatar";
+import { SecureImage } from "@/lib/useSecureImage";
 import { ChevronLeftIcon, ChevronRightIcon, FlameIcon, ImageIcon, Loader2Icon, PencilIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { format } from "date-fns";
 import { DeleteAlertDialog } from "@/components/DeleteAlertDialog";
@@ -402,7 +403,7 @@ export default function HorizontalTimeline({
                       setActivePhotoId(post.id === activePhotoId ? null : post.id);
                     }}
                   >
-                    <img
+                    <SecureImage
                       src={post.image || '/default-pet.png'}
                       alt={`${postPet?.name || 'Pet'} photo`}
                       className="w-full h-full object-cover"

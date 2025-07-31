@@ -1006,31 +1006,33 @@ function ProfilePageClient({
    <div className="w-full h-screen bg-background flex items-center justify-center relative overflow-hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
      <div className="max-w-3xl mx-auto w-full h-full overflow-y-auto pt-20 scrollbar-hide">
        {/* Create Pet Button */}
-       <div className="w-full flex justify-center items-center my-8">
-         {!hasPets ? (
-           <Button
-             onClick={() => setShowEditFamilyDialog(true)}
-             className="px-10 py-6 text-2xl font-bold bg-gradient-to-r from-pink-500 via-yellow-400 to-orange-400 text-white shadow-xl rounded-full"
-             style={{
-               boxShadow: '0 0 32px 8px #fbbf24, 0 0 64px 16px #f472b6, 0 0 0 12px rgba(251,191,36,0.15)',
-               transition: 'box-shadow 0.6s cubic-bezier(0.4,0,0.2,1)',
-             }}
-             onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 48px 16px #fbbf24, 0 0 96px 32px #f472b6, 0 0 0 20px rgba(251,191,36,0.18)'}
-             onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 32px 8px #fbbf24, 0 0 64px 16px #f472b6, 0 0 0 12px rgba(251,191,36,0.15)'}
-           >
-             <span className="drop-shadow-lg">+ Create Your First Pet</span>
-           </Button>
-         ) : (
-           <div className="fixed top-28 right-8 z-30">
+       {isOwnProfile && (
+         <div className="w-full flex justify-center items-center my-8">
+           {!hasPets ? (
              <Button
                onClick={() => setShowEditFamilyDialog(true)}
-               className="px-4 py-2 text-base font-semibold bg-gradient-to-r from-pink-400 via-yellow-300 to-orange-300 text-white shadow-md rounded-full hover:scale-105 transition-all duration-300 opacity-90"
+               className="px-10 py-6 text-2xl font-bold bg-gradient-to-r from-pink-500 via-yellow-400 to-orange-400 text-white shadow-xl rounded-full"
+               style={{
+                 boxShadow: '0 0 32px 8px #fbbf24, 0 0 64px 16px #f472b6, 0 0 0 12px rgba(251,191,36,0.15)',
+                 transition: 'box-shadow 0.6s cubic-bezier(0.4,0,0.2,1)',
+               }}
+               onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 48px 16px #fbbf24, 0 0 96px 32px #f472b6, 0 0 0 20px rgba(251,191,36,0.18)'}
+               onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 32px 8px #fbbf24, 0 0 64px 16px #f472b6, 0 0 0 12px rgba(251,191,36,0.15)'}
              >
-               + Add Pet
+               <span className="drop-shadow-lg">+ Create Your First Pet</span>
              </Button>
-           </div>
-         )}
-       </div>
+           ) : (
+             <div className="fixed top-28 right-8 z-30">
+               <Button
+                 onClick={() => setShowEditFamilyDialog(true)}
+                 className="px-4 py-2 text-base font-semibold bg-gradient-to-r from-pink-400 via-yellow-300 to-orange-300 text-white shadow-md rounded-full hover:scale-105 transition-all duration-300 opacity-90"
+               >
+                 + Add Pet
+               </Button>
+             </div>
+           )}
+         </div>
+       )}
        {/* Main grid layout for sidebar and content */}
        <div className="grid grid-cols-1 gap-6 p-6">
        {/* Merged Family Timeline */}
