@@ -39,7 +39,8 @@ export async function GET(request: NextRequest) {
             id: true, 
             name: true, 
             username: true, 
-            image: true 
+            image: true,
+            isFirst1000: true
           }
         },
         pet: {

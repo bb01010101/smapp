@@ -30,6 +30,7 @@ async function WhoToFollow() {
                   <SecureAvatar 
                     src={user.image}
                     alt={user.name || "User"}
+                    showFirst1000Badge={user?.isFirst1000}
                   />
                 </ProfileLink>
                 <div className="text-xs">

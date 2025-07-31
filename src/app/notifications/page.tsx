@@ -81,6 +81,7 @@ function NotificationsPage() {
                     src={notification.creator.image}
                     alt={notification.creator.name || "User"}
                     className="mt-1"
+                    showFirst1000Badge={notification.creator?.isFirst1000}
                   />
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">

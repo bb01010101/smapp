@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { HeartIcon, XIcon, Bone, ZapIcon, ChevronLeft, ChevronRight, TrophyIcon, ArrowUpIcon, ArrowDownIcon } from "lucide-react";
+import { HeartIcon, XIcon, Bone, ZapIcon, ChevronLeft, ChevronRight, TrophyIcon, ArrowUpIcon, ArrowDownIcon, Heart } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from 'next/navigation';
 import toast from "react-hot-toast";
@@ -14,6 +14,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import BlueCheckIcon from "@/components/BlueCheckIcon";
 import RedCheckIcon from "@/components/RedCheckIcon";
 import { PetCardSkeleton } from "@/components/PetCardSkeleton";
+import PetDatingProfileEditor from "@/components/PetDatingProfileEditor";
 
 // Types for new tabs
 type ChallengePost = {
@@ -78,63 +79,173 @@ function DoubleHeartIcon(props: React.SVGProps<SVGSVGElement>) {
 function PetCard({ pet, loveCount, onImageError }: any) {
   const [images, setImages] = useState<string[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
+  const [photoSwipeStart, setPhotoSwipeStart] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
-    async function fetchPetPosts() {
-      if (!pet.pet?.id) return setImages([pet.image || pet.pet?.imageUrl || "/default-pet.png"]);
-      try {
-        const res = await fetch(`/api/pets/${pet.pet.id}`);
-        if (!res.ok) throw new Error('Failed to fetch pet posts');
-        const data = await res.json();
-        // Get up to 6 images from the pet's posts, most recent first
-        const imgs = (data.posts || [])
-          .filter((p: any) => p.image)
-          .slice(0, 6)
-          .map((p: any) => p.image);
-        setImages(imgs.length ? imgs : [pet.image || pet.pet?.imageUrl || "/default-pet.png"]);
-        setActiveIdx(0);
-      } catch {
-        setImages([pet.image || pet.pet?.imageUrl || "/default-pet.png"]);
-        setActiveIdx(0);
-      }
+    // Use dating profile photos if available, otherwise fallback to post image
+    const datingPhotos = pet.pet?.datingProfilePhotos;
+    
+    if (datingPhotos && Array.isArray(datingPhotos) && datingPhotos.length > 0) {
+      setImages(datingPhotos);
+    } else {
+      // Fallback to using the post image or pet's main image
+      setImages([pet.image || pet.pet?.imageUrl || "/default-pet.png"]);
     }
-    fetchPetPosts();
-  }, [pet.pet?.id, pet.image, pet.pet?.imageUrl]);
+    setActiveIdx(0);
+  }, [pet.pet?.datingProfilePhotos, pet.image, pet.pet?.imageUrl]);
 
   const goLeft = () => setActiveIdx((idx) => (idx === 0 ? images.length - 1 : idx - 1));
   const goRight = () => setActiveIdx((idx) => (idx === images.length - 1 ? 0 : idx + 1));
 
+  const handlePhotoTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    if (images.length <= 1) return;
+    setPhotoSwipeStart({
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    });
+    setIsDragging(false);
+  };
+
+  const handlePhotoTouchMove = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    if (images.length <= 1 || !photoSwipeStart) return;
+    
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const diffX = Math.abs(currentX - photoSwipeStart.x);
+    const diffY = Math.abs(currentY - photoSwipeStart.y);
+    
+    // If horizontal movement is greater than vertical, prevent default to enable photo swipe
+    if (diffX > diffY && diffX > 10) {
+      e.preventDefault();
+      setIsDragging(true);
+    }
+  };
+
+  const handlePhotoTouchEnd = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    if (images.length <= 1 || !photoSwipeStart) return;
+    
+    const endX = e.changedTouches[0].clientX;
+    const diff = photoSwipeStart.x - endX;
+    
+    // Minimum swipe distance and ensure it was a horizontal swipe
+    if (Math.abs(diff) > 30 && isDragging) {
+      if (diff > 0) goRight(); // Swipe left = next photo
+      else goLeft(); // Swipe right = previous photo
+    }
+    
+    setPhotoSwipeStart(null);
+    setIsDragging(false);
+  };
+
+  const handlePhotoMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (images.length <= 1) return;
+    setPhotoSwipeStart({
+      x: e.clientX,
+      y: e.clientY
+    });
+    setIsDragging(false);
+  };
+
+  const handlePhotoMouseMove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (images.length <= 1 || !photoSwipeStart) return;
+    
+    const diffX = Math.abs(e.clientX - photoSwipeStart.x);
+    if (diffX > 10) {
+      setIsDragging(true);
+    }
+  };
+
+  const handlePhotoMouseUp = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (images.length <= 1 || !photoSwipeStart) return;
+    
+    const endX = e.clientX;
+    const diff = photoSwipeStart.x - endX;
+    
+    // Minimum swipe distance
+    if (Math.abs(diff) > 30 && isDragging) {
+      if (diff > 0) goRight(); // Swipe left = next photo
+      else goLeft(); // Swipe right = previous photo
+    }
+    
+    setPhotoSwipeStart(null);
+    setIsDragging(false);
+  };
+
   return (
     <div className="relative w-full h-full flex flex-col rounded-3xl shadow-2xl overflow-hidden bg-white">
       {/* Image carousel */}
-      <div className="relative w-full h-full min-h-[60vh] max-h-[80vh] flex items-center justify-center bg-black">
-        {/* Top bar for image progress */}
+      <div 
+        className="relative w-full h-full min-h-[60vh] max-h-[80vh] flex items-center justify-center bg-black cursor-pointer select-none"
+        onTouchStart={handlePhotoTouchStart}
+        onTouchMove={handlePhotoTouchMove}
+        onTouchEnd={handlePhotoTouchEnd}
+        onMouseDown={handlePhotoMouseDown}
+        onMouseMove={handlePhotoMouseMove}
+        onMouseUp={handlePhotoMouseUp}
+        onMouseLeave={() => {
+          setPhotoSwipeStart(null);
+          setIsDragging(false);
+        }}
+      >
+        {/* Enhanced Top bar for image progress - More visible on web */}
         {images.length > 1 && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 flex gap-1 z-20 w-[90%] max-w-xs">
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex gap-1 z-30 w-[85%] max-w-sm">
             {images.map((_, i) => (
-              <span
+              <button
                 key={i}
-                className={`flex-1 h-1 rounded-full transition-all duration-200 ${i === activeIdx ? 'bg-white' : 'bg-white/30'}`}
-                style={{ marginLeft: i === 0 ? 0 : 2, marginRight: i === images.length - 1 ? 0 : 2 }}
-              ></span>
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveIdx(i);
+                }}
+                className={`flex-1 h-1.5 rounded-full transition-all duration-300 hover:h-2 ${
+                  i === activeIdx ? 'bg-white shadow-lg' : 'bg-white/40 hover:bg-white/60'
+                }`}
+                aria-label={`View photo ${i + 1}`}
+              />
             ))}
           </div>
         )}
+        
+        {/* Enhanced Navigation Buttons - More prominent for web */}
         {images.length > 1 && (
-          <button className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/40 rounded-full p-1" onClick={goLeft} aria-label="Previous photo">
-            <ChevronLeft className="w-7 h-7 text-white" />
+          <button 
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-30 bg-black/70 hover:bg-black/90 rounded-full p-3 transition-all duration-200 hover:scale-110 backdrop-blur-sm border border-white/20" 
+            onClick={(e) => { e.stopPropagation(); goLeft(); }} 
+            aria-label="Previous photo"
+          >
+            <ChevronLeft className="w-6 h-6 text-white drop-shadow-lg" />
           </button>
         )}
+        
         <SecureImage
           src={images[activeIdx]}
           alt={pet?.pet?.name || 'Dog'}
           className="object-cover w-full h-full bg-black"
           onError={onImageError}
         />
+        
         {images.length > 1 && (
-          <button className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/40 rounded-full p-1" onClick={goRight} aria-label="Next photo">
-            <ChevronRight className="w-7 h-7 text-white" />
+          <button 
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-30 bg-black/70 hover:bg-black/90 rounded-full p-3 transition-all duration-200 hover:scale-110 backdrop-blur-sm border border-white/20" 
+            onClick={(e) => { e.stopPropagation(); goRight(); }} 
+            aria-label="Next photo"
+          >
+            <ChevronRight className="w-6 h-6 text-white drop-shadow-lg" />
           </button>
+        )}
+        
+        {/* Photo counter for web users */}
+        {images.length > 1 && (
+          <div className="absolute bottom-4 right-4 z-30 bg-black/70 backdrop-blur-sm rounded-full px-3 py-1 text-white text-sm font-medium border border-white/20">
+            {activeIdx + 1} / {images.length}
+          </div>
         )}
       </div>
       {/* Overlay info */}
@@ -358,6 +469,12 @@ export default function SwipeNSavePage() {
   const [challengers, setChallengers] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [consecutiveFetchAttempts, setConsecutiveFetchAttempts] = useState(0);
+  
+  // Profile management state
+  const [showDatingProfileEditor, setShowDatingProfileEditor] = useState(false);
+  const [currentUserPets, setCurrentUserPets] = useState<any[]>([]);
+  const [selectedPetForProfile, setSelectedPetForProfile] = useState<string | null>(null);
+  const [showPetSelectionMenu, setShowPetSelectionMenu] = useState(false);
 
   // Fetch pets (original logic)
   async function fetchPets() {
@@ -384,11 +501,17 @@ export default function SwipeNSavePage() {
         owner: pet.author?.username
       })));
       
-      // Remove X'd pets from the filtered list
-      const availablePets = filtered.filter((pet: any) => {
-        const petId = pet.pet?.id || pet.id;
-        return !xedPets.has(petId);
-      });
+      // Remove X'd pets from the filtered list, but if it's pet-shelters and we only have 1-2 pets, don't filter out X'd ones
+      let availablePets;
+      if (activeTab === 'pet-shelters' && filtered.length <= 2) {
+        // For pet shelters with very few pets, always show all pets to avoid empty state
+        availablePets = filtered;
+      } else {
+        availablePets = filtered.filter((pet: any) => {
+          const petId = pet.pet?.id || pet.id;
+          return !xedPets.has(petId);
+        });
+      }
       
       setAllPets(filtered);
       setPetCards(availablePets);
@@ -500,6 +623,20 @@ export default function SwipeNSavePage() {
     }
   }
 
+  // Fetch current user's pets
+  const fetchUserPets = async () => {
+    if (!user) return;
+    try {
+      const response = await fetch('/api/pets');
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentUserPets(data.pets || []);
+      }
+    } catch (error) {
+      console.error('Error fetching user pets:', error);
+    }
+  };
+
   useEffect(() => { 
     if (activeTab === 'pet-celebs' || activeTab === 'pet-shelters') {
       setXedPets(new Set()); // Reset X'd pets when switching tabs
@@ -511,6 +648,27 @@ export default function SwipeNSavePage() {
       fetchLeaderboard();
     }
   }, [activeTab]);
+
+  // Fetch user's pets on component mount
+  useEffect(() => {
+    if (user) {
+      fetchUserPets();
+    }
+  }, [user]);
+
+  // Close pet selection menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showPetSelectionMenu) {
+        setShowPetSelectionMenu(false);
+      }
+    };
+
+    if (showPetSelectionMenu) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showPetSelectionMenu]);
 
   // Original swipe logic
   const handleSwipeLeft = (petIdx: number) => {
@@ -696,16 +854,11 @@ export default function SwipeNSavePage() {
           });
           setLoveCounts(petLoveCounts);
         } else {
-          // If all pets have been X'd, reset and fetch new ones (but prevent infinite loops)
-          if (consecutiveFetchAttempts < 3) {
-            setXedPets(new Set()); // Clear the X'd pets so we can show them again
-            fetchPets();
-          } else {
-            // Stop fetching if we've tried too many times without success
-            console.log('Stopping fetch attempts - insufficient pets available');
-            setPetCards([]);
-            setCurrentIdx(0);
-          }
+          // If all pets have been X'd, show a message instead of infinite refreshing
+          console.log('All available pets have been viewed');
+          setPetCards([]);
+          setCurrentIdx(0);
+          setConsecutiveFetchAttempts(0); // Reset for next tab switch
         }
         setFetchingMore(false);
       }, 400);
@@ -945,7 +1098,7 @@ export default function SwipeNSavePage() {
                   🏠
                 </div>
                 <div className="text-xl font-bold text-gray-700 mb-2">No Pet Shelters Available</div>
-                <p className="text-gray-500 max-w-md">
+                <p className="text-gray-500 max-w-md mb-4">
                   There are currently no certified pet shelter posts to display. Check back later!
                 </p>
               </>
@@ -955,10 +1108,26 @@ export default function SwipeNSavePage() {
                   🐾
                 </div>
                 <div className="text-xl font-bold text-gray-700 mb-2">No More Pets</div>
-                <p className="text-gray-500 max-w-md">
+                <p className="text-gray-500 max-w-md mb-4">
                   You've seen all available pets! Check back later for new ones.
                 </p>
               </>
+            )}
+            {user && currentUserPets.length > 0 && (
+              <Button
+                onClick={() => {
+                  if (currentUserPets.length === 1) {
+                    setSelectedPetForProfile(currentUserPets[0].id);
+                    setShowDatingProfileEditor(true);
+                  } else {
+                    setShowPetSelectionMenu(true);
+                  }
+                }}
+                className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                <Heart className="w-4 h-4 mr-2" />
+                Create Dating Profile
+              </Button>
             )}
           </div>
         )}
@@ -1176,8 +1345,21 @@ export default function SwipeNSavePage() {
         </div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-gray-700 mb-2">Recycling pets...</div>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mt-4"></div>
+        <div className="text-2xl font-bold text-gray-700 mb-2">
+          {activeTab === 'pet-shelters' ? 'No more shelter pets!' : 'All pets viewed!'}
+        </div>
+        <div className="text-gray-500 mb-4">
+          {activeTab === 'pet-shelters' 
+            ? 'You\'ve seen all available shelter pets. Switch tabs to see more!' 
+            : 'You\'ve seen all available pet celebs. Switch tabs to see more!'
+          }
+        </div>
+        <button
+          onClick={() => setActiveTab(activeTab === 'pet-celebs' ? 'pet-shelters' : 'pet-celebs')}
+          className="px-6 py-2 bg-gradient-to-r from-pink-400 to-purple-500 text-white rounded-full font-semibold hover:from-pink-500 hover:to-purple-600 transition-all"
+        >
+          Switch to {activeTab === 'pet-celebs' ? 'Pet Shelters' : 'Pet Celebs'}
+        </button>
       </div>
     </div>
   );
@@ -1229,6 +1411,60 @@ export default function SwipeNSavePage() {
           </button>
         </div>
       </div>
+
+      {/* Profile Management Button - Top Right */}
+      {user && currentUserPets.length > 0 && (activeTab === 'pet-celebs' || activeTab === 'pet-shelters') && (
+        <div className="absolute top-4 right-6 z-30">
+          <div className="relative">
+            <Button
+              onClick={() => {
+                if (currentUserPets.length === 1) {
+                  setSelectedPetForProfile(currentUserPets[0].id);
+                  setShowDatingProfileEditor(true);
+                } else {
+                  setShowPetSelectionMenu(!showPetSelectionMenu);
+                }
+              }}
+              className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              Edit Pet Profile
+            </Button>
+            
+            {/* Pet Selection Menu for Top Button */}
+            {showPetSelectionMenu && currentUserPets.length > 1 && (
+              <div className="absolute top-12 right-0 bg-white rounded-lg shadow-xl border p-4 min-w-[200px]">
+                <h3 className="font-semibold text-gray-800 mb-2">Select Pet for Dating Profile:</h3>
+                <div className="space-y-2">
+                  {currentUserPets.map((pet) => (
+                    <button
+                      key={pet.id}
+                      onClick={() => {
+                        setSelectedPetForProfile(pet.id);
+                        setShowDatingProfileEditor(true);
+                        setShowPetSelectionMenu(false);
+                      }}
+                      className="w-full text-left flex items-center gap-3 p-2 rounded-lg hover:bg-pink-50 transition-colors"
+                    >
+                      {pet.imageUrl && (
+                        <SecureImage 
+                          src={pet.imageUrl} 
+                          alt={pet.name}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      )}
+                      <div>
+                        <div className="font-medium text-gray-800">{pet.name}</div>
+                        <div className="text-sm text-gray-500">{pet.species}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Animations */}
       {showHeartAnimation.show && (
@@ -1296,6 +1532,76 @@ export default function SwipeNSavePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Floating Profile Management Button */}
+      {user && currentUserPets.length > 0 && (
+        <div className="fixed bottom-6 right-6 z-40">
+          <div className="relative">
+            <Button
+              onClick={() => {
+                if (currentUserPets.length === 1) {
+                  setSelectedPetForProfile(currentUserPets[0].id);
+                  setShowDatingProfileEditor(true);
+                } else {
+                  setShowPetSelectionMenu(!showPetSelectionMenu);
+                }
+              }}
+              className="rounded-full w-14 h-14 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
+            >
+              <Heart className="w-6 h-6" />
+            </Button>
+            
+            {/* Pet Selection Menu */}
+            {showPetSelectionMenu && currentUserPets.length > 1 && (
+              <div className="absolute bottom-16 right-0 bg-white rounded-lg shadow-xl border p-4 min-w-[200px]">
+                <h3 className="font-semibold text-gray-800 mb-2">Select Pet for Dating Profile:</h3>
+                <div className="space-y-2">
+                  {currentUserPets.map((pet) => (
+                    <button
+                      key={pet.id}
+                      onClick={() => {
+                        setSelectedPetForProfile(pet.id);
+                        setShowDatingProfileEditor(true);
+                        setShowPetSelectionMenu(false);
+                      }}
+                      className="w-full text-left flex items-center gap-3 p-2 rounded-lg hover:bg-pink-50 transition-colors"
+                    >
+                      {pet.imageUrl && (
+                        <SecureImage 
+                          src={pet.imageUrl} 
+                          alt={pet.name}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      )}
+                      <div>
+                        <div className="font-medium text-gray-800">{pet.name}</div>
+                        <div className="text-sm text-gray-500">{pet.species}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Pet Dating Profile Editor */}
+      {selectedPetForProfile && (
+        <PetDatingProfileEditor
+          petId={selectedPetForProfile}
+          petName={currentUserPets.find(p => p.id === selectedPetForProfile)?.name || 'Your Pet'}
+          isOpen={showDatingProfileEditor}
+          onOpenChange={(open) => {
+            setShowDatingProfileEditor(open);
+            if (!open) {
+              setSelectedPetForProfile(null);
+              // Refresh pets to update dating profile status
+              fetchPets();
+            }
+          }}
+        />
       )}
     </div>
   );

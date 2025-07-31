@@ -121,6 +121,7 @@ function PostCard({post, dbUserId} : {post:Post; dbUserId:string | null}) {
               src={post.pet ? post.pet.imageUrl : post.author.image}
               alt={post.pet ? post.pet.name : post.author.name || "User"}
               className="w-11 h-11 border-2 border-gold-200"
+              showFirst1000Badge={!post.pet && post.author?.isFirst1000}
             />
           </ProfileLink>
           <div className="flex flex-col justify-center ml-3 min-w-0 flex-1">

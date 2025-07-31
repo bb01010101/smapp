@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: { username: st
       where: { followingId: user.id },
       include: {
         follower: {
-          select: { id: true, name: true, username: true, image: true },
+          select: { id: true, name: true, username: true, image: true, isFirst1000: true },
         },
       },
     });

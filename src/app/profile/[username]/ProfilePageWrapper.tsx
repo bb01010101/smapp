@@ -50,6 +50,7 @@ export default function ProfilePageWrapper({
                 src={user.image}
                 alt={user.name || "User"}
                 className="w-20 h-20 border-2 border-primary"
+                showFirst1000Badge={user?.isFirst1000}
               />
             </div>
             <CardTitle className="text-xl">

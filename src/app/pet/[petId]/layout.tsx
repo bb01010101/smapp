@@ -3,6 +3,7 @@ import PetCard from '@/components/PetCard';
 import { getEvolutionImageUrl } from '@/lib/petEvolution';
 import { getUserEvolutionImagePreference } from '@/actions/profile.action';
 import { getCurrentUserTotalXp, getUserTotalXpByClerkId } from '@/actions/user.action';
+import { getLevelFromXp } from '@/lib/petLeveling';
 import { auth } from '@clerk/nextjs/server';
 import { ReactNode } from 'react';
 
@@ -18,6 +19,9 @@ export default async function PetProfileLayout({ children, params }: { children:
   const isOwnPet = pet && currentUserClerkId && pet.userId === currentUserClerkId;
   const petOwnerTotalXp = pet && !isOwnPet ? await getUserTotalXpByClerkId(pet.userId) : currentUserTotalXp;
   const displayXp = isOwnPet ? currentUserTotalXp : petOwnerTotalXp;
+  
+  // Calculate level from XP to match the sidebar (155 XP = Level 2)
+  const calculatedLevel = getLevelFromXp(displayXp);
 
   return (
     <div className="max-w-7xl mx-auto px-4">
@@ -28,10 +32,10 @@ export default async function PetProfileLayout({ children, params }: { children:
               <PetCard
                 imageUrl={pet.imageUrl || '/avatar.png'}
                 name={pet.name}
-                level={pet.level}
+                level={calculatedLevel}
                 xp={displayXp}
                 prestige={pet.prestige}
-                evolutionImageUrl={getEvolutionImageUrl(pet.breed, pet.level)}
+                evolutionImageUrl={getEvolutionImageUrl(pet.breed, calculatedLevel)}
                 breed={pet.breed}
                 useEvolutionImages={useEvolutionImages}
                 petId={pet.id}

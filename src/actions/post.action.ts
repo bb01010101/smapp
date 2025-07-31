@@ -203,7 +203,8 @@ export async function getPosts() {
                         id: true,
                         name: true,
                         image: true,
-                        username: true
+                        username: true,
+                        isFirst1000: true
                     }
                 },
                 pet: {
@@ -224,7 +225,8 @@ export async function getPosts() {
                                 id: true,
                                 username: true,
                                 image: true,
-                                name: true
+                                name: true,
+                                isFirst1000: true
                             }
                         }
                     },
@@ -471,7 +473,8 @@ export async function getFollowingPosts() {
                         id: true,
                         name: true,
                         image: true,
-                        username: true
+                        username: true,
+                        isFirst1000: true
                     }
                 },
                 pet: {
@@ -492,7 +495,8 @@ export async function getFollowingPosts() {
                                 id: true,
                                 username: true,
                                 image: true,
-                                name: true
+                                name: true,
+                                isFirst1000: true
                             }
                         }
                     },
@@ -544,7 +548,8 @@ export async function getExplorePosts() {
                         id: true,
                         name: true,
                         image: true,
-                        username: true
+                        username: true,
+                        isFirst1000: true
                     }
                 },
                 pet: {
@@ -565,7 +570,8 @@ export async function getExplorePosts() {
                                 id: true,
                                 username: true,
                                 image: true,
-                                name: true
+                                name: true,
+                                isFirst1000: true
                             }
                         }
                     },
@@ -598,37 +604,52 @@ export async function getExplorePosts() {
 }
 
 export async function getRandomPetPostsWithImages(count: number = 3) {
-  // Get random posts with images and pets
-  const posts = await prisma.post.findMany({
-    where: {
-      image: { not: null },
-      petId: { not: null },
-      mediaType: { not: "video" },
-    },
-    include: {
-      pet: {
-        select: {
-          id: true,
-          name: true,
-          imageUrl: true,
-          loveCount: true,
+  try {
+    // Get random posts with images and pets
+    const posts = await prisma.post.findMany({
+      where: {
+        image: { not: null },
+        petId: { not: null },
+        mediaType: { not: "video" },
+      },
+      include: {
+        pet: {
+          select: {
+            id: true,
+            name: true,
+            imageUrl: true,
+            loveCount: true,
+            age: true,
+            bio: true,
+            breed: true,
+            species: true,
+            location: true,
+            datingProfilePhotos: true,
+            datingProfileEnabled: true,
+          },
+        },
+        author: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+          },
         },
       },
-      author: {
-        select: {
-          id: true,
-          name: true,
-          username: true,
-        },
-      },
-    },
-  });
-  // Shuffle and return N
-  for (let i = posts.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [posts[i], posts[j]] = [posts[j], posts[i]];
+    });
+    
+    console.log(`Found ${posts.length} posts with pets and images`);
+    
+    // Shuffle and return N
+    for (let i = posts.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [posts[i], posts[j]] = [posts[j], posts[i]];
+    }
+    return posts.slice(0, count);
+  } catch (error) {
+    console.error('Error in getRandomPetPostsWithImages:', error);
+    throw error;
   }
-  return posts.slice(0, count);
 }
 
 export async function updatePost(postId: string, data: { content?: string; image?: string }) {

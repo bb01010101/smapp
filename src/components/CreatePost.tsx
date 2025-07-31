@@ -31,10 +31,18 @@ function CreatePost() {
     // Fetch pets for the current user and current challenge
     const fetchData = async () => {
       // Fetch pets
-      const petsRes = await fetch("/api/pets");
-      if (petsRes.ok) {
-        const petsData = await petsRes.json();
-        setPets(petsData);
+      try {
+        const petsRes = await fetch("/api/pets");
+        if (petsRes.ok) {
+          const petsData = await petsRes.json();
+          setPets(Array.isArray(petsData.pets) ? petsData.pets : []);
+        } else {
+          console.error("Failed to fetch pets:", petsRes.status);
+          setPets([]);
+        }
+      } catch (error) {
+        console.error("Error fetching pets:", error);
+        setPets([]);
       }
 
       // Fetch current weekly challenge
@@ -121,7 +129,7 @@ function CreatePost() {
               disabled={isPosting}
             >
               <option value="">Yourself</option>
-              {pets.map((pet) => (
+              {pets && Array.isArray(pets) && pets.map((pet) => (
                 <option key={pet.id} value={pet.id}>
                   {pet.name} ({pet.species})
                 </option>

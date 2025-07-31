@@ -54,6 +54,7 @@ export default function ChatWindow({ messages, other, handleSend }: any) {
         <SecureAvatar 
           src={other?.image}
           alt={other?.name || "User"}
+          showFirst1000Badge={other?.isFirst1000}
         />
         <div className="font-bold text-xl flex items-center gap-1">
           {other?.name || other?.username || "User"}
@@ -97,6 +98,7 @@ export default function ChatWindow({ messages, other, handleSend }: any) {
                       src={other?.image}
                       alt={other?.name || "User"}
                       className="w-7 h-7"
+                      showFirst1000Badge={other?.isFirst1000}
                     />
                   </div>
                   <div className="flex flex-col items-start max-w-xs">

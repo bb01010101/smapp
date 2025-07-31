@@ -42,5 +42,5 @@ export function getXpForLevel(level: number): number {
 }
 
 export function getLevelFromXp(xp: number): number {
-  return Math.floor(xp / 100);
+  return Math.floor(xp / 100) + 1;
 } 

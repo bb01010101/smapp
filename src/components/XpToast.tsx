@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { StarIcon, TrophyIcon } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { TrophyIcon, StarIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface XpToastProps {
@@ -11,7 +11,8 @@ interface XpToastProps {
 }
 
 export function XpToast({ xpGained, challengeName, totalXpGained }: XpToastProps) {
-  const displayXp = totalXpGained || xpGained;
+  // Always show the increment (xpGained), not the total
+  const displayXp = xpGained;
   
   return (
     <div className="flex items-center gap-3 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-4 shadow-lg">
