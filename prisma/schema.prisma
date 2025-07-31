@@ -26,6 +26,7 @@ model User {
   longitude                Float?
   totalXp                  Int                       @default(0)
   useEvolutionImages       Boolean                   @default(false)
+  isFirst1000              Boolean                   @default(false)
   barks                    Bark[]
   barkComments             BarkComment[]
   barkCommentVotes         BarkCommentVote[]
@@ -135,27 +136,31 @@ model Notification {
 }
 
 model Pet {
-  id                String    @id @default(uuid())
-  userId            String
-  name              String
-  species           String
-  breed             String?
-  age               String?
-  bio               String?
-  imageUrl          String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  loveCount         Int       @default(0)
-  streak            Int       @default(0)
-  lastLogin         DateTime?
-  level             Int       @default(1)
-  loginStreak       Int       @default(0)
-  prestige          Prestige  @default(BRONZE)
-  xp                Int       @default(0)
-  evolutionImageUrl String?
-  posts             Post[]    @relation("PetPosts")
+  id                    String    @id @default(uuid())
+  userId                String
+  name                  String
+  species               String
+  breed                 String?
+  age                   String?
+  bio                   String?
+  imageUrl              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  loveCount             Int       @default(0)
+  streak                Int       @default(0)
+  lastLogin             DateTime?
+  level                 Int       @default(1)
+  loginStreak           Int       @default(0)
+  prestige              Prestige  @default(BRONZE)
+  xp                    Int       @default(0)
+  evolutionImageUrl     String?
+  location              String?   // Location for dating matching
+  datingProfileEnabled  Boolean   @default(true) // Enable/disable pet for dating
+  datingProfilePhotos   Json?     // Array of selected photo URLs for dating profile
+  posts                 Post[]    @relation("PetPosts")
 
   @@index([userId])
+  @@index([datingProfileEnabled])
 }
 
 model Conversation {

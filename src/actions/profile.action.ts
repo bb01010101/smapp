@@ -19,6 +19,7 @@ export async function getProfileByUsername(username: string) {
           location: true,
           website: true,
           createdAt: true,
+          isFirst1000: true,
           _count: {
             select: {
               followers: true,
@@ -49,6 +50,7 @@ export async function getProfileByUsername(username: string) {
               name: true,
               username: true,
               image: true,
+              isFirst1000: true,
             },
           },
           pet: {
@@ -70,6 +72,7 @@ export async function getProfileByUsername(username: string) {
                   name: true,
                   username: true,
                   image: true,
+                  isFirst1000: true,
                 },
               },
             },
@@ -139,6 +142,7 @@ export async function getProfileByUsername(username: string) {
                   name: true,
                   username: true,
                   image: true,
+                  isFirst1000: true,
                 },
               },
             },

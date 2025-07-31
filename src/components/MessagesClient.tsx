@@ -116,6 +116,7 @@ export default function MessagesClient({ conversations }: { conversations: any[]
                 <SecureAvatar 
                   src={other?.image}
                   alt={other?.name || "User"}
+                  showFirst1000Badge={other?.isFirst1000}
                 />
                 <div className="flex-1">
                   <div className="font-medium flex items-center gap-1">
@@ -159,6 +160,7 @@ export default function MessagesClient({ conversations }: { conversations: any[]
                 <SecureAvatar 
                   src={other?.image}
                   alt={other?.name || "User"}
+                  showFirst1000Badge={other?.isFirst1000}
                 />
                 <div className="flex-1">
                   <div className="font-medium flex items-center gap-1">

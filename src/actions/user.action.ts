@@ -121,6 +121,7 @@ export async function getRandomUsers() {
         name: true,
         username: true,
         image: true,
+        isFirst1000: true,
         _count: {
           select: {
             followers: true,

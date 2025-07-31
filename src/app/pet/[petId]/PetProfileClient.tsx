@@ -23,6 +23,7 @@ import { SecureAvatar } from "@/components/SecureAvatar";
 import HorizontalTimeline from "@/components/HorizontalTimeline";
 import BlueCheckIcon from "@/components/BlueCheckIcon";
 import { isUserVerified } from "@/lib/utils";
+import PetDatingProfileEditor from "@/components/PetDatingProfileEditor";
 
 // Dynamically import S3ImageUpload to avoid SSR issues
 const S3ImageUpload = dynamic(() => import("@/components/S3ImageUpload"), {
@@ -432,6 +433,7 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
   const [editContent, setEditContent] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
+  const [showDatingProfileEditor, setShowDatingProfileEditor] = useState(false);
 
   const formattedDate = pet.createdAt ? format(new Date(pet.createdAt), "MMMM yyyy") : "";
   const petPosts = posts.filter((post) => !post.mediaType || post.mediaType.startsWith('image'));
@@ -762,23 +764,32 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
                   </div>
                   {/* Only show upload button if user owns this pet */}
                   {isOwnPet && (
-                    <Button
-                      onClick={handleUploadDaily}
-                      disabled={isUploading}
-                      className="flex items-center space-x-2 bg-gradient-to-tr from-orange-400 via-yellow-400 to-orange-600 text-white hover:scale-105"
-                    >
-                      {isUploading ? (
-                        <>
-                          <Loader2Icon className="w-4 h-4 animate-spin" />
-                          <span>Uploading...</span>
-                        </>
-                      ) : (
-                        <>
-                          <ImageIcon className="w-4 h-4" />
-                          <span>Upload Daily Media</span>
-                        </>
-                      )}
-                    </Button>
+                    <>
+                      <Button
+                        onClick={handleUploadDaily}
+                        disabled={isUploading}
+                        className="flex items-center space-x-2 bg-gradient-to-tr from-orange-400 via-yellow-400 to-orange-600 text-white hover:scale-105"
+                      >
+                        {isUploading ? (
+                          <>
+                            <Loader2Icon className="w-4 h-4 animate-spin" />
+                            <span>Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <ImageIcon className="w-4 h-4" />
+                            <span>Upload Daily Media</span>
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={() => setShowDatingProfileEditor(true)}
+                        className="flex items-center space-x-2 bg-gradient-to-tr from-pink-400 via-purple-400 to-pink-600 text-white hover:scale-105"
+                      >
+                        <HeartIcon className="w-4 h-4" />
+                        <span>Dating Profile</span>
+                      </Button>
+                    </>
                   )}
                 </div>
                 {/* Alternating vertical timeline (tree style) */}
@@ -1024,6 +1035,16 @@ export default function PetProfileClient({ pet, posts, owner }: PetProfileClient
           post={activePost} 
           dbUserId={owner?.id} 
         />
+
+        {/* Dating Profile Editor */}
+        {isOwnPet && (
+          <PetDatingProfileEditor
+            petId={pet.id}
+            petName={pet.name}
+            isOpen={showDatingProfileEditor}
+            onOpenChange={setShowDatingProfileEditor}
+          />
+        )}
       </div>
     </div>
   );

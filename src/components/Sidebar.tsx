@@ -95,6 +95,7 @@ export default function SidebarClient({ user }: { user?: any }) {
                   src={user.image}
                   alt={user.name || "User"}
                   className="w-20 h-20 border-2"
+                  showFirst1000Badge={user?.isFirst1000}
                 />
 
                 <div className="mt-4 space-y-1">

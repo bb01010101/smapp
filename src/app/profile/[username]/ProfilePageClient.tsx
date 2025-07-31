@@ -213,12 +213,13 @@ function PostModal({ open, onOpenChange, post, dbUserId }: { open: boolean; onOp
          createdAt: new Date(),
          authorId: user?.id || "",
          postId: post.id,
-         author: {
-           id: user?.id || "",
-           name: user?.fullName || user?.username || "Anonymous",
-           username: user?.username || "anonymous",
-           image: user?.imageUrl || "/avatar.png",
-         },
+                 author: {
+          id: user?.id || "",
+          name: user?.fullName || user?.username || "Anonymous",
+          username: user?.username || "anonymous",
+          image: user?.imageUrl || "/avatar.png",
+          isFirst1000: true, // Default to true for current users
+        },
        },
      ]);
      setNewComment("");
@@ -1084,6 +1085,7 @@ function ProfilePageClient({
                    src={user.image}
                    alt={user.name || "User"}
                    className="w-28 h-28 sm:w-36 sm:h-36 ring-2 ring-primary"
+                   showFirst1000Badge={user?.isFirst1000}
                  />
                </div>
                  </div>
@@ -1796,7 +1798,7 @@ function ProfilePageClient({
                {followers.map(f => (
                  <li key={f.id} className="flex items-center gap-3 py-3">
                    <Link href={`/profile/${f.username}`} className="flex items-center gap-3">
-                     <SecureAvatar src={f.image} alt={f.name || "User"} className="w-8 h-8" />
+                     <SecureAvatar src={f.image} alt={f.name || "User"} className="w-8 h-8" showFirst1000Badge={f?.isFirst1000} />
                      <div>
                        <div className="flex items-center gap-1">
                          <div className="font-medium hover:underline">{f.name || f.username}</div>
@@ -1832,7 +1834,7 @@ function ProfilePageClient({
                {following.map(f => (
                  <li key={f.id} className="flex items-center gap-3 py-3">
                    <Link href={`/profile/${f.username}`} className="flex items-center gap-3">
-                     <SecureAvatar src={f.image} alt={f.name || "User"} className="w-8 h-8" />
+                     <SecureAvatar src={f.image} alt={f.name || "User"} className="w-8 h-8" showFirst1000Badge={f?.isFirst1000} />
                      <div>
                        <div className="flex items-center gap-1">
                          <div className="font-medium hover:underline">{f.name || f.username}</div>

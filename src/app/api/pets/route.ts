@@ -1,21 +1,34 @@
-import { getAuth } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { NextResponse, NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 
 // GET /api/pets - get all pets for current user
 export async function GET(req: NextRequest) {
-  const { userId } = getAuth(req);
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const pets = await prisma.pet.findMany({
-    where: { userId },
-    orderBy: { createdAt: 'desc' },
-  });
-  return NextResponse.json(pets);
+  try {
+    const { userId } = await auth();
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    
+    // Get user from database
+    const user = await prisma.user.findUnique({
+      where: { clerkId: userId }
+    });
+    
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    
+    const pets = await prisma.pet.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'desc' },
+    });
+    return NextResponse.json({ pets });
+  } catch (error) {
+    console.error('Error fetching pets:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }
 
 // POST /api/pets - create a new pet
 export async function POST(req: NextRequest) {
-  const { userId } = getAuth(req);
+  const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const data = await req.json();
 
